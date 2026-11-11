@@ -209,10 +209,16 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Messaging & Benachrichtigungen
 
-- [ ] **WhatsApp-Reflex** – Sendet Nachrichten via WhatsApp
-  - [ ] Integration mit WhatsApp Business API oder Third-Party-Dienst
-  - [ ] Template-Engine für Nachrichteninhalt
-  - [ ] Konfigurierbare Empfängernummern
+- [x] **WhatsApp-Reflex** – Sendet Nachrichten via WhatsApp
+  - [x] Integration mit WhatsApp Business API (Graph API)
+  - [x] Template-Engine für Nachrichteninhalt ({{topic}}, {{body}}, {{id}}, {{timestamp}}, {{metadata.<key>}})
+  - [x] Konfigurierbare Empfängernummern
+  - [x] Text- und Template-Nachrichten
+  - [x] Topic-basiertes Recipient-Mapping
+  - [x] Topic-basiertes Template-Mapping
+  - [x] Drittanbieter-API-Unterstützung (custom api_base_url)
+  - [x] Optionale Metadata-Einbindung in Nachrichten
+  - [x] 16 Unit-Tests (Message-Type, Recipients, Templates, Body-Rendering, Config)
 - [ ] **Telegram-Reflex** – Sendet Nachrichten via Telegram Bot
   - [ ] Bot-Token-Konfiguration
   - [ ] Chat-ID-Konfiguration (pro Reflex oder dynamisch)

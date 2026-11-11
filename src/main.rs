@@ -13,7 +13,10 @@ use tracing::{error, info};
 use config::{ReflexConfig, TentacleConfig, load_reflexes, load_tentacles};
 use eventbus::EventBus;
 use mantle::Mantle;
-use reflexes::{CommandReflex, CommandReflexConfig, FileReflex, FileReflexConfig, Reflex};
+use reflexes::{
+    CommandReflex, CommandReflexConfig, FileReflex, FileReflexConfig, Reflex, WhatsAppReflex,
+    WhatsAppReflexConfig,
+};
 use tentacles::{
     AwsSqsTentacle, AwsSqsTentacleConfig, DiscordTentacle, DiscordTentacleConfig,
     FileWatcherTentacle, FileWatcherTentacleConfig, GooglePubSubTentacle,
@@ -280,6 +283,14 @@ fn create_reflex_handler(config: &ReflexConfig) -> Result<Box<dyn Reflex>> {
             Ok(Box::new(CommandReflex::new(
                 config.name.clone(),
                 command_config,
+            )))
+        }
+        "whatsapp" => {
+            let whatsapp_config: WhatsAppReflexConfig =
+                serde_yaml::from_value(config.action.config.clone())?;
+            Ok(Box::new(WhatsAppReflex::new(
+                config.name.clone(),
+                whatsapp_config,
             )))
         }
         _ => anyhow::bail!("Unknown reflex type: {}", config.action.r#type),

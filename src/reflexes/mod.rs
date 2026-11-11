@@ -19,6 +19,8 @@ pub trait Reflex: Send + Sync {
 
 pub mod command;
 pub mod file;
+pub mod whatsapp;
 
 pub use command::{CommandReflex, CommandReflexConfig};
 pub use file::{FileReflex, FileReflexConfig};
+pub use whatsapp::{WhatsAppReflex, WhatsAppReflexConfig};

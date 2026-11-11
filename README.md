@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.10.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.10.0)
+[![Version](https://img.shields.io/badge/version-0.11.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.11.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -21,19 +21,19 @@ rustyKraken follows the kraken metaphor:
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────┐
 │                 rustyKraken Core                 │
 │                                                  │
-│  ┌──────────┐    ┌──────────────┐    ┌────────┐ │
-│  │Tentacles │───▶│  Event Bus   │───▶│Reflexes│ │
+│  ┌──────────┐    ┌──────────────┐    ┌─────────┐ │
+│  │Tentacles │───▶│  Event Bus   │───▶│Reflexes │ │
 │  │(Sources) │    │  (Routing)   │    │(Actions)│ │
-│  └──────────┘    └──────────────┘    └────────┘ │
-│       │                  │                  │    │
-│       ▼                  ▼                  ▼    │
-│  config/incoming/   Mantle/DB       config/    │
-│  (YAML)                              listener/  │
-│                                          (YAML) │
-└─────────────────────────────────────────────────┘
+│  └──────────┘    └──────────────┘    └─────────┘ │
+│       │                  │                │      │
+│       ▼                  ▼                ▼      │
+│  config/incoming/   Mantle/DB       config/      │
+│  (YAML)                              listener/   │
+│                                          (YAML)  │
+└──────────────────────────────────────────────────┘
 ```
 
 ## Quick Start
@@ -388,6 +388,24 @@ Available environment variables:
 - `INK_BODY` – The body content
 - `INK_ID` – The UUID
 
+**WhatsApp** (`config/listener/whatsapp_alerts.yaml`):
+```yaml
+name: "whatsapp_alerts"
+trigger:
+  topics:
+    - "/kraken/alerts/**"
+action:
+  type: "whatsapp"
+  config:
+    access_token: "EAA..."
+    phone_number_id: "1234567890"
+    recipients:
+      - "+1234567890"
+    message_type: "text"
+    body_template: "Alert: {{body}}"
+    language: "en_US"
+```
+
 ## Topics
 
 Messages are sorted by a path-based topic system:
@@ -445,7 +463,7 @@ Messages are sorted by a path-based topic system:
 - [ ] Telegram Bot Reflex
 - [ ] Discord Webhook Reflex
 - [ ] ntfy Reflex
-- [ ] WhatsApp Reflex
+- [x] WhatsApp Reflex
 - [ ] Email (SMTP) Reflex
 - [ ] HTTP/Webhook Reflex
 - [ ] Matrix Reflex
@@ -465,7 +483,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.7.0** (2025-11-11)
+Current version: **0.11.0** (2025-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

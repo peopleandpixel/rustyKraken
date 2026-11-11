@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2025-11-11
+
+### Added
+
+#### Reflexes
+- **WhatsApp Reflex**: Send messages via WhatsApp Business API with:
+  - WhatsApp Business API (Graph API) integration
+  - Template engine with placeholders: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - Configurable recipient phone numbers
+  - Text and template message types
+  - Topic-based recipient mapping
+  - Topic-based template name mapping
+  - Third-party API support via custom `api_base_url`
+  - Optional metadata inclusion in messages
+  - 16 unit tests
+
 ## [0.10.0] - 2025-11-11
 
 ### Added
@@ -252,7 +268,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.11.0
 [0.10.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.10.0
 [0.9.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.9.0
 [0.8.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.8.0
