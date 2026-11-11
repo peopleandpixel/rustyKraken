@@ -1,0 +1,59 @@
+# POP3-Tentacle Beispielkonfiguration
+# Kopiere diese Datei und passe die Werte an deine Bedürfnisse an.
+
+name: "pop3_email"
+type: "pop3"
+config:
+  # POP3-Server-Host
+  host: "pop3.example.com"
+  
+  # POP3-Port (Standard: 995 für SSL/TLS, 110 für plain)
+  port: 995
+  
+  # Benutzername
+  username: "user@example.com"
+  
+  # Passwort (oder Umgebungsvariable-Referenz wie "${POP3_PASSWORD}")
+  password: "${POP3_PASSWORD}"
+  
+  # Topic-Matching-Modus (drei Optionen, nur eine verwenden):
+  
+  # Option 1: Betreff als Topic verwenden (Betreff muss mit "/" beginnen)
+  topic_mode:
+    mode: "subject"
+  
+  # Option 2: Auf alle E-Mails von einem bestimmten Absender reagieren
+  # topic_mode:
+  #   mode: "sender"
+  #   sender_pattern: "*@example.com"  # Platzhalter unterstützt
+  #   topic: "/email/example"
+  
+  # Option 3: Auf alle E-Mails in einem Postfach reagieren
+  # topic_mode:
+  #   mode: "all"
+  #   topic: "/email/all"
+  
+  # Optional: Zusätzliche Topic-Mappings basierend auf Absender
+  # sender_mappings:
+  #   "alerts@example.com": "/email/alerts"
+  #   "news@example.com": "/email/news"
+  
+  # Intervall in Sekunden zwischen den Polls (Standard: 30)
+  poll_interval: 60
+  
+  # Optional: E-Mails nach Verarbeitung löschen (Standard: false)
+  # POP3 unterstützt kein "als gelesen markieren", daher ist Löschen die einzige Option
+  delete_after_processing: false
+  
+  # Optional: STARTTLS verwenden (Port 110) statt implizite TLS (Port 995)
+  # Standard: false (implizite TLS für Port 995)
+  # Wenn true: Verbindung wird über Port 110 mit STLS-Befehl und TLS-Upgrade hergestellt
+  starttls: false
+  
+  # Optional: Pfad zur Datei für persistente Message-ID-Speicherung
+  # Standard: "data/pop3_<name>_ids.json"
+  # id_storage_path: "data/pop3_email_ids.json"
+  
+  # Optional: Fallback-Topic, wenn Betreff nicht mit "/" beginnt (nur im Subject-Modus)
+  # Standard: "/email/default"
+  # fallback_topic: "/email/incoming"

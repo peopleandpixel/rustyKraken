@@ -1,0 +1,62 @@
+# MQTT-Tentacle Beispielkonfiguration
+# Kopiere diese Datei und passe die Werte an deine Bedürfnisse an.
+
+name: "mqtt_kraken"
+type: "mqtt"
+config:
+  # MQTT-Broker-Host
+  broker: "localhost"
+
+  # MQTT-Broker-Port (Standard: 1883 für plain, 8883 für TLS)
+  port: 1883
+
+  # TLS verwenden (Standard: false)
+  use_tls: false
+
+  # TLS-Konfiguration (optional, nur wenn use_tls: true)
+  # tls:
+  #   # CA-Zertifikat-Pfad (optional, verwendet System-Root-CAs wenn nicht gesetzt)
+  #   ca_file: "/path/to/ca.pem"
+  #   # Client-Zertifikat für mTLS (optional)
+  #   client_cert: "/path/to/client-cert.pem"
+  #   client_key: "/path/to/client-key.pem"
+  #   # Hostname-Validierung deaktivieren (NUR für Testing!)
+  #   disable_verification: false
+
+  # Topics, auf die abonniert werden soll (unterstützt MQTT-Wildcards)
+  topics:
+    - "kraken/+"
+    - "home/+/+"
+
+  # Optional: Mapping von MQTT-Topics auf rustyKraken-Topics
+  topic_mapping:
+    "kraken/warning": "/kraken/warning"
+    "kraken/status": "/kraken/status"
+    "home/+/status": "/home/+/status"
+
+  # Optional: Client-ID (wird automatisch generiert, wenn nicht gesetzt)
+  # client_id: "my-custom-client"
+
+  # Optional: Authentifizierung
+  # username: "myuser"
+  # password: "mypassword"
+
+  # Optional: QoS (0, 1, 2; Standard: 0)
+  # qos: 1
+
+  # Optional: Keep-Alive in Sekunden (Standard: 60)
+  # keep_alive: 60
+
+  # Optional: Clean Session (Standard: true)
+  # Wenn false, behält der Broker die Session und sendet verpasste Messages
+  # clean_session: true
+
+  # Optional: Last-Will-Message (wird gesendet, wenn Verbindung unerwartet abbricht)
+  # last_will:
+  #   topic: "kraken/status"
+  #   message: "offline"
+  #   qos: 0
+  #   retain: true
+
+  # Optional: Reconnection-Verzögerung in Sekunden (Standard: 5)
+  # reconnect_delay: 5

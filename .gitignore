@@ -1,0 +1,19 @@
+# Build artifacts
+/target/
+
+# IDE
+.idea/
+*.iml
+
+# Secrets and sensitive data
+.env
+config/incoming/*.secret.yaml
+config/listener/*.secret.yaml
+
+# Runtime data
+data/*.db
+data/*.log
+data/*_uids.json
+
+# Cargo lock (for libraries; keep for applications - we keep it)
+# Cargo.lock

@@ -1,0 +1,60 @@
+# Beispiel: IMAP Tentacle
+# Empfängt E-Mails via IMAP und speichert sie im Event Bus
+
+name: "email_inbox"
+type: "imap"
+config:
+  host: "imap.example.com"
+  port: 993
+  username: "user@example.com"
+  # Passwort kann als Umgebungsvariable referenziert werden
+  password: "${IMAP_PASSWORD}"
+  mailbox: "INBOX"
+  
+  # Topic-Matching-Modus (wähle einen):
+  
+  # Modus 1: Betreff als Topic verwenden
+  # (Betreff muss mit "/" beginnen, z.B. "/kraken/warning")
+  topic_mode:
+    mode: "subject"
+
+  # Modus 2: Alle E-Mails von einem bestimmten Absender
+  # topic_mode:
+  #   mode: "sender"
+  #   sender_pattern: "alerts@example.com"
+  #   topic: "/alerts/incoming"
+
+  # Modus 3: Alle E-Mails in einem Postfach
+  # topic_mode:
+  #   mode: "all"
+  #   topic: "/email/inbox"
+
+  # Zusätzliche Absender-Mappings (haben Priorität vor topic_mode)
+  sender_mappings:
+    "alerts@example.com": "/alerts/system"
+    "notifications@service.com": "/notifications"
+    "*@important.com": "/important"
+
+  # Intervall zwischen den Polls in Sekunden (Standard: 30)
+  poll_interval: 30
+
+  # E-Mails nach Verarbeitung als gelesen markieren (Standard: true)
+  mark_read: true
+
+  # Optional: E-Mails nach Verarbeitung in ein anderes Postfach verschieben
+  # move_to: "Processed"
+
+  # Optional: IDLE-Modus für Echtzeit-Benachrichtigungen (Standard: false)
+  # Funktioniert nur, wenn der Server IDLE unterstützt (z.B. Gmail, Outlook)
+  # Bei Aktivierung werden neue E-Mails sofort erkannt, ohne Polling
+  # use_idle: true
+
+  # Optional: STARTTLS verwenden (Port 143) statt implizite TLS (Port 993)
+  # Standard: false (implizite TLS für Port 993)
+  # Wenn true: Verbindung wird über Port 143 mit STARTTLS-Upgrade hergestellt
+  # starttls: false
+
+  # Optional: Pfad zur Datei für persistente UID-Speicherung
+  # Standard: "data/imap_<name>_uids.json"
+  # Die UIDs werden gespeichert, um bereits verarbeitete E-Mails nicht erneut zu verarbeiten
+  # uid_storage_path: "data/imap_email_inbox_uids.json"

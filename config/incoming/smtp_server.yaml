@@ -1,0 +1,79 @@
+# SMTP-Tentacle – Empfängt E-Mails via SMTP
+#
+# Dieser Tentacle startet einen SMTP-Server, der eingehende E-Mails akzeptiert
+# und sie basierend auf Betreff oder Absender an Topics routet.
+
+name: "smtp_server"
+type: "smtp"
+config:
+  # Die IP-Adresse, auf der der SMTP-Server lauscht
+  # Standard: "0.0.0.0" (alle Interfaces)
+  host: "0.0.0.0"
+  
+  # Der Port, auf dem der SMTP-Server lauscht
+  # Standard: 2525 (nicht-privilegierter Port)
+  # Für Produktion: 25 (Standard-SMTP), 465 (SMTPS/TLS), 587 (STARTTLS)
+  port: 2525
+  
+  # Optional: SMTP-Server-Name (wird in EHLO-Antwort verwendet)
+  # Standard: "rustyKraken"
+  server_name: "rustyKraken"
+  
+  # Optional: Maximale Größe einer E-Mail in Bytes
+  # Standard: 10485760 (10MB)
+  max_message_size: 10485760
+  
+  # Optional: Timeout für inaktive Verbindungen in Sekunden
+  # Standard: 300 (5 Minuten)
+  idle_timeout: 300
+  
+  # Optional: Maximale Anzahl gleichzeitiger Verbindungen
+  # Standard: 50
+  max_connections: 50
+  
+  # Topic-Matching-Modus (wähle einen der drei Modi)
+  
+  # Modus 1: Topic aus dem Betreff extrahieren
+  # Betreff muss mit "/" beginnen, z.B. "/kraken/warning"
+  topic_mode:
+    mode: "Subject"
+    fallback_topic: "/email/default"
+  
+  # Modus 2: Topic basierend auf Absender bestimmen
+  # topic_mode:
+  #   mode: "Sender"
+  #   sender_pattern: "alerts@*"
+  #   topic: "/kraken/alerts"
+  #   fallback_topic: "/email/default"
+  
+  # Modus 3: Alle E-Mails an ein festes Topic
+  # topic_mode:
+  #   mode: "All"
+  #   topic: "/email/incoming"
+  
+  # Optional: Absender-Mappings für zusätzliche Topic-Regeln
+  # Schlüssel: Absender-Muster (mit * als Platzhalter)
+  # Wert: Topic
+  sender_mappings:
+    "alerts@kraken.local": "/kraken/alerts"
+    "noreply@system.local": "/system/notifications"
+    "*@monitoring.local": "/monitoring/events"
+  
+  # Optional: TLS-Zertifikat-Pfad
+  # Wenn konfiguriert, unterstützt der Server:
+  # - Implizite TLS (Port 465): Verbindung wird sofort verschlüsselt
+  # - STARTTLS (Port 587): Verbindung startet unverschlüsselt, Client fordert STARTTLS an
+  # tls_cert: "certs/server.crt"
+
+  # Optional: TLS-Privatschlüssel-Pfad
+  # tls_key: "certs/server.key"
+  
+  # Optional: Authentifizierung erfordern
+  # Standard: false
+  require_auth: false
+  
+  # Optional: Erlaubte Absender (leer = alle erlaubt)
+  # Muster mit * als Platzhalter
+  # allowed_senders:
+  #   - "*@example.com"
+  #   - "alerts@*"
