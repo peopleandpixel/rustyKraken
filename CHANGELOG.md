@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-11-11
+
+### Added
+
+#### Tentacles
+- **File Watcher Tentacle**: Monitor directories for new files and convert them to Ink messages with:
+  - `notify` crate for real-time filesystem event monitoring (Create/Modify events)
+  - Topic detection modes: `folder` (folder mapping), `filename` (stem or wildcard mapping), `content` (first line as topic), and `all` (combined with priority)
+  - File type filtering by extension (case-insensitive, empty = all files)
+  - Post-processing actions: `none`, `delete`, or `move` to a destination directory
+  - Configurable processing delay (default 500ms) to ensure files are fully written
+  - Max file size limit (default 10MB) to skip oversized files
+  - Recursive/non-recursive folder watching per folder
+  - Rich metadata: file_path, file_name, file_size, folder
+  - 11 unit tests
+
 ## [0.5.0] - 2025-11-11
 
 ### Added
@@ -121,7 +137,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.6.0
 [0.5.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.5.0
 [0.4.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.4.0
 [0.3.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.3.0

@@ -98,11 +98,19 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Dateibasierte Quellen
 
-- [ ] **File Watcher Tentacle** – Überwacht Ordner auf neue Dateien
-  - [ ] `notify`-Crate für Dateisystem-Events
-  - [ ] Konfigurierbare Ordner mit Topic-Mapping
-  - [ ] Dateityp-Filter (z.B. nur .txt, .json, .csv)
-  - [ ] Nach Verarbeitung verschieben/löschen
+- [x] **File Watcher Tentacle** – Überwacht Ordner auf neue Dateien
+  - [x] `notify`-Crate für Dateisystem-Events
+  - [x] Konfigurierbare Ordner mit Topic-Mapping
+  - [x] Dateityp-Filter (z.B. nur .txt, .json, .csv)
+  - [x] Nach Verarbeitung verschieben/löschen
+  - [x] Topic-Erkennung: folder, filename, content, all (kombiniert)
+  - [x] Filename-basiertes Topic-Mapping mit Wildcard-Support
+  - [x] Fallback-Topic, wenn kein Topic erkannt wird
+  - [x] Rekursive Ordnerüberwachung konfigurierbar
+  - [x] Verarbeitungsverzögerung für vollständige Dateischreibung
+  - [x] Maximale Dateigröße konfigurierbar
+  - [x] Rich Metadata (file_path, file_name, file_size, folder)
+  - [x] 11 Unit-Tests (Pattern-Matching, Topic-Modi, Filter, Deserialisierung, Fallback)
 - [ ] **Stdin Tentacle** – Liest Nachrichten von der Standardeingabe
   - [ ] Zeilenbasiertes Lesen
   - [ ] JSON oder plain-text Format

@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.5.0)
+[![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.6.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -194,6 +194,22 @@ config:
   allowed_users: []           # empty = accept all
 ```
 
+**File Watcher** (`config/incoming/file_watcher.yaml`):
+```yaml
+name: "file_watcher"
+type: "file_watcher"
+config:
+  folders:
+    - path: "/watch/inbox"
+      topic: "/files/inbox"
+      recursive: false
+  file_extensions: [".txt", ".json"]
+  topic_mode: "all"           # folder, filename, content, or all
+  fallback_topic: "/files/default"
+  post_process: "move"        # none, delete, or move
+  move_to: "/watch/processed"
+```
+
 #### Reflexes (Actions)
 
 Create YAML files in `config/listener/`:
@@ -271,7 +287,7 @@ Messages are sorted by a path-based topic system:
 ## Planned Features
 
 ### Tentacles
-- [ ] File Watcher Tentacle
+- [x] File Watcher Tentacle
 - [x] Telegram Bot Tentacle
 - [x] Discord Bot Tentacle
 - [ ] WebSocket Tentacle
@@ -303,7 +319,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.5.0** (2025-11-11)
+Current version: **0.6.0** (2025-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
