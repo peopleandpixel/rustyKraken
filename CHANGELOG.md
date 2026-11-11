@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-11-11
+
+### Added
+
+#### Tentacles
+- **Docker Events Tentacle**: Subscribe to Docker daemon events via REST API with:
+  - Event stream via `/events` endpoint with auto-reconnect
+  - Unix socket and TCP/HTTPS host support
+  - Event type and action filtering
+  - Four topic modes: `type` (event type), `action` (event action), `attribute` (actor attribute), `all`
+  - Type and action-based topic mapping
+  - TLS configuration with optional certificate verification
+  - Rich metadata: docker_type, docker_action, docker_actor_id, docker_scope, actor attributes
+  - 8 unit tests for topic resolution, mapping, config, and deserialization
+
 ## [0.33.0] - 2026-11-11
 
 ### Added

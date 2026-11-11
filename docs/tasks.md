@@ -259,7 +259,15 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Reiche Metadaten: journal_priority, journal_identifier, journal_unit
   - [x] Fallback zu Polling-Modus wenn Follow fehlschlägt
   - [x] 10 Unit-Tests (Topic-Auflösung, Parsing, Konfiguration, Command Building)
-- [ ] **Docker Events Tentacle** – Subscribt zu Docker Daemon Events (container start/stop, image pull, etc.)
+- [x] **Docker Events Tentacle** – Subscribt zu Docker Daemon Events (container start/stop, image pull, etc.)
+  - [x] Event-Stream via `/events` Endpoint mit Auto-Reconnect
+  - [x] Unix Socket und TCP/HTTPS Host Support
+  - [x] Event-Type und Action Filtering
+  - [x] Vier Topic-Modi: type, action, attribute, all
+  - [x] Type und Action-basiertes Topic-Mapping
+  - [x] TLS-Konfiguration mit optionaler Zertifikatsverifizierung
+  - [x] Reiche Metadaten: docker_type, docker_action, docker_actor_id, docker_scope
+  - [x] 8 Unit-Tests (Topic-Auflösung, Mapping, Konfiguration, Deserialisierung)
 - [ ] **Kubernetes Events Tentacle** – Watcht Kubernetes Cluster Events via API
 - [ ] **Network Packet Capture Tentacle** – Listet auf spezifische Netzwerk-Muster (via libpcap)
 - [x] **Syslog Listener Tentacle** – UDP/TCP Syslog-Server zum Empfangen von Logs von anderen Geräten
