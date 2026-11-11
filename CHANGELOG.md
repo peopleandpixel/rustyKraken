@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2025-11-11
+
+### Added
+
+#### Reflexes
+- **Tentacle Reflex (Filter/Forward)**: Forward and transform Ink messages within the EventBus with:
+  - Topic renaming with exact mapping, prefix mapping (longest-prefix wins), and template engine
+  - Body transformation with template engine: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - Conditional forwarding based on regex topic and body filters
+  - Metadata preservation or filtering with configurable keys
+  - Custom metadata fields added to forwarded messages
+  - Original topic tracked as `__original_topic` for tracing
+  - 16 unit tests
+
 ## [0.11.0] - 2025-11-11
 
 ### Added
@@ -268,7 +282,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.12.0
 [0.11.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.11.0
 [0.10.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.10.0
 [0.9.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.9.0

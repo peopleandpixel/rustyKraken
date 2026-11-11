@@ -14,8 +14,8 @@ use config::{ReflexConfig, TentacleConfig, load_reflexes, load_tentacles};
 use eventbus::EventBus;
 use mantle::Mantle;
 use reflexes::{
-    CommandReflex, CommandReflexConfig, FileReflex, FileReflexConfig, Reflex, WhatsAppReflex,
-    WhatsAppReflexConfig,
+    CommandReflex, CommandReflexConfig, FileReflex, FileReflexConfig, Reflex, TentacleReflex,
+    TentacleReflexConfig, WhatsAppReflex, WhatsAppReflexConfig,
 };
 use tentacles::{
     AwsSqsTentacle, AwsSqsTentacleConfig, DiscordTentacle, DiscordTentacleConfig,
@@ -65,7 +65,11 @@ async fn main() -> Result<()> {
 
     // Tentacles laden und starten
     let tentacle_configs = load_tentacles(&tentacles_dir)?;
-    info!("Loaded {} tentacle(s)", tentacle_configs.len());
+    if tentacle_configs.is_empty() {
+        info!("No tentacle configurations found. No tentacles will be started.");
+    } else {
+        info!("Loaded {} tentacle(s)", tentacle_configs.len());
+    }
 
     for tentacle_config in tentacle_configs {
         match create_tentacle(&tentacle_config) {
@@ -85,11 +89,15 @@ async fn main() -> Result<()> {
 
     // Reflexes laden und starten
     let reflex_configs = load_reflexes(&reflexes_dir)?;
-    info!("Loaded {} reflex(es)", reflex_configs.len());
+    if reflex_configs.is_empty() {
+        info!("No reflex configurations found. No reflexes will be started.");
+    } else {
+        info!("Loaded {} reflex(es)", reflex_configs.len());
+    }
 
     // Für jeden Reflex einen eigenen Listener starten
     for reflex_config in reflex_configs {
-        let reflex = create_reflex_handler(&reflex_config)?;
+        let reflex = create_reflex_handler(&reflex_config, &event_bus)?;
         let reflex_name = reflex_config.name.clone();
         let topics = reflex_config.trigger.topics.clone();
 
@@ -270,7 +278,10 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
     }
 }
 
-fn create_reflex_handler(config: &ReflexConfig) -> Result<Box<dyn Reflex>> {
+fn create_reflex_handler(
+    config: &ReflexConfig,
+    event_bus: &Arc<EventBus>,
+) -> Result<Box<dyn Reflex>> {
     match config.action.r#type.as_str() {
         "file" => {
             let file_config: FileReflexConfig =
@@ -291,6 +302,15 @@ fn create_reflex_handler(config: &ReflexConfig) -> Result<Box<dyn Reflex>> {
             Ok(Box::new(WhatsAppReflex::new(
                 config.name.clone(),
                 whatsapp_config,
+            )))
+        }
+        "tentacle" => {
+            let tentacle_config: TentacleReflexConfig =
+                serde_yaml::from_value(config.action.config.clone())?;
+            Ok(Box::new(TentacleReflex::new(
+                config.name.clone(),
+                tentacle_config,
+                Arc::clone(event_bus),
             )))
         }
         _ => anyhow::bail!("Unknown reflex type: {}", config.action.r#type),

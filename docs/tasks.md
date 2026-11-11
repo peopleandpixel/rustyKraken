@@ -277,10 +277,14 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Transformation & Routing
 
-- [ ] **Filter Reflex** – Filtert und transformiert Nachrichten
-  - [ ] Bedingte Weiterleitung basierend auf Inhalt
-  - [ ] JSON-Patch Transformationen
-  - [ ] Topic-Umbenennung
+- [x] **Tentacle Reflex (Filter/Forward)** – Filtert und weiterleitet Nachrichten
+  - [x] Bedingte Weiterleitung basierend auf Topic- und Body-Filtern (Regex)
+  - [x] Topic-Umbenennung mit exaktem Mapping, Prefix-Mapping und Template-Engine
+  - [x] Body-Transformation mit Template-Engine ({{topic}}, {{body}}, {{id}}, {{timestamp}}, {{metadata.<key>}})
+  - [x] Metadata-Erhaltung oder -Filterung mit konfigurierbaren Schlüsseln
+  - [x] Custom Metadata-Felder hinzufügen
+  - [x] Original-Topic als __original_topic für Tracing
+  - [x] 16 Unit-Tests (Topic-Mapping, Prefix-Mapping, Template-Rendering, Filter, Metadata, Deserialisierung)
 - [ ] **Aggregator Reflex** – Sammelt und aggregiert Nachrichten
   - [ ] Zeitbasierte Aggregation (z.B. alle 5 Minuten)
   - [ ] Zählung, Summe, Durchschnitt

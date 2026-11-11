@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.11.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.11.0)
+[![Version](https://img.shields.io/badge/version-0.12.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.12.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -406,6 +406,27 @@ action:
     language: "en_US"
 ```
 
+**Tentacle (Filter/Forward)** (`config/listener/forward_alerts.yaml`):
+```yaml
+name: "forward_alerts"
+trigger:
+  topics:
+    - "/sensor/**"
+action:
+  type: "tentacle"
+  config:
+    target_topic: "/forwarded/{{topic}}"
+    body_template: "[{{topic}}] {{body}}"
+    topic_mapping:
+      "/sensor/temp": "/iot/temperature"
+    topic_prefix_mapping:
+      "/sensor/": "/iot/sensor/"
+    body_filter: ".*alert.*"
+    preserve_metadata: true
+    add_metadata:
+      forwarded_by: "tentacle-reflex"
+```
+
 ## Topics
 
 Messages are sorted by a path-based topic system:
@@ -464,6 +485,7 @@ Messages are sorted by a path-based topic system:
 - [ ] Discord Webhook Reflex
 - [ ] ntfy Reflex
 - [x] WhatsApp Reflex
+- [x] Tentacle Reflex (Filter/Forward)
 - [ ] Email (SMTP) Reflex
 - [ ] HTTP/Webhook Reflex
 - [ ] Matrix Reflex
@@ -483,7 +505,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.11.0** (2025-11-11)
+Current version: **0.12.0** (2025-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

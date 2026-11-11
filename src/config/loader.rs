@@ -1,7 +1,7 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::fs;
 use std::path::Path;
-use tracing::info;
+use tracing::{info, warn};
 use walkdir::WalkDir;
 
 use super::models::{ReflexConfig, TentacleConfig};
@@ -19,7 +19,13 @@ pub fn load_tentacles(config_dir: &Path) -> Result<Vec<TentacleConfig>> {
     }
 
     for entry in WalkDir::new(config_dir).max_depth(1) {
-        let entry = entry?;
+        let entry = match entry {
+            Ok(e) => e,
+            Err(e) => {
+                warn!("Failed to read directory entry: {}", e);
+                continue;
+            }
+        };
         let path = entry.path();
 
         if path.is_file()
@@ -29,11 +35,27 @@ pub fn load_tentacles(config_dir: &Path) -> Result<Vec<TentacleConfig>> {
         {
             info!("Loading tentacle config: {:?}", path);
 
-            let content = fs::read_to_string(path)
-                .with_context(|| format!("Failed to read config file: {:?}", path))?;
+            let content = match fs::read_to_string(path) {
+                Ok(c) => c,
+                Err(e) => {
+                    warn!(
+                        "Failed to read tentacle config file {:?}: {}, skipping",
+                        path, e
+                    );
+                    continue;
+                }
+            };
 
-            let config: TentacleConfig = serde_yaml::from_str(&content)
-                .with_context(|| format!("Failed to parse config file: {:?}", path))?;
+            let config: TentacleConfig = match serde_yaml::from_str(&content) {
+                Ok(c) => c,
+                Err(e) => {
+                    warn!(
+                        "Failed to parse tentacle config file {:?}: {}, skipping",
+                        path, e
+                    );
+                    continue;
+                }
+            };
 
             configs.push(config);
         }
@@ -56,7 +78,13 @@ pub fn load_reflexes(config_dir: &Path) -> Result<Vec<ReflexConfig>> {
     }
 
     for entry in WalkDir::new(config_dir).max_depth(1) {
-        let entry = entry?;
+        let entry = match entry {
+            Ok(e) => e,
+            Err(e) => {
+                warn!("Failed to read directory entry: {}", e);
+                continue;
+            }
+        };
         let path = entry.path();
 
         if path.is_file()
@@ -66,11 +94,27 @@ pub fn load_reflexes(config_dir: &Path) -> Result<Vec<ReflexConfig>> {
         {
             info!("Loading reflex config: {:?}", path);
 
-            let content = fs::read_to_string(path)
-                .with_context(|| format!("Failed to read config file: {:?}", path))?;
+            let content = match fs::read_to_string(path) {
+                Ok(c) => c,
+                Err(e) => {
+                    warn!(
+                        "Failed to read reflex config file {:?}: {}, skipping",
+                        path, e
+                    );
+                    continue;
+                }
+            };
 
-            let config: ReflexConfig = serde_yaml::from_str(&content)
-                .with_context(|| format!("Failed to parse config file: {:?}", path))?;
+            let config: ReflexConfig = match serde_yaml::from_str(&content) {
+                Ok(c) => c,
+                Err(e) => {
+                    warn!(
+                        "Failed to parse reflex config file {:?}: {}, skipping",
+                        path, e
+                    );
+                    continue;
+                }
+            };
 
             configs.push(config);
         }
