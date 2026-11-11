@@ -264,12 +264,19 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Web & API
 
-- [ ] **HTTP/Webhook-Reflex** – Sendet HTTP-Requests an externe APIs
-  - [ ] GET, POST, PUT, DELETE Methoden
-  - [ ] Header-Konfiguration
-  - [ ] JSON-Body mit Template-Engine
-  - [ ] Authentifizierung (Bearer, Basic, API-Key)
-  - [ ] Retry-Logik bei Fehlern
+- [x] **HTTP/Webhook-Reflex** – Sendet HTTP-Requests an externe APIs
+  - [x] GET, POST, PUT, DELETE, PATCH Methoden
+  - [x] Header-Konfiguration
+  - [x] JSON-Body mit Template-Engine
+  - [x] Authentifizierung (Bearer, Basic, API-Key)
+  - [x] Retry-Logik bei Fehlern
+  - [x] Topic-basiertes URL-Mapping
+  - [x] Topic-basiertes Method-Mapping
+  - [x] Topic-basiertes Body-Mapping
+  - [x] URL-Template mit Platzhaltern
+  - [x] Konfigurierbarer Timeout und Content-Type
+  - [x] Redirect-Handling konfigurierbar
+  - [x] 14 Unit-Tests (URL-Mapping, Method-Mapping, Templates, Metadaten, Auth, Deserialisierung)
 - [ ] **Matrix/Element-Reflex** – Sendet Nachrichten via Matrix
   - [ ] Matrix-Client mit `ruma`-Crate
   - [ ] Raum-ID und Benutzer-Konfiguration

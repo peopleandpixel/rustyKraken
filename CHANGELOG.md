@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-11-11
+
+### Added
+
+#### Reflexes
+- **HTTP/Webhook Reflex**: Send HTTP requests to external APIs with:
+  - Support for GET, POST, PUT, DELETE, and PATCH methods
+  - Template engine for body: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - URL template support with placeholders
+  - Authentication: Bearer token, Basic auth, and API-Key
+  - Custom headers configuration
+  - Configurable Content-Type header
+  - Retry logic with configurable attempts and delay
+  - Request timeout configuration
+  - Topic-based URL mapping for routing to different endpoints
+  - Topic-based HTTP method mapping
+  - Topic-based body template mapping
+  - Redirect handling (configurable)
+  - 14 unit tests
+
 ## [0.16.0] - 2025-11-11
 
 ### Added
@@ -355,7 +375,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.17.0
 [0.16.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.16.0
 [0.15.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.15.0
 [0.14.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.14.0
