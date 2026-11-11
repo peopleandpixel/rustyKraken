@@ -199,7 +199,15 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 - [ ] **RabbitMQ Tentacle** – Empfängt Nachrichten via AMQP-Protokoll
 - [ ] **Kafka Tentacle** – Konsumiert von Apache Kafka Topics
 - [ ] **Redis Streams Tentacle** – Konsumiert von Redis Streams oder Lists (LPUSH/BRPOP)
-- [ ] **NATS Tentacle** – Empfängt Nachrichten von NATS Subjects
+- [x] **NATS Tentacle** – Empfängt Nachrichten von NATS Subjects
+  - [x] NATS Server-Verbindung mit Auto-Reconnect
+  - [x] Mehrere Subject-Abonnements mit Wildcard-Support (* und >)
+  - [x] Drei Topic-Modi: subject, field, all
+  - [x] Subject-basiertes Topic-Mapping mit Wildcard-Substitution
+  - [x] Authentifizierung: none, credentials, token, NKey
+  - [x] Binäre Nachrichten als Base64
+  - [x] Reiche Metadaten: nats_subject, nats_reply_to
+  - [x] 12 Unit-Tests (Pattern-Matching, Topic-Auflösung, Metadaten, Deserialisierung)
 
 #### System & Infrastruktur
 

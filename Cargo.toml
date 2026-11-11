@@ -1,6 +1,6 @@
 [package]
 name = "rustyKraken"
-version = "0.27.0"
+version = "0.28.0"
 edition = "2024"
 
 [dependencies]
@@ -40,3 +40,4 @@ hmac = "0.12"
 urlencoding = "2.1"
 time = { version = "0.3", features = ["formatting"] }
 hostname = "0.4"
+async-nats = "0.40"

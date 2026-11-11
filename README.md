@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.27.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.27.0)
+[![Version](https://img.shields.io/badge/version-0.28.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.28.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -335,6 +335,24 @@ config:
   facility_topic_mapping:
     "0": "/syslog/kernel"
     "4": "/syslog/auth"
+```
+
+**NATS** (`config/incoming/nats.yaml`):
+```yaml
+name: "nats_listener"
+type: "nats"
+config:
+  server: "nats://localhost:4222"
+  subjects:
+    - "orders.>"
+    - "events.*"
+  topic_mode: "subject"      # subject, field, or all
+  fallback_topic: "/nats/default"
+  auth:
+    type: "credentials"
+    username: "user"
+    password: "pass"
+  reconnect_delay_seconds: 5
 ```
 
 **REST API Poller** (`config/incoming/rest_api.yaml`):
@@ -768,6 +786,7 @@ Messages are sorted by a path-based topic system:
 - [x] Slack Tentacle
 - [x] Cron/Scheduler Tentacle
 - [x] Syslog Listener Tentacle
+- [x] NATS Tentacle
 
 ### Reflexes
 - [x] Telegram Bot Reflex
@@ -797,7 +816,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.27.0** (2026-11-11)
+Current version: **0.28.0** (2026-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

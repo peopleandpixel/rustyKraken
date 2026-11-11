@@ -26,12 +26,12 @@ use tentacles::{
     AwsSqsTentacle, AwsSqsTentacleConfig, CronTentacle, CronTentacleConfig, DiscordTentacle,
     DiscordTentacleConfig, FileWatcherTentacle, FileWatcherTentacleConfig, GooglePubSubTentacle,
     GooglePubSubTentacleConfig, HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig,
-    MqttTentacle, MqttTentacleConfig, NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle,
-    Pop3TentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig,
-    SerialTentacle, SerialTentacleConfig, SlackTentacle, SlackTentacleConfig, SmtpTentacle,
-    SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig,
-    SyslogTentacle, SyslogTentacleConfig, TelegramTentacle, TelegramTentacleConfig, Tentacle,
-    WebSocketTentacle, WebSocketTentacleConfig,
+    MqttTentacle, MqttTentacleConfig, NatsTentacle, NatsTentacleConfig, NtfyTentacle,
+    NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig, RestApiTentacle, RestApiTentacleConfig,
+    RssTentacle, RssTentacleConfig, SerialTentacle, SerialTentacleConfig, SlackTentacle,
+    SlackTentacleConfig, SmtpTentacle, SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig,
+    StdinTentacle, StdinTentacleConfig, SyslogTentacle, SyslogTentacleConfig, TelegramTentacle,
+    TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
 };
 
 #[tokio::main]
@@ -293,6 +293,13 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(SyslogTentacle::new(
                 config.name.clone(),
                 syslog_config,
+            )))
+        }
+        "nats" => {
+            let nats_config: NatsTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(NatsTentacle::new(
+                config.name.clone(),
+                nats_config,
             )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),

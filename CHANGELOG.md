@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.28.0] - 2026-11-11
+
+### Added
+
+#### Tentacles
+- **NATS Tentacle**: Receive messages from NATS subjects with:
+  - NATS server connection with auto-reconnect
+  - Multiple subject subscriptions with wildcard support (`*` and `>`)
+  - Three topic modes: `subject` (NATS subject based), `field` (JSON field extraction), `all` (single topic)
+  - Subject-based topic mapping with wildcard substitution
+  - Authentication: none, credentials (username/password), token, NKey
+  - Binary message support (Base64 encoding)
+  - Rich metadata: nats_subject, nats_reply_to
+  - 12 unit tests for pattern matching, topic resolution, and metadata
+
 ## [0.27.0] - 2026-11-11
 
 ### Added
