@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-11-11
+
+### Added
+
+#### Reflexes
+- **Syslog Reflex**: Send messages to syslog servers with:
+  - UDP and TCP syslog support
+  - BSD and RFC 5424 message format
+  - Configurable facility (kernel, user, local0-7, etc.) and severity (emergency through debug)
+  - Template engine for message body: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - Topic-based facility mapping for per-topic syslog facility
+  - Topic-based severity mapping for per-topic log levels
+  - Topic-based message template mapping
+  - App-name and proc-id fields for RFC 5424 format
+  - Retry logic with configurable attempts and delay
+  - 12 unit tests
+
 ## [0.18.0] - 2026-11-11
 
 ### Added

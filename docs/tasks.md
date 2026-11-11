@@ -311,9 +311,16 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 - [ ] **Home Assistant Reflex** – Sendet Events an Home Assistant
   - [ ] REST API Integration
   - [ ] Event-Fire und Service-Call
-- [ ] **Syslog Reflex** – Sendet Nachrichten an Syslog
-  - [ ] UDP/TLS Syslog
-  - [ ] Konfigurierbare Priorität und Facility
+- [x] **Syslog Reflex** – Sendet Nachrichten an Syslog
+  - [x] UDP/TCP Syslog
+  - [x] Konfigurierbare Priorität und Facility
+  - [x] BSD und RFC 5424 Message-Format
+  - [x] Template-Engine für Nachrichteninhalt ({{topic}}, {{body}}, {{id}}, {{timestamp}}, {{metadata.<key>}})
+  - [x] Topic-basiertes Facility-Mapping
+  - [x] Topic-basiertes Severity-Mapping
+  - [x] Topic-basiertes Message-Template-Mapping
+  - [x] Retry-Logik bei Fehlern
+  - [x] 12 Unit-Tests (Facility-Mapping, Severity-Mapping, Templates, Metadaten, BSD/RFC5424-Format, Deserialisierung)
 
 #### Transformation & Routing
 

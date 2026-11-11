@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.18.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.18.0)
+[![Version](https://img.shields.io/badge/version-0.19.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.19.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -558,6 +558,26 @@ action:
       "/kraken/critical": "!critical:matrix.org"
 ```
 
+**Syslog** (`config/listener/syslog_alerts.yaml`):
+```yaml
+name: "syslog_alerts"
+trigger:
+  topics:
+    - "/kraken/alerts/**"
+action:
+  type: "syslog"
+  config:
+    server: "syslog.example.com"
+    port: 514
+    connection_type: "udp"    # or "tcp"
+    facility: "local0"
+    severity: "warning"
+    message_template: "[{{topic}}] {{body}}"
+    rfc5424: false
+    topic_severity_mapping:
+      "/kraken/critical": "emergency"
+```
+
 ## Topics
 
 Messages are sorted by a path-based topic system:
@@ -620,6 +640,7 @@ Messages are sorted by a path-based topic system:
 - [x] Email (SMTP) Reflex
 - [x] HTTP/Webhook Reflex
 - [x] Matrix/Element Reflex
+- [x] Syslog Reflex
 - [ ] Home Assistant Reflex
 - [ ] Database Reflex
 - [ ] Script Reflex
@@ -636,7 +657,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.18.0** (2026-11-11)
+Current version: **0.19.0** (2026-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

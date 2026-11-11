@@ -16,8 +16,9 @@ use mantle::Mantle;
 use reflexes::{
     CommandReflex, CommandReflexConfig, DiscordReflex, DiscordReflexConfig, EmailReflex,
     EmailReflexConfig, FileReflex, FileReflexConfig, HttpReflex, HttpReflexConfig, MatrixReflex,
-    MatrixReflexConfig, NtfyReflex, NtfyReflexConfig, Reflex, TelegramReflex, TelegramReflexConfig,
-    TentacleReflex, TentacleReflexConfig, WhatsAppReflex, WhatsAppReflexConfig,
+    MatrixReflexConfig, NtfyReflex, NtfyReflexConfig, Reflex, SyslogReflex, SyslogReflexConfig,
+    TelegramReflex, TelegramReflexConfig, TentacleReflex, TentacleReflexConfig, WhatsAppReflex,
+    WhatsAppReflexConfig,
 };
 use tentacles::{
     AwsSqsTentacle, AwsSqsTentacleConfig, DiscordTentacle, DiscordTentacleConfig,
@@ -355,6 +356,14 @@ fn create_reflex_handler(
             Ok(Box::new(MatrixReflex::new(
                 config.name.clone(),
                 matrix_config,
+            )?))
+        }
+        "syslog" => {
+            let syslog_config: SyslogReflexConfig =
+                serde_yaml::from_value(config.action.config.clone())?;
+            Ok(Box::new(SyslogReflex::new(
+                config.name.clone(),
+                syslog_config,
             )?))
         }
         _ => anyhow::bail!("Unknown reflex type: {}", config.action.r#type),
