@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.21.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.21.0)
+[![Version](https://img.shields.io/badge/version-0.22.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.22.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -617,6 +617,30 @@ action:
     include_status: true
 ```
 
+**Aggregator** (`config/listener/sensor_aggregator.yaml`):
+```yaml
+name: "sensor_aggregator"
+trigger:
+  topics:
+    - "/sensor/**"
+action:
+  type: "aggregator"
+  config:
+    window_seconds: 300             # 5 minutes
+    groups:
+      - name: "temp_count"
+        topic_pattern: "/sensor/temp/**"
+        function: count
+        output_topic: "/aggregated/temp/count"
+      - name: "temp_avg"
+        topic_pattern: "/sensor/temp/**"
+        function: average
+        value_field: "value"
+        output_topic: "/aggregated/temp/avg"
+    body_template: "{{count}} messages, avg={{average}}"
+    include_breakdown: true
+```
+
 ## Topics
 
 Messages are sorted by a path-based topic system:
@@ -682,6 +706,7 @@ Messages are sorted by a path-based topic system:
 - [x] Syslog Reflex
 - [x] Home Assistant Reflex
 - [x] Database Reflex
+- [x] Aggregator Reflex
 - [ ] Script Reflex
 
 ### General
@@ -696,7 +721,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.21.0** (2026-11-11)
+Current version: **0.22.0** (2026-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

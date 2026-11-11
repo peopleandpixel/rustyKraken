@@ -352,10 +352,16 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Custom Metadata-Felder hinzufügen
   - [x] Original-Topic als __original_topic für Tracing
   - [x] 16 Unit-Tests (Topic-Mapping, Prefix-Mapping, Template-Rendering, Filter, Metadata, Deserialisierung)
-- [ ] **Aggregator Reflex** – Sammelt und aggregiert Nachrichten
-  - [ ] Zeitbasierte Aggregation (z.B. alle 5 Minuten)
-  - [ ] Zählung, Summe, Durchschnitt
-  - [ ] Zusammenfassung als einzelne Nachricht
+- [x] **Aggregator Reflex** – Sammelt und aggregiert Nachrichten
+  - [x] Zeitbasierte Aggregation mit konfigurierbarem Fenster
+  - [x] Aggregationsfunktionen: count, sum, average, min, max
+  - [x] Mehrere Aggregationsgruppen pro Reflex
+  - [x] Topic-Muster-Matching pro Gruppe
+  - [x] Numerische Wertextraktion aus Body, JSON-Feld oder Metadaten
+  - [x] Template-Engine für aggregierte Nachrichten ({{count}}, {{sum}}, {{average}}, {{min}}, {{max}}, {{group_name}}, {{topic_pattern}}, {{window_start}}, {{window_end}})
+  - [x] Reiche Metadaten in aggregierten Nachrichten
+  - [x] Flush-on-first-Modus für Tests
+  - [x] 12 Unit-Tests (Konfiguration, Akkumulator, Template-Rendering, Wertextraktion, Topic-Matching, Deserialisierung)
 
 ---
 

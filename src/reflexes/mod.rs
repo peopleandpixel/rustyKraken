@@ -17,6 +17,7 @@ pub trait Reflex: Send + Sync {
     async fn handle(&self, ink: &Ink) -> Result<()>;
 }
 
+pub mod aggregator;
 pub mod command;
 pub mod database;
 pub mod discord;
@@ -31,6 +32,7 @@ pub mod telegram;
 pub mod tentacle;
 pub mod whatsapp;
 
+pub use aggregator::{AggregatorReflex, AggregatorReflexConfig};
 pub use command::{CommandReflex, CommandReflexConfig};
 pub use database::{DatabaseReflex, DatabaseReflexConfig};
 pub use discord::{DiscordReflex, DiscordReflexConfig};

@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-11-11
+
+### Added
+
+#### Reflexes
+- **Aggregator Reflex**: Collect and aggregate Ink messages over time windows with:
+  - Time-based aggregation with configurable window (e.g., 5 minutes)
+  - Aggregation functions: count, sum, average, min, max
+  - Multiple aggregation groups per reflex with independent topic patterns
+  - Numeric value extraction from body, JSON field, or metadata
+  - Template engine for aggregated messages: `{{count}}`, `{{sum}}`, `{{average}}`, `{{min}}`, `{{max}}`, `{{group_name}}`, `{{topic_pattern}}`, `{{window_start}}`, `{{window_end}}`
+  - Rich metadata in aggregated messages (window timestamps, all aggregation values)
+  - Flush-on-first mode for testing
+  - 12 unit tests
+
 ## [0.21.0] - 2026-11-11
 
 ### Added

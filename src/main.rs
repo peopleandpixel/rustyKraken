@@ -14,12 +14,12 @@ use config::{ReflexConfig, TentacleConfig, load_reflexes, load_tentacles};
 use eventbus::EventBus;
 use mantle::Mantle;
 use reflexes::{
-    CommandReflex, CommandReflexConfig, DatabaseReflex, DatabaseReflexConfig, DiscordReflex,
-    DiscordReflexConfig, EmailReflex, EmailReflexConfig, FileReflex, FileReflexConfig,
-    HomeAssistantReflex, HomeAssistantReflexConfig, HttpReflex, HttpReflexConfig, MatrixReflex,
-    MatrixReflexConfig, NtfyReflex, NtfyReflexConfig, Reflex, SyslogReflex, SyslogReflexConfig,
-    TelegramReflex, TelegramReflexConfig, TentacleReflex, TentacleReflexConfig, WhatsAppReflex,
-    WhatsAppReflexConfig,
+    AggregatorReflex, AggregatorReflexConfig, CommandReflex, CommandReflexConfig, DatabaseReflex,
+    DatabaseReflexConfig, DiscordReflex, DiscordReflexConfig, EmailReflex, EmailReflexConfig,
+    FileReflex, FileReflexConfig, HomeAssistantReflex, HomeAssistantReflexConfig, HttpReflex,
+    HttpReflexConfig, MatrixReflex, MatrixReflexConfig, NtfyReflex, NtfyReflexConfig, Reflex,
+    SyslogReflex, SyslogReflexConfig, TelegramReflex, TelegramReflexConfig, TentacleReflex,
+    TentacleReflexConfig, WhatsAppReflex, WhatsAppReflexConfig,
 };
 use tentacles::{
     AwsSqsTentacle, AwsSqsTentacleConfig, DiscordTentacle, DiscordTentacleConfig,
@@ -382,6 +382,15 @@ fn create_reflex_handler(
                 config.name.clone(),
                 db_config,
             )?))
+        }
+        "aggregator" => {
+            let agg_config: AggregatorReflexConfig =
+                serde_yaml::from_value(config.action.config.clone())?;
+            Ok(Box::new(AggregatorReflex::new(
+                config.name.clone(),
+                agg_config,
+                Arc::clone(event_bus),
+            )))
         }
         _ => anyhow::bail!("Unknown reflex type: {}", config.action.r#type),
     }
