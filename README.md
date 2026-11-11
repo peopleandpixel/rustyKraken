@@ -1,8 +1,9 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.3.0)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.4.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
+[![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
 
 ![rustyKraken Logo](docs/rustyKraken.jpeg)
 
@@ -162,6 +163,21 @@ config:
     fallback_topic: "/email/incoming"
 ```
 
+**Telegram** (`config/incoming/telegram.yaml`):
+```yaml
+name: "telegram_bot"
+type: "telegram"
+config:
+  bot_token: "123456:ABC-DEF..."
+  connection_type: "polling"  # or "webhook"
+  topic_mode: "all"           # command, content, chat, or all
+  fallback_topic: "/telegram/default"
+  chat_topic_mapping:
+    "100": "/kraken/alerts"
+  allowed_chats: []           # empty = accept all
+  allowed_users: []           # empty = accept all
+```
+
 #### Reflexes (Actions)
 
 Create YAML files in `config/listener/`:
@@ -240,7 +256,7 @@ Messages are sorted by a path-based topic system:
 
 ### Tentacles
 - [ ] File Watcher Tentacle
-- [ ] Telegram Bot Tentacle
+- [x] Telegram Bot Tentacle
 - [ ] Discord Webhook Tentacle
 - [ ] WebSocket Tentacle
 - [ ] RSS/Atom Feed Tentacle
@@ -271,7 +287,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.3.0** (2025-11-11)
+Current version: **0.4.0** (2025-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-11-11
+
+### Added
+
+#### Tentacles
+- **Telegram Tentacle**: Receive messages from Telegram via Bot API with:
+  - Polling mode (long-polling via `getUpdates`)
+  - Webhook mode (Axum-based HTTP server with secret token validation)
+  - Topic detection modes: `command` (e.g., `/kraken_topic`), `content` (messages starting with `/`), `chat` (chat_id/username mapping), and `all` (combined)
+  - Message type support: text, photo, document, voice, audio, video, location, contact
+  - Filtering via `allowed_chats` and `allowed_users` whitelists
+  - Rich metadata: chat info, sender info, message type, forwarded-from, location, contact data
+  - 8 unit tests
+
+[0.4.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.4.0
+
 ## [0.3.0] - 2025-11-11
 
 ### Added
@@ -91,6 +107,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.4.0
 [0.3.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.3.0
 [0.2.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.2.0

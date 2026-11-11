@@ -63,10 +63,20 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Reconnection mit konfigurierbarer Verzögerung
   - [x] ntfy-Metadaten (Title, Priority, Tags, Click, Icon) als Ink-Metadaten
   - [x] 5 Unit-Tests (Topic-Mapping, Ink-Erstellung, JSON-Parsing, WebSocket-Events)
-- [ ] **Telegram-Tentacle** – Empfängt Nachrichten via Telegram Bot API
-  - [ ] Webhook- oder Polling-Modus
-  - [ ] Topic-Erkennung aus Nachrichteninhalt oder Commands
-  - [ ] Gruppennachrichten und private Chats unterstützen
+- [x] **Telegram-Tentacle** – Empfängt Nachrichten via Telegram Bot API
+  - [x] Webhook-Modus mit Axum-Server
+  - [x] Polling-Modus mit long-polling (getUpdates)
+  - [x] Topic-Erkennung aus Commands (/kraken_topic)
+  - [x] Topic-Erkennung aus Nachrichteninhalt (/topic-Präfix)
+  - [x] Topic-Erkennung aus Chat-ID (chat_topic_mapping)
+  - [x] Username-basiertes Topic-Mapping
+  - [x] Gruppennachrichten, private Chats und Kanäle unterstützen
+  - [x] Nachrichtentyp-Erkennung (Text, Foto, Dokument, Voice, Audio, Video, Location, Contact)
+  - [x] Secret-Token-Validierung für Webhooks
+  - [x] Allowed-Chats/Allowed-Users-Filter
+  - [x] Webhook-Registrierung beim Telegram-Server
+  - [x] Reconnection mit konfigurierbarer Verzögerung
+  - [x] 8 Unit-Tests (Command-Extraktion, Topic-Modi, Ink-Erstellung, Filter, Nachrichtentypen, Webhook)
 - [ ] **Discord-Tentacle** – Empfängt Nachrichten via Discord Webhooks oder Bot
   - [ ] Discord Webhook-Endpoint
   - [ ] Discord Bot mit Gateway-Verbindung

@@ -10,6 +10,7 @@ pub mod mqtt;
 pub mod ntfy;
 pub mod pop3;
 pub mod smtp;
+pub mod telegram;
 
 pub use http::{HttpTentacle, HttpTentacleConfig};
 pub use imap::{ImapTentacle, ImapTentacleConfig};
@@ -17,6 +18,7 @@ pub use mqtt::{MqttTentacle, MqttTentacleConfig};
 pub use ntfy::{NtfyTentacle, NtfyTentacleConfig};
 pub use pop3::{Pop3Tentacle, Pop3TentacleConfig};
 pub use smtp::{SmtpTentacle, SmtpTentacleConfig};
+pub use telegram::{TelegramTentacle, TelegramTentacleConfig};
 
 /// Ein Tentacle ist eine Nachrichtenquelle, die Ink in das Event Bus einspeist.
 #[allow(dead_code)]
