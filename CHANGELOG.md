@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-11-11
+
+### Added
+
+#### Reflexes
+- **Database Reflex**: Store Ink messages in a database with:
+  - SQLite, PostgreSQL, and MySQL/MariaDB support via `sqlx`
+  - Configurable table name and schema
+  - Auto-creation of the table on startup
+  - Connection pooling with configurable max/min connections
+  - Optional metadata JSON column
+  - Optional status field (new/processed/archived)
+  - Duplicate prevention (ON CONFLICT / INSERT IGNORE)
+  - Query by topic pattern (LIKE with escaping)
+  - Message count query
+  - 12 unit tests
+
 ## [0.20.0] - 2026-11-11
 
 ### Added

@@ -296,10 +296,19 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [ ] Verschiedene Formate (JSON, CSV, plain text, XML)
   - [ ] Template-Engine für Dateiinhalte
   - [ ] Rotation und Größenlimits
-- [ ] **Database Reflex** – Speichert Nachrichten in einer Datenbank
-  - [ ] PostgreSQL-Unterstützung
-  - [ ] MySQL/MariaDB-Unterstützung
-  - [ ] Konfigurierbare Tabellenschemata
+- [x] **Database Reflex** – Speichert Nachrichten in einer Datenbank
+  - [x] SQLite-Unterstützung via sqlx
+  - [x] PostgreSQL-Unterstützung via sqlx
+  - [x] MySQL/MariaDB-Unterstützung via sqlx
+  - [x] Konfigurierbare Tabellennamen und Schemata
+  - [x] Auto-Creation der Tabelle beim Start
+  - [x] Connection Pooling mit konfigurierbarer Größe
+  - [x] Metadaten als JSON-Spalte (optional)
+  - [x] Status-Feld (optional)
+  - [x] Duplikatsvermeidung (ON CONFLICT / INSERT IGNORE)
+  - [x] Abfrage nach Topic-Muster (LIKE)
+  - [x] Nachrichten-Zählung
+  - [x] 12 Unit-Tests (Konfiguration, Deserialisierung, SQL-Generierung, Status-Mapping, Pattern-Escaping)
 
 #### System & Automatisierung
 

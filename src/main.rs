@@ -14,11 +14,11 @@ use config::{ReflexConfig, TentacleConfig, load_reflexes, load_tentacles};
 use eventbus::EventBus;
 use mantle::Mantle;
 use reflexes::{
-    CommandReflex, CommandReflexConfig, DiscordReflex, DiscordReflexConfig, EmailReflex,
-    EmailReflexConfig, FileReflex, FileReflexConfig, HomeAssistantReflex,
-    HomeAssistantReflexConfig, HttpReflex, HttpReflexConfig, MatrixReflex, MatrixReflexConfig,
-    NtfyReflex, NtfyReflexConfig, Reflex, SyslogReflex, SyslogReflexConfig, TelegramReflex,
-    TelegramReflexConfig, TentacleReflex, TentacleReflexConfig, WhatsAppReflex,
+    CommandReflex, CommandReflexConfig, DatabaseReflex, DatabaseReflexConfig, DiscordReflex,
+    DiscordReflexConfig, EmailReflex, EmailReflexConfig, FileReflex, FileReflexConfig,
+    HomeAssistantReflex, HomeAssistantReflexConfig, HttpReflex, HttpReflexConfig, MatrixReflex,
+    MatrixReflexConfig, NtfyReflex, NtfyReflexConfig, Reflex, SyslogReflex, SyslogReflexConfig,
+    TelegramReflex, TelegramReflexConfig, TentacleReflex, TentacleReflexConfig, WhatsAppReflex,
     WhatsAppReflexConfig,
 };
 use tentacles::{
@@ -373,6 +373,14 @@ fn create_reflex_handler(
             Ok(Box::new(HomeAssistantReflex::new(
                 config.name.clone(),
                 ha_config,
+            )?))
+        }
+        "database" => {
+            let db_config: DatabaseReflexConfig =
+                serde_yaml::from_value(config.action.config.clone())?;
+            Ok(Box::new(DatabaseReflex::new(
+                config.name.clone(),
+                db_config,
             )?))
         }
         _ => anyhow::bail!("Unknown reflex type: {}", config.action.r#type),

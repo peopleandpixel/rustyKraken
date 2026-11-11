@@ -18,6 +18,7 @@ pub trait Reflex: Send + Sync {
 }
 
 pub mod command;
+pub mod database;
 pub mod discord;
 pub mod email;
 pub mod file;
@@ -31,6 +32,7 @@ pub mod tentacle;
 pub mod whatsapp;
 
 pub use command::{CommandReflex, CommandReflexConfig};
+pub use database::{DatabaseReflex, DatabaseReflexConfig};
 pub use discord::{DiscordReflex, DiscordReflexConfig};
 pub use email::{EmailReflex, EmailReflexConfig};
 pub use file::{FileReflex, FileReflexConfig};

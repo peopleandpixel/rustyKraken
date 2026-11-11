@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.20.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.20.0)
+[![Version](https://img.shields.io/badge/version-0.21.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.21.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -599,6 +599,24 @@ action:
       "/notify/phone": "notify/mobile_app_phone"
 ```
 
+**Database** (`config/listener/database_store.yaml`):
+```yaml
+name: "database_store"
+trigger:
+  topics:
+    - "/**"
+action:
+  type: "database"
+  config:
+    database_type: "sqlite"        # sqlite, postgres, or mysql
+    connection_string: "data/kraken_archive.db"
+    table_name: "ink_messages"
+    auto_create_table: true
+    max_connections: 10
+    include_metadata: true
+    include_status: true
+```
+
 ## Topics
 
 Messages are sorted by a path-based topic system:
@@ -663,7 +681,7 @@ Messages are sorted by a path-based topic system:
 - [x] Matrix/Element Reflex
 - [x] Syslog Reflex
 - [x] Home Assistant Reflex
-- [ ] Database Reflex
+- [x] Database Reflex
 - [ ] Script Reflex
 
 ### General
@@ -678,7 +696,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.20.0** (2026-11-11)
+Current version: **0.21.0** (2026-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
