@@ -195,7 +195,17 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Channel und User Filtering
   - [x] Rich Metadata (User-Profile, Files, Thread)
   - [x] 8 Unit-Tests (Topic-Modi, Filtering, Ink-Erstellung)
-- [ ] **Azure Service Bus Tentacle** – Empfängt Nachrichten von Azure Service Bus Queues/Topics
+- [x] **Azure Service Bus Tentacle** – Empfängt Nachrichten von Azure Service Bus Queues/Topics
+  - [x] REST API-basiertes Polling (keine zusätzlichen Dependencies)
+  - [x] Queue und Topic/Subscription Support
+  - [x] Drei Topic-Modi: entity, field, all
+  - [x] Entity-basiertes Mapping für custom Routing
+  - [x] Authentifizierung: SAS Shared Access Signature, Connection String
+  - [x] SAS Token Generierung mit HMAC-SHA256
+  - [x] Konfigurierbares Poll-Interval und max Nachrichten pro Poll
+  - [x] Binäre Nachrichten als Base64
+  - [x] Reiche Metadaten: asb_entity, asb_entity_type, asb_subscription
+  - [x] 10 Unit-Tests (Topic-Auflösung, Auth-Varianten, Konfiguration, Deserialisierung)
 - [x] **RabbitMQ Tentacle** – Empfängt Nachrichten via AMQP-Protokoll
   - [x] AMQP-Verbindung mit Auto-Reconnect
   - [x] Mehrere Queue-Abonnements mit Exchange-Binding

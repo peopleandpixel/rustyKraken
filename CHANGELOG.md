@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-11-11
+
+### Added
+
+#### Tentacles
+- **Azure Service Bus Tentacle**: Consume messages from Azure Service Bus Queues and Topics with:
+  - REST API-based polling (no additional dependencies)
+  - Queue and Topic/Subscription support
+  - Three topic modes: `entity` (entity name based), `field` (JSON field extraction), `all` (single topic)
+  - Entity-based mapping for custom routing
+  - Authentication: SAS Shared Access Signature, Connection String
+  - SAS token generation with HMAC-SHA256
+  - Configurable poll interval and max messages per poll
+  - Binary message support (Base64 encoding)
+  - Rich metadata: asb_entity, asb_entity_type, asb_subscription
+  - 10 unit tests for topic resolution, auth variants, config, and deserialization
+
 ## [0.31.0] - 2026-11-11
 
 ### Added
