@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-11-11
+
+### Added
+
+#### Tentacles
+- **Stdin Tentacle**: Read messages from standard input, line by line, with:
+  - Line-based reading using `tokio::io`
+  - Three input formats: `plain` (text), `json` (JSON objects), and `auto` (detects format per line)
+  - Topic detection from content — lines starting with `/` extract the topic (e.g., `/alerts message`)
+  - Two topic modes: `content` (extract from message) and `all` (use fallback topic)
+  - JSON support with `topic`, `body`, and `message` fields
+  - Configurable fallback topic (default: `/stdin/default`)
+  - EOF and Ctrl+C handling for graceful shutdown
+  - 16 unit tests
+
 ## [0.6.0] - 2025-11-11
 
 ### Added
@@ -137,7 +152,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.7.0
 [0.6.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.6.0
 [0.5.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.5.0
 [0.4.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.4.0

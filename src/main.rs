@@ -18,7 +18,8 @@ use tentacles::{
     DiscordTentacle, DiscordTentacleConfig, FileWatcherTentacle, FileWatcherTentacleConfig,
     HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig, MqttTentacle,
     MqttTentacleConfig, NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig,
-    SmtpTentacle, SmtpTentacleConfig, TelegramTentacle, TelegramTentacleConfig, Tentacle,
+    SmtpTentacle, SmtpTentacleConfig, StdinTentacle, StdinTentacleConfig, TelegramTentacle,
+    TelegramTentacleConfig, Tentacle,
 };
 
 #[tokio::main]
@@ -192,6 +193,13 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(FileWatcherTentacle::new(
                 config.name.clone(),
                 file_watcher_config,
+            )))
+        }
+        "stdin" => {
+            let stdin_config: StdinTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(StdinTentacle::new(
+                config.name.clone(),
+                stdin_config,
             )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),

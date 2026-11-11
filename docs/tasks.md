@@ -111,10 +111,16 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Maximale Dateigröße konfigurierbar
   - [x] Rich Metadata (file_path, file_name, file_size, folder)
   - [x] 11 Unit-Tests (Pattern-Matching, Topic-Modi, Filter, Deserialisierung, Fallback)
-- [ ] **Stdin Tentacle** – Liest Nachrichten von der Standardeingabe
-  - [ ] Zeilenbasiertes Lesen
-  - [ ] JSON oder plain-text Format
-  - [ ] Sinnvoll für Pipes und Skripte
+- [x] **Stdin Tentacle** – Liest Nachrichten von der Standardeingabe
+  - [x] Zeilenbasiertes Lesen
+  - [x] JSON oder plain-text Format
+  - [x] Auto-Erkennung des Formats (JSON wenn Zeile mit { beginnt)
+  - [x] Topic-Erkennung aus Inhalt (/topic-Präfix)
+  - [x] Zwei Topic-Modi: content (aus Inhalt), all (Fallback-Topic)
+  - [x] Fallback-Topic konfigurierbar
+  - [x] JSON-Felder: "topic", "body", "message"
+  - [x] EOF und Ctrl+C Handling
+  - [x] 16 Unit-Tests (Topic-Extraktion, Body-Extraktion, JSON-Parsing, Format-Erkennung, Konfiguration)
 
 #### API & Web Services
 
