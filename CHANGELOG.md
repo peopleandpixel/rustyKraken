@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-11-11
+
+### Added
+
+#### Tentacles
+- **Syslog Listener Tentacle**: Receive syslog messages via UDP or TCP with:
+  - UDP and TCP transport support
+  - BSD Syslog (RFC 3164) and RFC 5424 message parsing
+  - Auto-detection of syslog format
+  - Three topic modes: `facility` (facility/severity based), `appname` (app name based), `all` (single topic)
+  - Facility-based topic mapping for custom routing
+  - Rich metadata: priority, facility, severity, hostname, appname, procid, msgid, timestamp
+  - Configurable bind address, buffer size, and max TCP connections
+  - 13 unit tests for parsing, topic resolution, and metadata
+
 ## [0.26.0] - 2026-11-11
 
 ### Added

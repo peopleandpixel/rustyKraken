@@ -207,7 +207,15 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 - [ ] **Docker Events Tentacle** – Subscribt zu Docker Daemon Events (container start/stop, image pull, etc.)
 - [ ] **Kubernetes Events Tentacle** – Watcht Kubernetes Cluster Events via API
 - [ ] **Network Packet Capture Tentacle** – Listet auf spezifische Netzwerk-Muster (via libpcap)
-- [ ] **Syslog Listener Tentacle** – UDP/TCP Syslog-Server zum Empfangen von Logs von anderen Geräten
+- [x] **Syslog Listener Tentacle** – UDP/TCP Syslog-Server zum Empfangen von Logs von anderen Geräten
+  - [x] UDP und TCP Transport-Protokoll
+  - [x] BSD Syslog (RFC 3164) und RFC 5424 Parsing
+  - [x] Automatische Format-Erkennung
+  - [x] Drei Topic-Modi: facility, appname, all
+  - [x] Facility-basiertes Topic-Mapping
+  - [x] Reiche Metadaten: priority, facility, severity, hostname, appname, procid, msgid, timestamp
+  - [x] Konfigurierbare Bind-Adresse, Puffergröße, max TCP-Verbindungen
+  - [x] 13 Unit-Tests (Parsing, Topic-Auflösung, Metadaten, Deserialisierung)
 
 #### Web & APIs (zusätzlich)
 

@@ -21,6 +21,7 @@ pub mod slack;
 pub mod smtp;
 pub mod snmp;
 pub mod stdin_tentacle;
+pub mod syslog_listener;
 pub mod telegram;
 pub mod websocket;
 
@@ -41,6 +42,7 @@ pub use slack::{SlackTentacle, SlackTentacleConfig};
 pub use smtp::{SmtpTentacle, SmtpTentacleConfig};
 pub use snmp::{SnmpTentacle, SnmpTentacleConfig};
 pub use stdin_tentacle::{StdinTentacle, StdinTentacleConfig};
+pub use syslog_listener::{SyslogTentacle, SyslogTentacleConfig};
 pub use telegram::{TelegramTentacle, TelegramTentacleConfig};
 pub use websocket::{WebSocketTentacle, WebSocketTentacleConfig};
 

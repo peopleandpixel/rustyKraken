@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.26.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.26.0)
+[![Version](https://img.shields.io/badge/version-0.27.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.27.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -320,6 +320,21 @@ config:
     - name: "daily_report"
       schedule: "0 0 * * *"
       topic: "/cron/daily"
+```
+
+**Syslog Listener** (`config/incoming/syslog.yaml`):
+```yaml
+name: "syslog_listener"
+type: "syslog"
+config:
+  transport: "udp"           # udp or tcp
+  bind_addr: "0.0.0.0:514"
+  topic_mode: "facility"     # facility, appname, or all
+  fallback_topic: "/syslog/default"
+  buffer_size: 65535
+  facility_topic_mapping:
+    "0": "/syslog/kernel"
+    "4": "/syslog/auth"
 ```
 
 **REST API Poller** (`config/incoming/rest_api.yaml`):
@@ -752,6 +767,7 @@ Messages are sorted by a path-based topic system:
 - [x] Google Pub/Sub Tentacle
 - [x] Slack Tentacle
 - [x] Cron/Scheduler Tentacle
+- [x] Syslog Listener Tentacle
 
 ### Reflexes
 - [x] Telegram Bot Reflex
@@ -781,7 +797,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.26.0** (2026-11-11)
+Current version: **0.27.0** (2026-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

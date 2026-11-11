@@ -30,7 +30,8 @@ use tentacles::{
     Pop3TentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig,
     SerialTentacle, SerialTentacleConfig, SlackTentacle, SlackTentacleConfig, SmtpTentacle,
     SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig,
-    TelegramTentacle, TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
+    SyslogTentacle, SyslogTentacleConfig, TelegramTentacle, TelegramTentacleConfig, Tentacle,
+    WebSocketTentacle, WebSocketTentacleConfig,
 };
 
 #[tokio::main]
@@ -284,6 +285,14 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(CronTentacle::new(
                 config.name.clone(),
                 cron_config,
+            )))
+        }
+        "syslog" => {
+            let syslog_config: SyslogTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(SyslogTentacle::new(
+                config.name.clone(),
+                syslog_config,
             )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),
