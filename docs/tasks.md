@@ -230,10 +230,16 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Optionale Metadata-Einbindung in Nachrichten
   - [x] Custom API Base URL für Proxies
   - [x] 10 Unit-Tests (Chat-ID-Mapping, Parse-Mode-Mapping, Template-Rendering, Trunkierung, Metadata, Deserialisierung)
-- [ ] **Discord-Reflex** – Sendet Nachrichten via Discord Webhooks oder Bot
-  - [ ] Webhook-URL-Konfiguration
-  - [ ] Embed-Nachrichten mit Farben und Feldern
-  - [ ] Avatar und Benutzernamen konfigurieren
+- [x] **Discord-Reflex** – Sendet Nachrichten via Discord Webhooks oder Bot
+  - [x] Webhook-URL-Konfiguration
+  - [x] Embed-Nachrichten mit Farben und Feldern
+  - [x] Avatar und Benutzernamen konfigurieren
+  - [x] Template-Engine für Nachrichteninhalt ({{topic}}, {{body}}, {{id}}, {{timestamp}}, {{metadata.<key>}})
+  - [x] Topic-basiertes Webhook-URL-Mapping
+  - [x] Topic-basiertes Embed-Farben-Mapping
+  - [x] Ink-Metadaten als Embed-Felder
+  - [x] Embed-Titel, Beschreibung, Footer mit Templates
+  - [x] 15 Unit-Tests (Webhook-Mapping, Farben, Templates, Embeds, Trunkierung, Deserialisierung)
 - [ ] **ntfy-Reflex** – Sendet Push-Benachrichtigungen via ntfy
   - [ ] Broker-URL konfigurierbar
   - [ ] Priorität, Tags, Klick-Links

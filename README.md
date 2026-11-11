@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.13.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.13.0)
+[![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.14.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -427,6 +427,30 @@ action:
       forwarded_by: "tentacle-reflex"
 ```
 
+**Discord** (`config/listener/discord_alerts.yaml`):
+```yaml
+name: "discord_alerts"
+trigger:
+  topics:
+    - "/kraken/alerts/**"
+action:
+  type: "discord"
+  config:
+    webhook_url: "https://discord.com/api/webhooks/123/abc"
+    content_template: "Alert: {{body}}"
+    use_embeds: true
+    embed_title: "{{topic}}"
+    embed_color: 16711680
+    embed_footer: "rustyKraken"
+    username: "Kraken Bot"
+    topic_webhook_mapping:
+      "/kraken/critical": "https://discord.com/api/webhooks/456/def"
+    topic_color_mapping:
+      "/kraken/critical": 16711680
+      "/kraken/info": 65280
+    include_metadata: true
+```
+
 **Telegram** (`config/listener/telegram_alerts.yaml`):
 ```yaml
 name: "telegram_alerts"
@@ -501,7 +525,7 @@ Messages are sorted by a path-based topic system:
 
 ### Reflexes
 - [x] Telegram Bot Reflex
-- [ ] Discord Webhook Reflex
+- [x] Discord Webhook Reflex
 - [ ] ntfy Reflex
 - [x] WhatsApp Reflex
 - [x] Tentacle Reflex (Filter/Forward)
@@ -524,7 +548,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.13.0** (2025-11-11)
+Current version: **0.14.0** (2025-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

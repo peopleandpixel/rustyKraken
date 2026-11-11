@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2025-11-11
+
+### Added
+
+#### Reflexes
+- **Discord Reflex**: Send messages via Discord Webhooks with:
+  - Discord Webhook API integration
+  - Template engine with placeholders: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - Embed messages with configurable colors, title, description, and footer
+  - Topic-based webhook URL mapping for routing to different channels
+  - Topic-based embed color mapping for per-topic visual distinction
+  - Custom username and avatar URL for webhook messages
+  - Ink metadata as embed fields (configurable max fields, Discord limit: 25)
+  - Content truncation at Discord's 2000 character limit
+  - Embed description truncation at 4096 characters
+  - TTS (text-to-speech) support
+  - 15 unit tests
+
 ## [0.13.0] - 2025-11-11
 
 ### Added
@@ -299,7 +317,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.14.0
 [0.13.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.13.0
 [0.12.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.12.0
 [0.11.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.11.0
