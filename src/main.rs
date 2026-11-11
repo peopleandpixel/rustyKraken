@@ -27,14 +27,14 @@ use tentacles::{
     CronTentacleConfig, DiscordTentacle, DiscordTentacleConfig, DockerTentacle,
     DockerTentacleConfig, FileWatcherTentacle, FileWatcherTentacleConfig, GooglePubSubTentacle,
     GooglePubSubTentacleConfig, HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig,
-    JournalTentacle, JournalTentacleConfig, KafkaTentacle, KafkaTentacleConfig, MqttTentacle,
-    MqttTentacleConfig, NatsTentacle, NatsTentacleConfig, NtfyTentacle, NtfyTentacleConfig,
-    Pop3Tentacle, Pop3TentacleConfig, RabbitMqTentacle, RabbitMqTentacleConfig, RedisTentacle,
-    RedisTentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig,
-    SerialTentacle, SerialTentacleConfig, SlackTentacle, SlackTentacleConfig, SmtpTentacle,
-    SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig,
-    SyslogTentacle, SyslogTentacleConfig, TelegramTentacle, TelegramTentacleConfig, Tentacle,
-    WebSocketTentacle, WebSocketTentacleConfig,
+    JournalTentacle, JournalTentacleConfig, K8sTentacle, K8sTentacleConfig, KafkaTentacle,
+    KafkaTentacleConfig, MqttTentacle, MqttTentacleConfig, NatsTentacle, NatsTentacleConfig,
+    NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig, RabbitMqTentacle,
+    RabbitMqTentacleConfig, RedisTentacle, RedisTentacleConfig, RestApiTentacle,
+    RestApiTentacleConfig, RssTentacle, RssTentacleConfig, SerialTentacle, SerialTentacleConfig,
+    SlackTentacle, SlackTentacleConfig, SmtpTentacle, SmtpTentacleConfig, SnmpTentacle,
+    SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig, SyslogTentacle, SyslogTentacleConfig,
+    TelegramTentacle, TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
 };
 
 #[tokio::main]
@@ -346,6 +346,10 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
                 config.name.clone(),
                 docker_config,
             )))
+        }
+        "kubernetes" => {
+            let k8s_config: K8sTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(K8sTentacle::new(config.name.clone(), k8s_config)))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),
     }

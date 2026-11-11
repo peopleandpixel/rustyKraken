@@ -268,7 +268,15 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] TLS-Konfiguration mit optionaler Zertifikatsverifizierung
   - [x] Reiche Metadaten: docker_type, docker_action, docker_actor_id, docker_scope
   - [x] 8 Unit-Tests (Topic-Auflösung, Mapping, Konfiguration, Deserialisierung)
-- [ ] **Kubernetes Events Tentacle** – Watcht Kubernetes Cluster Events via API
+- [x] **Kubernetes Events Tentacle** – Watcht Kubernetes Cluster Events via API
+  - [x] Watch API Stream mit Auto-Reconnect
+  - [x] Namespace Filtering
+  - [x] Bearer Token Authentifizierung (Service Account)
+  - [x] Vier Topic-Modi: type, resource, namespace, all
+  - [x] Resource-Type-basiertes Topic-Mapping
+  - [x] TLS-Konfiguration mit optionaler Zertifikatsverifizierung
+  - [x] Reiche Metadaten: k8s_event_type, k8s_resource_kind, k8s_namespace, k8s_labels
+  - [x] 7 Unit-Tests (Topic-Auflösung, Mapping, Konfiguration, Deserialisierung)
 - [ ] **Network Packet Capture Tentacle** – Listet auf spezifische Netzwerk-Muster (via libpcap)
 - [x] **Syslog Listener Tentacle** – UDP/TCP Syslog-Server zum Empfangen von Logs von anderen Geräten
   - [x] UDP und TCP Transport-Protokoll

@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-11-11
+
+### Added
+
+#### Tentacles
+- **Kubernetes Events Tentacle**: Watch Kubernetes cluster events via API with:
+  - Watch API stream with auto-reconnect
+  - Namespace filtering
+  - Bearer token authentication (Service Account)
+  - Four topic modes: `type` (Normal/Warning), `resource` (Pod/Node/etc.), `namespace`, `all`
+  - Resource-type-based topic mapping
+  - TLS configuration with optional certificate verification
+  - Rich metadata: k8s_event_type, k8s_resource_kind, k8s_namespace, k8s_name, k8s_uid, k8s_reason, k8s_labels, k8s_involved_object, k8s_source, k8s_count
+  - 7 unit tests for topic resolution, mapping, config, and deserialization
+
 ## [0.34.0] - 2026-11-11
 
 ### Added
