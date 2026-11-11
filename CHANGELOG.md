@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-11-11
+
+### Added
+
+#### Tentacles
+- **Kafka Tentacle**: Consume messages from Apache Kafka topics with:
+  - Kafka consumer via rdkafka with StreamConsumer (async)
+  - Consumer group support with configurable group ID
+  - Multiple topic subscriptions
+  - Three topic modes: `topic` (Kafka topic based), `field` (JSON field extraction), `all` (single topic)
+  - Topic-based mapping for custom routing
+  - Authentication: none, SASL Plain, SCRAM-SHA-256, SCRAM-SHA-512
+  - SSL/TLS support with configurable CA certificate
+  - Configurable session timeout, heartbeat interval, max poll interval
+  - Auto offset reset (earliest/latest)
+  - Binary message support (Base64 encoding)
+  - Rich metadata: kafka_topic, kafka_partition, kafka_offset, kafka headers
+  - 12 unit tests for topic resolution, auth variants, config, and deserialization
+
 ## [0.30.0] - 2026-11-11
 
 ### Added

@@ -206,7 +206,19 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Binäre Nachrichten als Base64
   - [x] Reiche Metadaten: rabbitmq_queue, rabbitmq_routing_key
   - [x] 7 Unit-Tests (Topic-Auflösung, Metadaten, Deserialisierung)
-- [ ] **Kafka Tentacle** – Konsumiert von Apache Kafka Topics
+- [x] **Kafka Tentacle** – Konsumiert von Apache Kafka Topics
+  - [x] Kafka Consumer via rdkafka mit StreamConsumer (async)
+  - [x] Consumer Group Support mit konfigurierbarer Group ID
+  - [x] Multiple Topic-Abonnements
+  - [x] Drei Topic-Modi: topic, field, all
+  - [x] Topic-basiertes Mapping für custom Routing
+  - [x] Authentifizierung: none, SASL Plain, SCRAM-SHA-256, SCRAM-SHA-512
+  - [x] SSL/TLS Support mit konfigurierbarem CA-Zertifikat
+  - [x] Konfigurierbarer Session Timeout, Heartbeat Interval, Max Poll Interval
+  - [x] Auto Offset Reset (earliest/latest)
+  - [x] Binäre Nachrichten als Base64
+  - [x] Reiche Metadaten: kafka_topic, kafka_partition, kafka_offset, kafka headers
+  - [x] 12 Unit-Tests (Topic-Auflösung, Auth-Varianten, Konfiguration, Deserialisierung)
 - [x] **Redis Streams Tentacle** – Konsumiert von Redis Streams oder Lists (LPUSH/BRPOP)
   - [x] Zwei Modi: stream (XREADGROUP) und list (BRPOP)
   - [x] Drei Topic-Modi: name, field, all

@@ -26,13 +26,13 @@ use tentacles::{
     AwsSqsTentacle, AwsSqsTentacleConfig, CronTentacle, CronTentacleConfig, DiscordTentacle,
     DiscordTentacleConfig, FileWatcherTentacle, FileWatcherTentacleConfig, GooglePubSubTentacle,
     GooglePubSubTentacleConfig, HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig,
-    MqttTentacle, MqttTentacleConfig, NatsTentacle, NatsTentacleConfig, NtfyTentacle,
-    NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig, RabbitMqTentacle, RabbitMqTentacleConfig,
-    RedisTentacle, RedisTentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle,
-    RssTentacleConfig, SerialTentacle, SerialTentacleConfig, SlackTentacle, SlackTentacleConfig,
-    SmtpTentacle, SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle,
-    StdinTentacleConfig, SyslogTentacle, SyslogTentacleConfig, TelegramTentacle,
-    TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
+    KafkaTentacle, KafkaTentacleConfig, MqttTentacle, MqttTentacleConfig, NatsTentacle,
+    NatsTentacleConfig, NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig,
+    RabbitMqTentacle, RabbitMqTentacleConfig, RedisTentacle, RedisTentacleConfig, RestApiTentacle,
+    RestApiTentacleConfig, RssTentacle, RssTentacleConfig, SerialTentacle, SerialTentacleConfig,
+    SlackTentacle, SlackTentacleConfig, SmtpTentacle, SmtpTentacleConfig, SnmpTentacle,
+    SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig, SyslogTentacle, SyslogTentacleConfig,
+    TelegramTentacle, TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
 };
 
 #[tokio::main]
@@ -316,6 +316,13 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(RabbitMqTentacle::new(
                 config.name.clone(),
                 rabbitmq_config,
+            )))
+        }
+        "kafka" => {
+            let kafka_config: KafkaTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(KafkaTentacle::new(
+                config.name.clone(),
+                kafka_config,
             )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),
