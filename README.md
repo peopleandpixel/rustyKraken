@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.15.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.15.0)
+[![Version](https://img.shields.io/badge/version-0.16.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.16.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -492,6 +492,30 @@ action:
     include_metadata: false
 ```
 
+**E-Mail** (`config/listener/email_alerts.yaml`):
+```yaml
+name: "email_alerts"
+trigger:
+  topics:
+    - "/kraken/alerts/**"
+action:
+  type: "email"
+  config:
+    smtp_host: "smtp.gmail.com"
+    smtp_port: 587
+    smtp_user: "alerts@gmail.com"
+    smtp_password: "app_password"
+    from_email: "alerts@gmail.com"
+    from_name: "Kraken Alerts"
+    to_emails:
+      - "admin@example.com"
+    subject_template: "[{{topic}}] {{body}}"
+    body_template: "Topic: {{topic}}\nBody: {{body}}\nTime: {{timestamp}}"
+    html_body: false
+    topic_recipient_mapping:
+      "/kraken/critical": ["oncall@example.com"]
+```
+
 ## Topics
 
 Messages are sorted by a path-based topic system:
@@ -551,7 +575,7 @@ Messages are sorted by a path-based topic system:
 - [x] ntfy Reflex
 - [x] WhatsApp Reflex
 - [x] Tentacle Reflex (Filter/Forward)
-- [ ] Email (SMTP) Reflex
+- [x] Email (SMTP) Reflex
 - [ ] HTTP/Webhook Reflex
 - [ ] Matrix Reflex
 - [ ] Home Assistant Reflex
@@ -570,7 +594,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.15.0** (2025-11-11)
+Current version: **0.16.0** (2025-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

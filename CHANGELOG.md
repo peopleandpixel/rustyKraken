@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.16.0] - 2025-11-11
+
+### Added
+
+#### Reflexes
+- **E-Mail Reflex**: Send emails via SMTP with:
+  - `lettre` crate integration for SMTP transport
+  - Configurable sender, recipients, subject, and body
+  - HTML and plain text body support
+  - File attachment support
+  - CC and BCC recipients
+  - Template engine for subject and body: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - Topic-based recipient mapping for routing to different email addresses
+  - Topic-based subject mapping for per-topic email subjects
+  - STARTTLS (port 587) and implicit TLS (port 465) support
+  - 12 unit tests
+
 ## [0.15.0] - 2025-11-11
 
 ### Added
@@ -338,7 +355,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.16.0
 [0.15.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.15.0
 [0.14.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.14.0
 [0.13.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.13.0

@@ -250,11 +250,17 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Topic-basiertes Tags-Mapping
   - [x] Icon und Markdown-Unterstützung
   - [x] 12 Unit-Tests (Topic-Mapping, Prioritäten, Tags, Templates, Metadaten, Deserialisierung)
-- [ ] **E-Mail-Reflex** – Sendet E-Mails via SMTP
-  - [ ] `lettre`-Integration (bereits in Cargo.toml)
-  - [ ] Absender, Empfänger, Betreff konfigurierbar
-  - [ ] HTML- und Text-Body
-  - [ ] Anhänge unterstützen
+- [x] **E-Mail-Reflex** – Sendet E-Mails via SMTP
+  - [x] `lettre`-Integration (bereits in Cargo.toml)
+  - [x] Absender, Empfänger, Betreff konfigurierbar
+  - [x] HTML- und Text-Body
+  - [x] Anhänge unterstützen
+  - [x] CC und BCC Empfänger
+  - [x] Template-Engine für Betreff und Body ({{topic}}, {{body}}, {{id}}, {{timestamp}}, {{metadata.<key>}})
+  - [x] Topic-basiertes Recipient-Mapping
+  - [x] Topic-basiertes Subject-Mapping
+  - [x] STARTTLS und implizite TLS Unterstützung
+  - [x] 12 Unit-Tests (Recipient-Mapping, Subject-Mapping, Templates, Metadaten, Deserialisierung)
 
 #### Web & API
 
