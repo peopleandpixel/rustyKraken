@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-11-11
+
+### Added
+
+#### Event Bus Optimizations
+- **Configurable Channel Size**: EventBus buffer size is now configurable via `EventBusConfig` (default: 1000)
+- **Priority Queue**: Messages matching configured priority topics are routed through a dedicated high-priority channel
+- **Backpressure Handling**: Configurable backpressure strategy (`block`, `drop_oldest`, `sample`) when the channel is full
+- **Metrics**: EventBus now tracks published/dropped message counts, queue size, and latency via `EventBusMetrics`
+- **13 new unit tests** for config, metrics, priority, and backpressure features
+
 ## [0.24.0] - 2026-11-11
 
 ### Added

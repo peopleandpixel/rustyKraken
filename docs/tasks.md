@@ -195,6 +195,53 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Channel und User Filtering
   - [x] Rich Metadata (User-Profile, Files, Thread)
   - [x] 8 Unit-Tests (Topic-Modi, Filtering, Ink-Erstellung)
+- [ ] **Azure Service Bus Tentacle** – Empfängt Nachrichten von Azure Service Bus Queues/Topics
+- [ ] **RabbitMQ Tentacle** – Empfängt Nachrichten via AMQP-Protokoll
+- [ ] **Kafka Tentacle** – Konsumiert von Apache Kafka Topics
+- [ ] **Redis Streams Tentacle** – Konsumiert von Redis Streams oder Lists (LPUSH/BRPOP)
+- [ ] **NATS Tentacle** – Empfängt Nachrichten von NATS Subjects
+
+#### System & Infrastruktur
+
+- [ ] **Journalctl/systemd Tentacle** – Tailt systemd Journal-Logs als Events
+- [ ] **Docker Events Tentacle** – Subscribt zu Docker Daemon Events (container start/stop, image pull, etc.)
+- [ ] **Kubernetes Events Tentacle** – Watcht Kubernetes Cluster Events via API
+- [ ] **Network Packet Capture Tentacle** – Listet auf spezifische Netzwerk-Muster (via libpcap)
+- [ ] **Syslog Listener Tentacle** – UDP/TCP Syslog-Server zum Empfangen von Logs von anderen Geräten
+
+#### Web & APIs (zusätzlich)
+
+- [ ] **GraphQL Subscriptions Tentacle** – Subscribt zu real-time GraphQL Endpoints
+- [ ] **gRPC Tentacle** – gRPC Server/Stream Listener für protobuf-basierte Services
+- [ ] **CalDAV/CardDAV Tentacle** – Monitoriert Calendar Events oder Contacts für Triggers
+- [ ] **Webhooks Poller Tentacle** – Periodisches Pollen von externen HTTP Endpoints für neue Daten
+
+#### Data & Storage
+
+- [ ] **Database Poller Tentacle** – Periodisches Abfragen von SQL/NoSQL Datenbanken für neue/geänderte Zeilen
+- [ ] **Elasticsearch Tentacle** – Watcht Elasticsearch Indices für neue Dokumente
+- [ ] **FTP/SFTP Tentacle** – Monitoriert FTP/SFTP Verzeichnisse für neue Datei-Uploads
+
+#### Scheduling & Time
+
+- [ ] **Cron/Scheduler Tentacle** – Generiert periodische Events basierend auf Cron-Ausdrücken (interner Trigger)
+- [ ] **Geofence Tentacle** – Trigger Events wenn Geräte geografische Bereiche betreten/verlassen
+
+#### Messaging & Communication (zusätzlich)
+
+- [ ] **Matrix Tentacle** – Empfängt Events von Matrix Rooms via Matrix Client-Server API
+- [ ] **Signal Tentacle** – Listet auf Nachrichten via Signal Desktop oder Signal Gateway
+- [ ] **Microsoft Teams Tentacle** – Webhook-basierte oder bot-basierte eingehende Nachrichten von Teams Channels
+- [ ] **Google Chat Tentacle** – Eingehende Webhooks oder Bot Events von Google Workspace Chat
+- [ ] **IRC Tentacle** – Verbindet zu IRC Channels und fängt Nachrichten ab
+- [ ] **XMPP/Jabber Tentacle** – Listet auf Nachrichten in XMPP-Netzwerken
+
+#### IoT & Hardware (zusätzlich)
+
+- [ ] **Modbus Tentacle** – Industrieller Protokoll zum Lesen von Sensor-Daten von PLCs und Geräten
+- [ ] **BLE/Bluetooth Low Energy Tentacle** – Listet auf BLE Advertisements oder verbindet mit BLE Peripherals
+- [ ] **Zigbee Tentacle** – Home Automation Protokoll (via Zigbee2MQTT Bridge oder nativ)
+- [ ] **Z-Wave Tentacle** – Weiteres Home Automation Protokoll
 
 ---
 
@@ -374,16 +421,89 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Flush-on-first-Modus für Tests
   - [x] 12 Unit-Tests (Konfiguration, Akkumulator, Template-Rendering, Wertextraktion, Topic-Matching, Deserialisierung)
 
+#### Messaging & Communication (zusätzlich)
+
+- [ ] **Matrix Reflex** – Sendet Nachrichten an Matrix Rooms (completes bidirectional Matrix capability)
+- [ ] **Signal Reflex** – Sendet Nachrichten via Signal
+- [ ] **Microsoft Teams Reflex** – Postet an Teams via Webhooks oder Bot API
+- [ ] **Google Chat Reflex** – Sendet Cards oder Nachrichten an Google Chat Spaces
+- [ ] **IRC Reflex** – Sendet Nachrichten an IRC Channels
+- [ ] **Pushbullet Reflex** – Sendet Push-Benachrichtigungen an Geräte
+- [ ] **Gotify Reflex** – Self-hosted Push-Benachrichtigungsdienst
+
+#### Cloud & Queue Services
+
+- [ ] **Azure Service Bus Reflex** – Publish Messages zu Azure Queues/Topics
+- [ ] **RabbitMQ Reflex** – Publish zu AMQP Exchanges
+- [ ] **Kafka Reflex** – Produce Messages zu Kafka Topics
+- [ ] **NATS Reflex** – Publish zu NATS Subjects
+- [ ] **AWS SNS Reflex** – Publish zu Amazon Simple Notification Service
+
+#### System & Infrastruktur
+
+- [ ] **Docker Reflex** – Trigger Docker Actions (start/stop/restart containers, create images)
+- [ ] **Kubernetes Reflex** – Trigger kubectl Actions oder API Calls
+- [ ] **Ansible Reflex** – Trigger Ansible Playbooks
+- [ ] **SaltStack Reflex** – Execute Salt States oder Commands
+- [ ] **Puppet Reflex** – Trigger Puppet Runs
+- [ ] **PowerDNS Reflex** – Update DNS Records dynamisch
+
+#### Home Automation & IoT
+
+- [ ] **MQTT Publish Reflex** – Publish Messages zu MQTT Topics (completes bidirectional MQTT capability)
+- [ ] **Zigbee2MQTT Reflex** – Control Zigbee Devices via MQTT Bridge
+- [ ] **Shelly Reflex** – Control Shelly Smart Devices
+- [ ] **Tasmota Reflex** – Control Tasmota-flashed Devices
+- [ ] **ESPHome Reflex** – Control ESPHome Devices
+- [ ] **FHEM Reflex** – Interact with FHEM Home Automation
+- [ ] **openHAB Reflex** – Send Commands to openHAB
+
+#### Notifications
+
+- [ ] **Pushover Reflex** – Sendet Push-Benachrichtigungen via Pushover API
+- [ ] **Bark Reflex** – iOS Push-Benachrichtigungen via Bark Server
+- [ ] **Custom Webhook Reflex** – Generic HTTP POST an beliebige Webhook-URLs mit Templating
+- [ ] **Sound/Alert Reflex** – Spielt Sounds oder triggert Alerts auf dem lokalen Rechner
+- [ ] **LED/Display Reflex** – Update LED Matrices, E-Ink Displays oder Smart Displays
+
+#### Data & Storage
+
+- [ ] **Elasticsearch Reflex** – Index Events in Elasticsearch
+- [ ] **InfluxDB Reflex** – Schreibt Time-Series Daten nach InfluxDB
+- [ ] **Prometheus Reflex** – Exponiert Metriken im Prometheus Format
+- [ ] **S3/MinIO Reflex** – Upload Event-Daten zu Object Storage
+- [ ] **FTP/SFTP Upload Reflex** – Upload Dateien zu entfernten FTP/SFTP Servern
+
+#### Security & Monitoring
+
+- [ ] **Fail2Ban Reflex** – Add/Remove IPs von Fail2Ban
+- [ ] **Grafana Reflex** – Sendet Annotations oder triggert Alerts in Grafana
+- [ ] **TheHive Reflex** – Erstellt Cases in TheHive SIEM
+- [ ] **Shodan Reflex** – Query oder Update Shodan Daten
+
+#### Scheduling & Workflow
+
+- [ ] **n8n/Node-RED Reflex** – Trigger externe Automation Workflows
+- [ ] **Make.com (Integromat) Reflex** – Trigger Make Scenarios
+- [ ] **Zapier Reflex** – Trigger Zapier Webhooks
+- [ ] **Temporal Reflex** – Startet Temporal Workflow Executions
+
+#### Creative & Fun
+
+- [ ] **TTS (Text-to-Speech) Reflex** – Konvertiert Event-Daten zu Speech und spielt sie ab
+- [ ] **Printer Reflex** – Druckt Event-Zusammenfassungen oder Labels
+- [ ] **3D Printer Reflex** – Trigger 3D Print Jobs
+
 ---
 
 ## 3. Performanceoptimierungen
 
 ### 3.1 Event Bus
 
-- [ ] **Channel-Größe optimieren** – Aktuelle feste Größe (1000) durch konfigurierbare Größe ersetzen
-- [ ] **Prioritäts-Warteschlange** – Wichtige Nachrichten (z.B. Warnungen) priorisieren
-- [ ] **Backpressure-Handling** – Verhaltun bei überlastetem EventBus definieren (drop oldest, block, sample)
-- [ ] **Metriken** – Nachrichtenrate, Latenz, Queue-Größe messen und exponieren
+- [x] **Channel-Größe optimieren** – Aktuelle feste Größe (1000) durch konfigurierbare Größe ersetzen
+- [x] **Prioritäts-Warteschlange** – Wichtige Nachrichten (z.B. Warnungen) priorisieren
+- [x] **Backpressure-Handling** – Verhaltun bei überlastetem EventBus definieren (drop oldest, block, sample)
+- [x] **Metriken** – Nachrichtenrate, Latenz, Queue-Größe messen und exponieren
 
 ### 3.2 Mantle (Speicherung)
 
