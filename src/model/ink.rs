@@ -16,7 +16,7 @@ pub struct Ink {
     pub status: InkStatus,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SourceInfo {
     pub r#type: String,
     pub name: String,

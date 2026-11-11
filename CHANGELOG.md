@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2025-11-11
+
+### Added
+
+#### Tentacles
+- **AWS SQS Tentacle**: Read messages from Amazon SQS queues with:
+  - Queue polling with configurable visibility timeout
+  - AWS Signature v4 authentication
+  - Topic detection: `attribute` (message attributes), `body` (JSON body), `all` (combined)
+  - Queue URL to topic mapping
+  - Auto-delete after processing
+  - XML response parsing
+  - 7 unit tests
+- **Google Pub/Sub Tentacle**: Receive messages from Google Cloud Pub/Sub with:
+  - Subscription pulling via REST API
+  - OAuth2 JWT authentication (Service Account)
+  - Topic detection: `attribute`, `data` (Base64 decoded), `all` (combined)
+  - Subscription to topic mapping
+  - Auto-acknowledge
+  - 6 unit tests
+- **Slack Tentacle**: Receive messages via Slack Events API with:
+  - Axum-based HTTP server for Event Subscription API
+  - Signing secret verification (HMAC-SHA256)
+  - URL verification challenge handling
+  - Topic detection: `channel` (channel mapping), `content` (/ prefix), `all` (combined)
+  - Channel and user filtering
+  - Rich metadata: user profile, files, thread info
+  - 8 unit tests
+
+### Changed
+- **Crate Updates**:
+  - Added `sha2 0.10` for HMAC-SHA256 signing
+  - Added `hmac 0.12` for HMAC operations
+  - Added `urlencoding 2.1` for URL encoding
+- Added `PartialEq` to `SourceInfo` for test assertions
+
 ## [0.9.0] - 2025-11-11
 
 ### Added
@@ -216,7 +252,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.10.0
 [0.9.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.9.0
 [0.8.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.8.0
 [0.7.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.7.0

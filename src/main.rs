@@ -15,13 +15,14 @@ use eventbus::EventBus;
 use mantle::Mantle;
 use reflexes::{CommandReflex, CommandReflexConfig, FileReflex, FileReflexConfig, Reflex};
 use tentacles::{
-    DiscordTentacle, DiscordTentacleConfig, FileWatcherTentacle, FileWatcherTentacleConfig,
-    HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig, MqttTentacle,
-    MqttTentacleConfig, NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig,
-    RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig, SerialTentacle,
-    SerialTentacleConfig, SmtpTentacle, SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig,
-    StdinTentacle, StdinTentacleConfig, TelegramTentacle, TelegramTentacleConfig, Tentacle,
-    WebSocketTentacle, WebSocketTentacleConfig,
+    AwsSqsTentacle, AwsSqsTentacleConfig, DiscordTentacle, DiscordTentacleConfig,
+    FileWatcherTentacle, FileWatcherTentacleConfig, GooglePubSubTentacle,
+    GooglePubSubTentacleConfig, HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig,
+    MqttTentacle, MqttTentacleConfig, NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle,
+    Pop3TentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig,
+    SerialTentacle, SerialTentacleConfig, SlackTentacle, SlackTentacleConfig, SmtpTentacle,
+    SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig,
+    TelegramTentacle, TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
 };
 
 #[tokio::main]
@@ -237,6 +238,29 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(SnmpTentacle::new(
                 config.name.clone(),
                 snmp_config,
+            )))
+        }
+        "aws_sqs" => {
+            let aws_sqs_config: AwsSqsTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(AwsSqsTentacle::new(
+                config.name.clone(),
+                aws_sqs_config,
+            )))
+        }
+        "google_pubsub" => {
+            let google_pubsub_config: GooglePubSubTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(GooglePubSubTentacle::new(
+                config.name.clone(),
+                google_pubsub_config,
+            )))
+        }
+        "slack" => {
+            let slack_config: SlackTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(SlackTentacle::new(
+                config.name.clone(),
+                slack_config,
             )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),

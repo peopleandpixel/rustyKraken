@@ -2197,7 +2197,7 @@ checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
 name = "rustyKraken"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "async-imap",
@@ -2207,6 +2207,7 @@ dependencies = [
  "chrono",
  "feed-parser",
  "futures-util",
+ "hmac 0.12.1",
  "http",
  "lettre",
  "mailparse",
@@ -2220,6 +2221,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serial2-tokio",
+ "sha2 0.10.9",
  "snmp2",
  "sqlx",
  "tokio",
@@ -2227,6 +2229,7 @@ dependencies = [
  "tokio-tungstenite",
  "tracing",
  "tracing-subscriber",
+ "urlencoding",
  "uuid",
  "walkdir",
  "yaml_serde",
@@ -3149,6 +3152,12 @@ dependencies = [
  "percent-encoding",
  "serde",
 ]
+
+[[package]]
+name = "urlencoding"
+version = "2.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "daf8dba3b7eb870caf1ddeed7bc9d2a049f3cfdfae7cb521b087cc33ae4c49da"
 
 [[package]]
 name = "utf-8"

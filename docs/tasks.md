@@ -172,15 +172,29 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Cloud & Dienste
 
-- [ ] **AWS SQS Tentacle** – Liest von Amazon SQS-Queues
-  - [ ] Queue-Polling mit Visibility Timeout
-  - [ ] Topic aus Message-Attributen
-- [ ] **Google Pub/Sub Tentacle** – Empfängt von Google Cloud Pub/Sub
-  - [ ] Subscription-Pulling
-  - [ ] Topic-Mapping
-- [ ] **Slack Tentacle** – Empfängt Nachrichten via Slack Events API
-  - [ ] Event Subscription API
-  - [ ] Topic aus Channel oder Nachricht
+- [x] **AWS SQS Tentacle** – Liest von Amazon SQS-Queues
+  - [x] Queue-Polling mit Visibility Timeout
+  - [x] AWS Signature v4 Authentifizierung
+  - [x] Topic aus Message-Attributen (attribute, body, all Modi)
+  - [x] Queue-URL zu Topic Mapping
+  - [x] Nachrichten nach Verarbeitung löschen
+  - [x] XML-Response Parsing
+  - [x] 7 Unit-Tests (Topic-Modi, XML-Parsing, Konfiguration)
+- [x] **Google Pub/Sub Tentacle** – Empfängt von Google Cloud Pub/Sub
+  - [x] Subscription-Pulling via REST API
+  - [x] OAuth2 JWT Authentifizierung (Service Account)
+  - [x] Topic-Mapping (attribute, data, all Modi)
+  - [x] Base64-Daten Decodierung
+  - [x] Auto-Acknowledge
+  - [x] 6 Unit-Tests (Topic-Modi, Base64, Ink-Erstellung)
+- [x] **Slack Tentacle** – Empfängt Nachrichten via Slack Events API
+  - [x] Event Subscription API mit Axum-Server
+  - [x] Signing Secret Verifizierung (HMAC-SHA256)
+  - [x] URL Verification Challenge
+  - [x] Topic aus Channel oder Nachricht (channel, content, all Modi)
+  - [x] Channel und User Filtering
+  - [x] Rich Metadata (User-Profile, Files, Thread)
+  - [x] 8 Unit-Tests (Topic-Modi, Filtering, Ink-Erstellung)
 
 ---
 

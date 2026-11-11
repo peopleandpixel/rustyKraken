@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.9.0)
+[![Version](https://img.shields.io/badge/version-0.10.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.10.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -254,6 +254,56 @@ config:
   max_packet_size: 65535
 ```
 
+**AWS SQS** (`config/incoming/aws_sqs.yaml`):
+```yaml
+name: "sqs_consumer"
+type: "aws_sqs"
+config:
+  region: "eu-central-1"
+  queue_url: "https://sqs.eu-central-1.amazonaws.com/123456789/my-queue"
+  poll_interval: 5
+  max_messages: 10
+  visibility_timeout: 30
+  delete_after_processing: true
+  topic_mode: "all"           # attribute, body, or all
+  fallback_topic: "/sqs/default"
+  queue_topic_mapping:
+    "https://sqs.eu-central-1.amazonaws.com/123456789/alerts": "/sqs/alerts"
+```
+
+**Google Pub/Sub** (`config/incoming/google_pubsub.yaml`):
+```yaml
+name: "pubsub_listener"
+type: "google_pubsub"
+config:
+  project_id: "my-project"
+  subscription: "my-subscription"
+  poll_interval: 5
+  max_messages: 10
+  auto_ack: true
+  topic_mode: "all"           # attribute, data, or all
+  fallback_topic: "/pubsub/default"
+  topic_mapping:
+    "my-subscription": "/pubsub/mapped"
+```
+
+**Slack** (`config/incoming/slack.yaml`):
+```yaml
+name: "slack_listener"
+type: "slack"
+config:
+  signing_secret: "your-signing-secret"
+  host: "0.0.0.0"
+  port: 9880
+  path: "/slack/events"
+  topic_mode: "all"           # channel, content, or all
+  fallback_topic: "/slack/default"
+  channel_topic_mapping:
+    "C123456": "/slack/alerts"
+  allowed_channels: []        # empty = all
+  allowed_users: []           # empty = all
+```
+
 **REST API Poller** (`config/incoming/rest_api.yaml`):
 ```yaml
 name: "api_poller"
@@ -387,6 +437,9 @@ Messages are sorted by a path-based topic system:
 - [x] RSS/Atom Feed Tentacle
 - [x] Serial Port Tentacle
 - [x] SNMP Trap Tentacle
+- [x] AWS SQS Tentacle
+- [x] Google Pub/Sub Tentacle
+- [x] Slack Tentacle
 
 ### Reflexes
 - [ ] Telegram Bot Reflex
