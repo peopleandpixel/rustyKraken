@@ -77,10 +77,24 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Webhook-Registrierung beim Telegram-Server
   - [x] Reconnection mit konfigurierbarer Verzögerung
   - [x] 8 Unit-Tests (Command-Extraktion, Topic-Modi, Ink-Erstellung, Filter, Nachrichtentypen, Webhook)
-- [ ] **Discord-Tentacle** – Empfängt Nachrichten via Discord Webhooks oder Bot
-  - [ ] Discord Webhook-Endpoint
-  - [ ] Discord Bot mit Gateway-Verbindung
-  - [ ] Topic-Mapping aus Channel oder Nachricht
+- [x] **Discord-Tentacle** – Empfängt Nachrichten via Discord Bot Gateway oder Webhook
+  - [x] Discord Bot mit Gateway-Verbindung (WebSocket)
+  - [x] Heartbeat und Session-Management
+  - [x] MESSAGE_CREATE Event-Verarbeitung
+  - [x] Webhook-Modus mit Axum-Server
+  - [x] Topic-Mapping aus Channel, Guild oder Nachrichteninhalt
+  - [x] Topic-Erkennung aus Nachrichteninhalt (/topic-Präfix)
+  - [x] Channel-basiertes Topic-Mapping
+  - [x] Guild-basiertes Topic-Mapping
+  - [x] Drei Topic-Modi: channel, content, all
+  - [x] Nachrichtentyp-Erkennung (Text, Bild, Video, Audio, Anhang, Embed, Reply)
+  - [x] Rich Metadata (Author, Member/Nickname/Roles, Channel, Guild, Attachments, Embeds, Mentions)
+  - [x] Allowed-Channels/Allowed-Guilds/Allowed-Users-Filter
+  - [x] Secret-Token-Validierung für Webhooks
+  - [x] Reconnection mit konfigurierbarer Verzögerung
+  - [x] Sharding-Unterstützung
+  - [x] Gateway Intents Konfiguration
+  - [x] 13 Unit-Tests (Topic-Modi, Filter, Ink-Erstellung, Nachrichtentypen)
 
 #### Dateibasierte Quellen
 

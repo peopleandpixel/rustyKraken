@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.4.0)
+[![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.5.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -178,6 +178,22 @@ config:
   allowed_users: []           # empty = accept all
 ```
 
+**Discord** (`config/incoming/discord.yaml`):
+```yaml
+name: "discord_bot"
+type: "discord"
+config:
+  connection_type: "bot"      # or "webhook"
+  bot_token: "MTAw..."        # Discord bot token
+  topic_mode: "all"           # channel, content, or all
+  fallback_topic: "/discord/default"
+  channel_topic_mapping:
+    "123456789": "/kraken/alerts"
+  allowed_channels: []        # empty = accept all
+  allowed_guilds: []          # empty = accept all
+  allowed_users: []           # empty = accept all
+```
+
 #### Reflexes (Actions)
 
 Create YAML files in `config/listener/`:
@@ -257,7 +273,7 @@ Messages are sorted by a path-based topic system:
 ### Tentacles
 - [ ] File Watcher Tentacle
 - [x] Telegram Bot Tentacle
-- [ ] Discord Webhook Tentacle
+- [x] Discord Bot Tentacle
 - [ ] WebSocket Tentacle
 - [ ] RSS/Atom Feed Tentacle
 - [ ] Serial Port Tentacle
@@ -287,9 +303,13 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.4.0** (2025-11-11)
+Current version: **0.5.0** (2025-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+
+## Contributors
+
+- **Jens Reinemuth** – Creator and maintainer
 
 ## License
 

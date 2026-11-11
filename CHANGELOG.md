@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-11-11
+
+### Added
+
+#### Tentacles
+- **Discord Tentacle**: Receive messages from Discord via Bot Gateway or HTTP webhook with:
+  - Bot mode (Discord Gateway WebSocket connection with heartbeat, session management, reconnection, and sharding support)
+  - Webhook mode (Axum-based HTTP server with secret token validation)
+  - Topic detection modes: `channel` (channel/guild mapping), `content` (messages starting with `/`), and `all` (combined)
+  - Message type support: text, image, video, audio, attachment, embed, reply
+  - Filtering via `allowed_channels`, `allowed_guilds`, and `allowed_users` whitelists
+  - Rich metadata: author info, member nickname/roles, channel/guild IDs, attachments, embeds, mentions, reply references
+  - 13 unit tests
+
 ## [0.4.0] - 2025-11-11
 
 ### Added
@@ -107,7 +121,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.5.0
 [0.4.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.4.0
 [0.3.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.3.0
 [0.2.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.2.0

@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use crate::eventbus::EventBus;
 use std::sync::Arc;
 
+pub mod discord;
 pub mod http;
 pub mod imap;
 pub mod mqtt;
@@ -12,6 +13,7 @@ pub mod pop3;
 pub mod smtp;
 pub mod telegram;
 
+pub use discord::{DiscordTentacle, DiscordTentacleConfig};
 pub use http::{HttpTentacle, HttpTentacleConfig};
 pub use imap::{ImapTentacle, ImapTentacleConfig};
 pub use mqtt::{MqttTentacle, MqttTentacleConfig};

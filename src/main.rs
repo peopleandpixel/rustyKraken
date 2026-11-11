@@ -15,9 +15,10 @@ use eventbus::EventBus;
 use mantle::Mantle;
 use reflexes::{CommandReflex, CommandReflexConfig, FileReflex, FileReflexConfig, Reflex};
 use tentacles::{
-    HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig, MqttTentacle,
-    MqttTentacleConfig, NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig,
-    SmtpTentacle, SmtpTentacleConfig, TelegramTentacle, TelegramTentacleConfig, Tentacle,
+    DiscordTentacle, DiscordTentacleConfig, HttpTentacle, HttpTentacleConfig, ImapTentacle,
+    ImapTentacleConfig, MqttTentacle, MqttTentacleConfig, NtfyTentacle, NtfyTentacleConfig,
+    Pop3Tentacle, Pop3TentacleConfig, SmtpTentacle, SmtpTentacleConfig, TelegramTentacle,
+    TelegramTentacleConfig, Tentacle,
 };
 
 #[tokio::main]
@@ -175,6 +176,14 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(TelegramTentacle::new(
                 config.name.clone(),
                 telegram_config,
+            )))
+        }
+        "discord" => {
+            let discord_config: DiscordTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(DiscordTentacle::new(
+                config.name.clone(),
+                discord_config,
             )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),
