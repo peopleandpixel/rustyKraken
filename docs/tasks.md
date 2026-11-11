@@ -219,11 +219,17 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Drittanbieter-API-Unterstützung (custom api_base_url)
   - [x] Optionale Metadata-Einbindung in Nachrichten
   - [x] 16 Unit-Tests (Message-Type, Recipients, Templates, Body-Rendering, Config)
-- [ ] **Telegram-Reflex** – Sendet Nachrichten via Telegram Bot
-  - [ ] Bot-Token-Konfiguration
-  - [ ] Chat-ID-Konfiguration (pro Reflex oder dynamisch)
-  - [ ] Markdown- und HTML-Formatierung
-  - [ ] Rich-Formatting (Bold, Italic, Code)
+- [x] **Telegram-Reflex** – Sendet Nachrichten via Telegram Bot
+  - [x] Bot-Token-Konfiguration
+  - [x] Chat-ID-Konfiguration (pro Reflex oder dynamisch via topic_chat_mapping)
+  - [x] Markdown- und HTML-Formatierung (parse_mode: Markdown, HTML, None)
+  - [x] Topic-basiertes Chat-ID-Mapping
+  - [x] Topic-basiertes Parse-Mode-Mapping
+  - [x] Template-Engine für Nachrichteninhalt ({{topic}}, {{body}}, {{id}}, {{timestamp}}, {{metadata.<key>}})
+  - [x] Nachrichtentrunkierung bei Telegram-Limit (4096 Zeichen)
+  - [x] Optionale Metadata-Einbindung in Nachrichten
+  - [x] Custom API Base URL für Proxies
+  - [x] 10 Unit-Tests (Chat-ID-Mapping, Parse-Mode-Mapping, Template-Rendering, Trunkierung, Metadata, Deserialisierung)
 - [ ] **Discord-Reflex** – Sendet Nachrichten via Discord Webhooks oder Bot
   - [ ] Webhook-URL-Konfiguration
   - [ ] Embed-Nachrichten mit Farben und Feldern

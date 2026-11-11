@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2025-11-11
+
+### Added
+
+#### Reflexes
+- **Telegram Reflex**: Send messages via Telegram Bot API with:
+  - Telegram Bot API (sendMessage) integration
+  - Template engine with placeholders: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - Configurable chat IDs (multiple recipients)
+  - Parse mode support: Markdown, HTML, or None (plain text)
+  - Topic-based chat ID mapping for routing to different chats
+  - Topic-based parse mode mapping for per-topic formatting
+  - Message truncation at Telegram's 4096 character limit
+  - Optional metadata inclusion in messages (as code block)
+  - Custom API base URL support for proxies
+  - 10 unit tests
+
 ## [0.12.0] - 2025-11-11
 
 ### Added
@@ -282,7 +299,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.13.0
 [0.12.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.12.0
 [0.11.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.11.0
 [0.10.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.10.0

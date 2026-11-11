@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.12.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.12.0)
+[![Version](https://img.shields.io/badge/version-0.13.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.13.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -427,6 +427,25 @@ action:
       forwarded_by: "tentacle-reflex"
 ```
 
+**Telegram** (`config/listener/telegram_alerts.yaml`):
+```yaml
+name: "telegram_alerts"
+trigger:
+  topics:
+    - "/kraken/alerts/**"
+action:
+  type: "telegram"
+  config:
+    bot_token: "123456:ABC-DEF"
+    chat_ids:
+      - "-1001234567890"
+    parse_mode: "Markdown"
+    body_template: "*Alert:* {{body}}"
+    topic_chat_mapping:
+      "/kraken/critical": ["-1009876543210"]
+    include_metadata: false
+```
+
 ## Topics
 
 Messages are sorted by a path-based topic system:
@@ -481,7 +500,7 @@ Messages are sorted by a path-based topic system:
 - [x] Slack Tentacle
 
 ### Reflexes
-- [ ] Telegram Bot Reflex
+- [x] Telegram Bot Reflex
 - [ ] Discord Webhook Reflex
 - [ ] ntfy Reflex
 - [x] WhatsApp Reflex
@@ -505,7 +524,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.12.0** (2025-11-11)
+Current version: **0.13.0** (2025-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
