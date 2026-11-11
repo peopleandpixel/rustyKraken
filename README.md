@@ -25,7 +25,7 @@ rustyKraken follows the kraken metaphor:
 │                 rustyKraken Core                 │
 │                                                  │
 │  ┌──────────┐    ┌──────────────┐    ┌─────────┐ │
-│  │Tentacles │───▶│  Event Bus   │───▶│Reflexes │ │
+│  │Tentacles │──▶│  Event Bus   │──▶│Reflexes │ │
 │  │(Sources) │    │  (Routing)   │    │(Actions)│ │
 │  └──────────┘    └──────────────┘    └─────────┘ │
 │       │                  │                │      │
