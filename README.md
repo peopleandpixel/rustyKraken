@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.8.0)
+[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.9.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -220,6 +220,40 @@ config:
   fallback_topic: "/stdin/default"
 ```
 
+**Serial Port** (`config/incoming/serial.yaml`):
+```yaml
+name: "serial_sensor"
+type: "serial"
+config:
+  ports:
+    - port: "/dev/ttyUSB0"
+      baud_rate: 9600
+      data_bits: 8
+      parity: "none"
+      stop_bits: 1
+      topic: "/serial/sensor"
+      parser: "plain"       # plain, json, csv, custom
+  reconnect_delay: 5
+  buffer_size: 4096
+  port_topic_mapping:
+    "/dev/ttyUSB1": "/serial/actuator"
+```
+
+**SNMP Trap** (`config/incoming/snmp.yaml`):
+```yaml
+name: "snmp_traps"
+type: "snmp"
+config:
+  listen_address: "0.0.0.0:1162"
+  community: "public"
+  version: "v2c"            # v1, v2c, v3
+  topic: "/snmp/trap"
+  oid_topic_mapping:
+    "1.3.6.1.6.3.1.1.5.2": "/snmp/linkdown"
+    "1.3.6.1.6.3.1.1.5.3": "/snmp/linkup"
+  max_packet_size: 65535
+```
+
 **REST API Poller** (`config/incoming/rest_api.yaml`):
 ```yaml
 name: "api_poller"
@@ -351,8 +385,8 @@ Messages are sorted by a path-based topic system:
 - [x] REST API Poller Tentacle
 - [x] WebSocket Tentacle
 - [x] RSS/Atom Feed Tentacle
-- [ ] Serial Port Tentacle
-- [ ] SNMP Trap Tentacle
+- [x] Serial Port Tentacle
+- [x] SNMP Trap Tentacle
 
 ### Reflexes
 - [ ] Telegram Bot Reflex

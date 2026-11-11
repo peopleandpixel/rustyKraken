@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-11-11
+
+### Added
+
+#### Tentacles
+- **Serial Port Tentacle**: Read from serial/COM ports and convert data to Ink messages with:
+  - Configurable ports with baud rate, data bits, parity, and stop bits
+  - Protocol parsers: `plain` (text), `json` (JSON objects), `csv` (with configurable delimiter), and `custom`
+  - Custom delimiter support as hex string (e.g., `0d0a` for `\r\n`)
+  - Port-based topic mapping for per-port topic override
+  - Auto-reconnection with configurable delay
+  - Buffer overflow protection
+  - Rich metadata: port, baud_rate, parser
+  - 11 unit tests
+- **SNMP Trap Tentacle**: Receive SNMP traps via UDP and convert them to Ink messages with:
+  - UDP trap listener on configurable address (default: `0.0.0.0:1162`)
+  - SNMP v1/v2c/v3 support via `snmp2` crate
+  - OID-to-topic mapping with exact match and prefix match
+  - Longest-prefix matching for OID mappings
+  - Varbinds serialized as JSON body
+  - Rich metadata: trap_oid, version, community, message_type, varbind_count
+  - 13 unit tests
+
+### Changed
+- **Crate Updates**:
+  - Added `serial2-tokio 0.1` for async serial port I/O
+  - Added `snmp2 0.5` for SNMP PDU parsing
+
 ## [0.8.0] - 2025-11-11
 
 ### Added
@@ -188,7 +216,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.9.0
 [0.8.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.8.0
 [0.7.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.7.0
 [0.6.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.6.0

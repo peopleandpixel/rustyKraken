@@ -152,12 +152,23 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### IoT & Hardware
 
-- [ ] **Serial Port Tentacle** – Liest von seriellen Schnittstellen
-  - [ ] Konfigurierbare COM-Ports und Baudraten
-  - [ ] Protokoll-Parser (z.B. JSON, CSV, custom)
-- [ ] **SNMP Trap Tentacle** – Empfängt SNMP-Traps
-  - [ ] SNMP-Trap-Listener
-  - [ ] OID-Mapping zu Topics
+- [x] **Serial Port Tentacle** – Liest von seriellen Schnittstellen
+  - [x] Konfigurierbare COM-Ports und Baudraten
+  - [x] Protokoll-Parser (plain, JSON, CSV, custom)
+  - [x] Custom-Delimiter als Hex-String
+  - [x] Port-basiertes Topic-Mapping
+  - [x] Auto-Reconnection mit konfigurierbarer Verzögerung
+  - [x] Buffer-Overflow-Schutz
+  - [x] Rich Metadata (port, baud_rate, parser)
+  - [x] 11 Unit-Tests (Topic-Modi, Parser, Konfiguration, Deserialisierung)
+- [x] **SNMP Trap Tentacle** – Empfängt SNMP-Traps
+  - [x] UDP-Trap-Listener auf konfigurierbarer Adresse
+  - [x] SNMP v1/v2c/v3 Unterstützung
+  - [x] OID-Mapping zu Topics (exact match und prefix match)
+  - [x] Längstes-Prefix-Matching für OID-Mappings
+  - [x] Varbinds als JSON-Body
+  - [x] Rich Metadata (trap_oid, version, community, message_type)
+  - [x] 13 Unit-Tests (Topic-Modi, SNMP-Werte, Konfiguration, Deserialisierung)
 
 #### Cloud & Dienste
 
