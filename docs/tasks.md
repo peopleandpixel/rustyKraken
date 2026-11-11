@@ -312,11 +312,18 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### System & Automatisierung
 
-- [ ] **Script-Reflex** – Führt Skripte aus (erweitert)
-  - [ ] Lua-Scripting mit `mlua`
-  - [ ] JavaScript-Scripting mit `rquickjs`
-  - [ ] Python-Scripting via Subprocess
-  - [ ] Zugriff auf Ink-Daten im Skript
+- [x] **Script-Reflex** – Führt Skripte aus (erweitert)
+  - [x] Lua-Skripting via Subprozess (lua)
+  - [x] JavaScript-Skripting via Subprozess (node)
+  - [x] Python-Skripting via Subprozess (python3)
+  - [x] Zugriff auf Ink-Daten via Umgebungsvariablen (INK_TOPIC, INK_BODY, INK_ID, INK_TIMESTAMP, INK_METADATA, INK_JSON)
+  - [x] Inline-Skriptcode oder externe Skriptdatei
+  - [x] Konfigurierbarer Interpreter-Pfad
+  - [x] Template-Engine für Umgebungsvariablen ({{topic}}, {{body}}, {{id}}, {{timestamp}}, {{metadata.<key>}})
+  - [x] Custom Umgebungsvariablen mit Template-Rendering
+  - [x] Ausgabe-Erfassung und optionales Publish an Topic
+  - [x] Konfigurierbarer Timeout
+  - [x] 11 Unit-Tests (Template-Rendering, Interpreter-Auswahl, Konfiguration, Deserialisierung)
 - [x] **Home Assistant Reflex** – Sendet Events an Home Assistant
   - [x] REST API Integration
   - [x] Event-Fire und Service-Call

@@ -18,8 +18,9 @@ use reflexes::{
     DatabaseReflexConfig, DiscordReflex, DiscordReflexConfig, EmailReflex, EmailReflexConfig,
     FileReflex, FileReflexConfig, HomeAssistantReflex, HomeAssistantReflexConfig, HttpReflex,
     HttpReflexConfig, MatrixReflex, MatrixReflexConfig, NtfyReflex, NtfyReflexConfig, Reflex,
-    SyslogReflex, SyslogReflexConfig, TelegramReflex, TelegramReflexConfig, TentacleReflex,
-    TentacleReflexConfig, WhatsAppReflex, WhatsAppReflexConfig,
+    ScriptReflex, ScriptReflexConfig, SyslogReflex, SyslogReflexConfig, TelegramReflex,
+    TelegramReflexConfig, TentacleReflex, TentacleReflexConfig, WhatsAppReflex,
+    WhatsAppReflexConfig,
 };
 use tentacles::{
     AwsSqsTentacle, AwsSqsTentacleConfig, DiscordTentacle, DiscordTentacleConfig,
@@ -390,6 +391,14 @@ fn create_reflex_handler(
                 config.name.clone(),
                 agg_config,
                 Arc::clone(event_bus),
+            )))
+        }
+        "script" => {
+            let script_config: ScriptReflexConfig =
+                serde_yaml::from_value(config.action.config.clone())?;
+            Ok(Box::new(ScriptReflex::new(
+                config.name.clone(),
+                script_config,
             )))
         }
         _ => anyhow::bail!("Unknown reflex type: {}", config.action.r#type),

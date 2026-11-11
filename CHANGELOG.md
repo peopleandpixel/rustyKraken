@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-11-11
+
+### Added
+
+#### Reflexes
+- **Script Reflex**: Execute scripts in Lua, JavaScript (Node.js), or Python with:
+  - Three language support: Lua (`lua`), JavaScript (`node`), and Python (`python3`)
+  - Subprocess-based execution for portability and isolation
+  - Inline script code or external script file path
+  - Configurable interpreter path per language
+  - Ink data exposed as environment variables: `INK_TOPIC`, `INK_BODY`, `INK_ID`, `INK_TIMESTAMP`, `INK_METADATA` (JSON), `INK_JSON` (full Ink)
+  - Template engine for environment variables: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - Custom environment variables with template rendering
+  - Output capture and optional publish to topic
+  - Configurable timeout
+  - 11 unit tests
+
 ## [0.22.0] - 2026-11-11
 
 ### Added
@@ -461,7 +478,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.23.0
+[0.22.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.22.0
+[0.21.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.21.0
+[0.20.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.20.0
+[0.19.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.19.0
 [0.18.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.18.0
 [0.17.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.17.0
 [0.16.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.16.0

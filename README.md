@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.22.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.22.0)
+[![Version](https://img.shields.io/badge/version-0.23.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.23.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -641,6 +641,24 @@ action:
     include_breakdown: true
 ```
 
+**Script** (`config/listener/process_script.yaml`):
+```yaml
+name: "process_script"
+trigger:
+  topics:
+    - "/sensor/**"
+action:
+  type: "script"
+  config:
+    language: "python"
+    script_path: "/opt/scripts/process.py"
+    capture_stdout: true
+    publish_output: true
+    output_topic: "/script/{{topic}}/output"
+    env:
+      API_KEY: "secret"
+```
+
 ## Topics
 
 Messages are sorted by a path-based topic system:
@@ -707,7 +725,7 @@ Messages are sorted by a path-based topic system:
 - [x] Home Assistant Reflex
 - [x] Database Reflex
 - [x] Aggregator Reflex
-- [ ] Script Reflex
+- [x] Script Reflex
 
 ### General
 - [ ] Web UI for message overview
@@ -721,7 +739,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.22.0** (2026-11-11)
+Current version: **0.23.0** (2026-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
