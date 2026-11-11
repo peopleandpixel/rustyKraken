@@ -15,9 +15,9 @@ use eventbus::EventBus;
 use mantle::Mantle;
 use reflexes::{
     CommandReflex, CommandReflexConfig, DiscordReflex, DiscordReflexConfig, EmailReflex,
-    EmailReflexConfig, FileReflex, FileReflexConfig, HttpReflex, HttpReflexConfig, NtfyReflex,
-    NtfyReflexConfig, Reflex, TelegramReflex, TelegramReflexConfig, TentacleReflex,
-    TentacleReflexConfig, WhatsAppReflex, WhatsAppReflexConfig,
+    EmailReflexConfig, FileReflex, FileReflexConfig, HttpReflex, HttpReflexConfig, MatrixReflex,
+    MatrixReflexConfig, NtfyReflex, NtfyReflexConfig, Reflex, TelegramReflex, TelegramReflexConfig,
+    TentacleReflex, TentacleReflexConfig, WhatsAppReflex, WhatsAppReflexConfig,
 };
 use tentacles::{
     AwsSqsTentacle, AwsSqsTentacleConfig, DiscordTentacle, DiscordTentacleConfig,
@@ -348,6 +348,14 @@ fn create_reflex_handler(
             let http_config: HttpReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
             Ok(Box::new(HttpReflex::new(config.name.clone(), http_config)?))
+        }
+        "matrix" => {
+            let matrix_config: MatrixReflexConfig =
+                serde_yaml::from_value(config.action.config.clone())?;
+            Ok(Box::new(MatrixReflex::new(
+                config.name.clone(),
+                matrix_config,
+            )?))
         }
         _ => anyhow::bail!("Unknown reflex type: {}", config.action.r#type),
     }

@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.17.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.17.0)
+[![Version](https://img.shields.io/badge/version-0.18.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.18.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -538,6 +538,26 @@ action:
       "/kraken/critical": "https://hooks.example.com/critical"
 ```
 
+**Matrix/Element** (`config/listener/matrix_alerts.yaml`):
+```yaml
+name: "matrix_alerts"
+trigger:
+  topics:
+    - "/kraken/alerts/**"
+action:
+  type: "matrix"
+  config:
+    server: "https://matrix.org"
+    access_token: "your_access_token"
+    room_id: "!roomid:matrix.org"
+    msg_type: "notice"
+    body_template: "*{{topic}}*: {{body}}"
+    formatted_body_template: "<b>{{topic}}</b>: {{body}}"
+    format: "html"
+    topic_room_mapping:
+      "/kraken/critical": "!critical:matrix.org"
+```
+
 ## Topics
 
 Messages are sorted by a path-based topic system:
@@ -599,7 +619,7 @@ Messages are sorted by a path-based topic system:
 - [x] Tentacle Reflex (Filter/Forward)
 - [x] Email (SMTP) Reflex
 - [x] HTTP/Webhook Reflex
-- [ ] Matrix Reflex
+- [x] Matrix/Element Reflex
 - [ ] Home Assistant Reflex
 - [ ] Database Reflex
 - [ ] Script Reflex
@@ -616,7 +636,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.17.0** (2026-11-11)
+Current version: **0.18.0** (2026-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

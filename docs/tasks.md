@@ -277,9 +277,18 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Konfigurierbarer Timeout und Content-Type
   - [x] Redirect-Handling konfigurierbar
   - [x] 14 Unit-Tests (URL-Mapping, Method-Mapping, Templates, Metadaten, Auth, Deserialisierung)
-- [ ] **Matrix/Element-Reflex** – Sendet Nachrichten via Matrix
-  - [ ] Matrix-Client mit `ruma`-Crate
-  - [ ] Raum-ID und Benutzer-Konfiguration
+- [x] **Matrix/Element-Reflex** – Sendet Nachrichten via Matrix
+  - [x] Matrix Client-Server REST API Integration
+  - [x] Raum-ID und Access-Token-Konfiguration
+  - [x] Nachrichtentypen: text, notice, emote
+  - [x] HTML-formatierter Body mit `org.matrix.custom.html`
+  - [x] Template-Engine für Body ({{topic}}, {{body}}, {{id}}, {{timestamp}}, {{metadata.<key>}})
+  - [x] Topic-basiertes Room-ID-Mapping
+  - [x] Topic-basiertes Message-Type-Mapping
+  - [x] Topic-basiertes Body-Template-Mapping
+  - [x] Retry-Logik bei Fehlern
+  - [x] Konfigurierbarer Timeout
+  - [x] 14 Unit-Tests (Room-Mapping, Message-Type, Templates, Metadaten, Payload, Deserialisierung)
 
 #### Dateibasierte Aktionen
 

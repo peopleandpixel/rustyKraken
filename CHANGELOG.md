@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-11-11
+
+### Added
+
+#### Reflexes
+- **Matrix/Element Reflex**: Send messages via Matrix Client-Server API with:
+  - Matrix homeserver integration via REST API (no heavy dependencies)
+  - Template engine for message body: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - Message types: text, notice, and emote
+  - HTML formatted body support with `org.matrix.custom.html` format
+  - Topic-based room ID mapping for routing to different Matrix rooms
+  - Topic-based message type mapping for per-topic message styling
+  - Topic-based body template mapping for per-topic message formats
+  - Bearer token authentication via access token
+  - Retry logic with configurable attempts and delay
+  - Request timeout configuration
+  - 14 unit tests
+
 ## [0.17.0] - 2026-11-11
 
 ### Added
@@ -375,7 +393,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.18.0
 [0.17.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.17.0
 [0.16.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.16.0
 [0.15.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.15.0
