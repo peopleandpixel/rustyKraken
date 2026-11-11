@@ -55,10 +55,14 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Push-Benachrichtigungen
 
-- [ ] **ntfy-Tentacle** – Empfängt Nachrichten vom ntfy-Push-Benachrichtigungsserver
-  - [ ] WebSocket-Verbindung zum ntfy-Broker
-  - [ ] Topic-Mapping von ntfy-Themen zu Kraken-Topics
-  - [ ] Authentifizierung (Bearer-Token/Basic Auth)
+- [x] **ntfy-Tentacle** – Empfängt Nachrichten vom ntfy-Push-Benachrichtigungsserver
+  - [x] JSON Stream-Verbindung (HTTP long-polling)
+  - [x] WebSocket-Verbindung zum ntfy-Broker
+  - [x] Topic-Mapping von ntfy-Themen zu Kraken-Topics
+  - [x] Authentifizierung (Bearer-Token/Basic Auth)
+  - [x] Reconnection mit konfigurierbarer Verzögerung
+  - [x] ntfy-Metadaten (Title, Priority, Tags, Click, Icon) als Ink-Metadaten
+  - [x] 5 Unit-Tests (Topic-Mapping, Ink-Erstellung, JSON-Parsing, WebSocket-Events)
 - [ ] **Telegram-Tentacle** – Empfängt Nachrichten via Telegram Bot API
   - [ ] Webhook- oder Polling-Modus
   - [ ] Topic-Erkennung aus Nachrichteninhalt oder Commands
@@ -370,7 +374,6 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 - Integrationstests
 
 ### Phase 2 – Erweiterung (mittlere Priorität)
-- ntfy-Tentacle
 - Telegram-Reflex
 - Discord-Reflex
 - File Watcher Tentacle

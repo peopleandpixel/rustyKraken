@@ -1,21 +1,23 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.2.0)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.3.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 
-Eine zentrale Nachrichten-Hub-Software in Rust, die Nachrichten aus beliebigen Quellen sammelt, nach Themen sortiert und an Aktionen weiterleitet.
+![rustyKraken Logo](docs/rustyKraken.jpeg)
 
-## Konzept
+A centralized message hub written in Rust that collects messages from various sources, sorts them by topic, and routes them to actions.
 
-rustyKraken folgt der Kraken-Metapher:
+## Concept
 
-- **Tentacles** (Arme) – Greifen in verschiedene Quellen (E-Mail, MQTT, HTTP, ntfy, ...) und holen Nachrichten
-- **Ink** (Tinte) – Das einheitliche Nachrichtenformat, in das alle Quellen gebracht werden
-- **Mantle** (Mantel) – Die SQLite-basierte Speicherung aller Nachrichten
-- **Reflexes** (Reflexe) – Reagieren auf bestimmte Themen und lösen Aktionen aus
+rustyKraken follows the kraken metaphor:
 
-## Architektur
+- **Tentacles** (Arms) – Reach into various sources (email, MQTT, HTTP, ntfy, ...) and fetch messages
+- **Ink** (Ink) – The unified message format that all sources are converted into
+- **Mantle** (Mantle) – SQLite-based storage for all messages
+- **Reflexes** (Reflexes) – React to specific topics and trigger actions
+
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -23,7 +25,7 @@ rustyKraken folgt der Kraken-Metapher:
 │                                                  │
 │  ┌──────────┐    ┌──────────────┐    ┌────────┐ │
 │  │Tentacles │───▶│  Event Bus   │───▶│Reflexes│ │
-│  │(Quellen) │    │  (Routierung) │    │(Aktionen)│ │
+│  │(Sources) │    │  (Routing)   │    │(Actions)│ │
 │  └──────────┘    └──────────────┘    └────────┘ │
 │       │                  │                  │    │
 │       ▼                  ▼                  ▼    │
@@ -33,7 +35,7 @@ rustyKraken folgt der Kraken-Metapher:
 └─────────────────────────────────────────────────┘
 ```
 
-## Schnellstart
+## Quick Start
 
 ### Installation
 
@@ -42,11 +44,11 @@ cargo build --release
 ./target/release/rustyKraken
 ```
 
-### Konfiguration
+### Configuration
 
-#### Tentacles (Eingangsquellen)
+#### Tentacles (Incoming Sources)
 
-Erstelle YAML-Dateien in `config/incoming/`:
+Create YAML files in `config/incoming/`:
 
 **HTTP Webhook** (`config/incoming/http_webhook.yaml`):
 ```yaml
@@ -58,7 +60,7 @@ config:
   path: "/webhook"
 ```
 
-Testen mit:
+Test with:
 ```bash
 curl -X POST http://127.0.0.1:8080/webhook \
   -H "Content-Type: application/json" \
@@ -127,6 +129,22 @@ config:
     fallback_topic: "/email/inbox"
 ```
 
+**ntfy** (`config/incoming/ntfy_kraken.yaml`):
+```yaml
+name: "ntfy_kraken"
+type: "ntfy"
+config:
+  server: "https://ntfy.sh"
+  topics:
+    - "kraken/alerts"
+    - "kraken/status"
+  connection_type: "json"  # or "websocket"
+  topic_mapping:
+    "kraken/alerts": "/kraken/alerts"
+    "kraken/status": "/kraken/status"
+  reconnect_delay: 5
+```
+
 **SMTP** (`config/incoming/smtp_server.yaml`):
 ```yaml
 name: "smtp_receiver"
@@ -144,11 +162,11 @@ config:
     fallback_topic: "/email/incoming"
 ```
 
-#### Reflexes (Aktionen)
+#### Reflexes (Actions)
 
-Erstelle YAML-Dateien in `config/listener/`:
+Create YAML files in `config/listener/`:
 
-**Datei-Logging** (`config/listener/file_log.yaml`):
+**File Logging** (`config/listener/file_log.yaml`):
 ```yaml
 name: "log_warnings"
 trigger:
@@ -162,7 +180,7 @@ action:
     mode: "append"
 ```
 
-**Shell-Befehl** (`config/listener/command_echo.yaml`):
+**Shell Command** (`config/listener/command_echo.yaml`):
 ```yaml
 name: "echo_warning"
 trigger:
@@ -175,15 +193,15 @@ action:
     args: ["Nachricht erhalten"]
 ```
 
-Verfügbare Umgebungsvariablen:
-- `INK_JSON` – Die gesamte Nachricht als JSON
-- `INK_TOPIC` – Das Topic
-- `INK_BODY` – Der Inhalt
-- `INK_ID` – Die UUID
+Available environment variables:
+- `INK_JSON` – The entire message as JSON
+- `INK_TOPIC` – The topic
+- `INK_BODY` – The body content
+- `INK_ID` – The UUID
 
-## Themen (Topics)
+## Topics
 
-Nachrichten werden nach einem Pfad-basierten Themensystem sortiert:
+Messages are sorted by a path-based topic system:
 
 ```
 /kraken/
@@ -198,10 +216,10 @@ Nachrichten werden nach einem Pfad-basierten Themensystem sortiert:
 
 ### Wildcards
 
-- `/kraken/**` – Passt zu `/kraken/warning`, `/kraken/data/sensor`, etc.
-- `/kraken/*` – Passt zu `/kraken/warning`, aber nicht zu `/kraken/data/sensor`
+- `/kraken/**` – Matches `/kraken/warning`, `/kraken/data/sensor`, etc.
+- `/kraken/*` – Matches `/kraken/warning`, but not `/kraken/data/sensor`
 
-## Nachrichtenschema (Ink)
+## Message Schema (Ink)
 
 ```json
 {
@@ -218,10 +236,9 @@ Nachrichten werden nach einem Pfad-basierten Themensystem sortiert:
 }
 ```
 
-## Geplante Features
+## Planned Features
 
 ### Tentacles
-- [ ] ntfy Tentacle
 - [ ] File Watcher Tentacle
 - [ ] Telegram Bot Tentacle
 - [ ] Discord Webhook Tentacle
@@ -235,30 +252,30 @@ Nachrichten werden nach einem Pfad-basierten Themensystem sortiert:
 - [ ] Discord Webhook Reflex
 - [ ] ntfy Reflex
 - [ ] WhatsApp Reflex
-- [ ] E-Mail (SMTP) Reflex
+- [ ] Email (SMTP) Reflex
 - [ ] HTTP/Webhook Reflex
 - [ ] Matrix Reflex
 - [ ] Home Assistant Reflex
 - [ ] Database Reflex
 - [ ] Script Reflex
 
-### Allgemein
-- [ ] Web-UI für Nachrichtenübersicht
-- [ ] Hot-Reload für Konfigurationsdateien
-- [ ] Template-Engine für Nachrichten (`{{message.body}}`)
-- [ ] Authentifizierung für Webhooks
-- [ ] Plugin-System für dynamisches Laden
-- [ ] Performance-Optimierungen (Batch-Verarbeitung, Connection-Pooling)
-- [ ] Monitoring und Health-Checks
-- [ ] Docker-Image
+### General
+- [ ] Web UI for message overview
+- [ ] Hot-reload for configuration files
+- [ ] Template engine for messages (`{{message.body}}`)
+- [ ] Authentication for webhooks
+- [ ] Plugin system for dynamic loading
+- [ ] Performance optimizations (batch processing, connection pooling)
+- [ ] Monitoring and health checks
+- [ ] Docker image
 
 ## Version
 
-Aktuelle Version: **0.2.0** (2025-11-11)
+Current version: **0.3.0** (2025-11-11)
 
-Siehe [CHANGELOG.md](CHANGELOG.md) für detaillierte Änderungsübersicht.
+See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
-## Lizenz
+## License
 
 [MIT](LICENSE) © 2025 peopleandpixel
 

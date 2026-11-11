@@ -16,8 +16,8 @@ use mantle::Mantle;
 use reflexes::{CommandReflex, CommandReflexConfig, FileReflex, FileReflexConfig, Reflex};
 use tentacles::{
     HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig, MqttTentacle,
-    MqttTentacleConfig, Pop3Tentacle, Pop3TentacleConfig, SmtpTentacle, SmtpTentacleConfig,
-    Tentacle,
+    MqttTentacleConfig, NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig,
+    SmtpTentacle, SmtpTentacleConfig, Tentacle,
 };
 
 #[tokio::main]
@@ -160,6 +160,13 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(SmtpTentacle::new(
                 config.name.clone(),
                 smtp_config,
+            )))
+        }
+        "ntfy" => {
+            let ntfy_config: NtfyTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(NtfyTentacle::new(
+                config.name.clone(),
+                ntfy_config,
             )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),
