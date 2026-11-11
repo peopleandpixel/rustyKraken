@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-11-11
+
+### Added
+
+#### Tentacles
+- **RabbitMQ Tentacle**: Consume messages from RabbitMQ queues via AMQP with:
+  - AMQP connection with auto-reconnect
+  - Multiple queue subscriptions with exchange binding
+  - Exchange types: direct, fanout, headers, topic
+  - Three topic modes: `routingkey` (routing key based), `field` (JSON field extraction), `all` (single topic)
+  - Configurable QoS prefetch count
+  - Manual or automatic message acknowledgment
+  - Binary message support (Base64 encoding)
+  - Rich metadata: rabbitmq_queue, rabbitmq_routing_key
+  - 7 unit tests for topic resolution, metadata, and deserialization
+
 ## [0.29.0] - 2026-11-11
 
 ### Added

@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.29.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.29.0)
+[![Version](https://img.shields.io/badge/version-0.30.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.30.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -370,6 +370,23 @@ config:
   consumer_name: "consumer1"
   batch_size: 10
   block_timeout_ms: 5000
+```
+
+**RabbitMQ** (`config/incoming/rabbitmq.yaml`):
+```yaml
+name: "rabbitmq_listener"
+type: "rabbitmq"
+config:
+  server: "amqp://guest:guest@localhost:5672"
+  queues:
+    - "orders"
+    - "events"
+  exchange: "kraken_exchange"
+  exchange_kind: "topic"
+  topic_mode: "routingkey"   # routingkey, field, or all
+  prefetch_count: 10
+  auto_ack: false
+  reconnect_delay_seconds: 5
 ```
 
 **REST API Poller** (`config/incoming/rest_api.yaml`):
@@ -805,6 +822,7 @@ Messages are sorted by a path-based topic system:
 - [x] Syslog Listener Tentacle
 - [x] NATS Tentacle
 - [x] Redis Streams Tentacle
+- [x] RabbitMQ Tentacle
 
 ### Reflexes
 - [x] Telegram Bot Reflex
@@ -834,7 +852,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.29.0** (2026-11-11)
+Current version: **0.30.0** (2026-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

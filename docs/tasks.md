@@ -196,7 +196,16 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Rich Metadata (User-Profile, Files, Thread)
   - [x] 8 Unit-Tests (Topic-Modi, Filtering, Ink-Erstellung)
 - [ ] **Azure Service Bus Tentacle** – Empfängt Nachrichten von Azure Service Bus Queues/Topics
-- [ ] **RabbitMQ Tentacle** – Empfängt Nachrichten via AMQP-Protokoll
+- [x] **RabbitMQ Tentacle** – Empfängt Nachrichten via AMQP-Protokoll
+  - [x] AMQP-Verbindung mit Auto-Reconnect
+  - [x] Mehrere Queue-Abonnements mit Exchange-Binding
+  - [x] Exchange-Typen: direct, fanout, headers, topic
+  - [x] Drei Topic-Modi: routingkey, field, all
+  - [x] Konfigurierbarer QoS Prefetch-Count
+  - [x] Manuelles oder automatisches Message-Acknowledgment
+  - [x] Binäre Nachrichten als Base64
+  - [x] Reiche Metadaten: rabbitmq_queue, rabbitmq_routing_key
+  - [x] 7 Unit-Tests (Topic-Auflösung, Metadaten, Deserialisierung)
 - [ ] **Kafka Tentacle** – Konsumiert von Apache Kafka Topics
 - [x] **Redis Streams Tentacle** – Konsumiert von Redis Streams oder Lists (LPUSH/BRPOP)
   - [x] Zwei Modi: stream (XREADGROUP) und list (BRPOP)
