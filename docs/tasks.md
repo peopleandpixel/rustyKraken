@@ -240,10 +240,16 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Ink-Metadaten als Embed-Felder
   - [x] Embed-Titel, Beschreibung, Footer mit Templates
   - [x] 15 Unit-Tests (Webhook-Mapping, Farben, Templates, Embeds, Trunkierung, Deserialisierung)
-- [ ] **ntfy-Reflex** – Sendet Push-Benachrichtigungen via ntfy
-  - [ ] Broker-URL konfigurierbar
-  - [ ] Priorität, Tags, Klick-Links
-  - [ ] Authentifizierung
+- [x] **ntfy-Reflex** – Sendet Push-Benachrichtigungen via ntfy
+  - [x] Broker-URL konfigurierbar
+  - [x] Priorität, Tags, Klick-Links
+  - [x] Authentifizierung (Basic Auth)
+  - [x] Template-Engine für Titel und Nachricht ({{topic}}, {{body}}, {{id}}, {{timestamp}}, {{metadata.<key>}})
+  - [x] Topic-basiertes ntfy-Topic-Mapping
+  - [x] Topic-basiertes Prioritäten-Mapping
+  - [x] Topic-basiertes Tags-Mapping
+  - [x] Icon und Markdown-Unterstützung
+  - [x] 12 Unit-Tests (Topic-Mapping, Prioritäten, Tags, Templates, Metadaten, Deserialisierung)
 - [ ] **E-Mail-Reflex** – Sendet E-Mails via SMTP
   - [ ] `lettre`-Integration (bereits in Cargo.toml)
   - [ ] Absender, Empfänger, Betreff konfigurierbar

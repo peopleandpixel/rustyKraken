@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2025-11-11
+
+### Added
+
+#### Reflexes
+- **ntfy Reflex**: Send push notifications via ntfy broker with:
+  - ntfy broker API integration (POST to topic endpoint)
+  - Template engine with placeholders: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - Configurable notification title and message templates
+  - Priority levels (1-5) with topic-based priority mapping
+  - Tags support with topic-based tags mapping
+  - Click action URLs for notification tap actions
+  - Icon URL support for custom notification icons
+  - Markdown formatting support
+  - Basic authentication (username/password)
+  - Topic-based ntfy topic mapping for routing to different notification topics
+  - 12 unit tests
+
+### Changed
+- **License**: Changed from MIT to GPL v3 or later
+
 ## [0.14.0] - 2025-11-11
 
 ### Added
@@ -317,7 +338,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.15.0
 [0.14.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.14.0
 [0.13.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.13.0
 [0.12.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.12.0

@@ -20,6 +20,7 @@ pub trait Reflex: Send + Sync {
 pub mod command;
 pub mod discord;
 pub mod file;
+pub mod ntfy;
 pub mod telegram;
 pub mod tentacle;
 pub mod whatsapp;
@@ -27,6 +28,7 @@ pub mod whatsapp;
 pub use command::{CommandReflex, CommandReflexConfig};
 pub use discord::{DiscordReflex, DiscordReflexConfig};
 pub use file::{FileReflex, FileReflexConfig};
+pub use ntfy::{NtfyReflex, NtfyReflexConfig};
 pub use telegram::{TelegramReflex, TelegramReflexConfig};
 pub use tentacle::{TentacleReflex, TentacleReflexConfig};
 pub use whatsapp::{WhatsAppReflex, WhatsAppReflexConfig};

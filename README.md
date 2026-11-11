@@ -1,7 +1,7 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.14.0)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-0.15.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.15.0)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
 
@@ -451,6 +451,28 @@ action:
     include_metadata: true
 ```
 
+**ntfy** (`config/listener/ntfy_alerts.yaml`):
+```yaml
+name: "ntfy_alerts"
+trigger:
+  topics:
+    - "/kraken/alerts/**"
+action:
+  type: "ntfy"
+  config:
+    server: "https://ntfy.sh"
+    topic: "kraken-alerts"
+    title_template: "[{{topic}}] Alert"
+    message_template: "{{body}}"
+    priority: 5
+    tags: ["fire", "warning"]
+    markdown: true
+    topic_mapping:
+      "/kraken/critical": "kraken-critical"
+    topic_priority_mapping:
+      "/kraken/critical": 5
+```
+
 **Telegram** (`config/listener/telegram_alerts.yaml`):
 ```yaml
 name: "telegram_alerts"
@@ -526,7 +548,7 @@ Messages are sorted by a path-based topic system:
 ### Reflexes
 - [x] Telegram Bot Reflex
 - [x] Discord Webhook Reflex
-- [ ] ntfy Reflex
+- [x] ntfy Reflex
 - [x] WhatsApp Reflex
 - [x] Tentacle Reflex (Filter/Forward)
 - [ ] Email (SMTP) Reflex
@@ -548,7 +570,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.14.0** (2025-11-11)
+Current version: **0.15.0** (2025-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
@@ -558,7 +580,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 ## License
 
-[MIT](LICENSE) © 2025 peopleandpixel
+[GPL v3 or later](LICENSE) © 2025 peopleandpixel
 
 ## Repository
 
