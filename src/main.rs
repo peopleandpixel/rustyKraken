@@ -23,8 +23,8 @@ use reflexes::{
     WhatsAppReflexConfig,
 };
 use tentacles::{
-    AwsSqsTentacle, AwsSqsTentacleConfig, DiscordTentacle, DiscordTentacleConfig,
-    FileWatcherTentacle, FileWatcherTentacleConfig, GooglePubSubTentacle,
+    AwsSqsTentacle, AwsSqsTentacleConfig, CronTentacle, CronTentacleConfig, DiscordTentacle,
+    DiscordTentacleConfig, FileWatcherTentacle, FileWatcherTentacleConfig, GooglePubSubTentacle,
     GooglePubSubTentacleConfig, HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig,
     MqttTentacle, MqttTentacleConfig, NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle,
     Pop3TentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig,
@@ -277,6 +277,13 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(SlackTentacle::new(
                 config.name.clone(),
                 slack_config,
+            )))
+        }
+        "cron" => {
+            let cron_config: CronTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(CronTentacle::new(
+                config.name.clone(),
+                cron_config,
             )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),

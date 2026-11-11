@@ -5,6 +5,7 @@ use crate::eventbus::EventBus;
 use std::sync::Arc;
 
 pub mod aws_sqs;
+pub mod cron;
 pub mod discord;
 pub mod file_watcher;
 pub mod google_pubsub;
@@ -24,6 +25,7 @@ pub mod telegram;
 pub mod websocket;
 
 pub use aws_sqs::{AwsSqsTentacle, AwsSqsTentacleConfig};
+pub use cron::{CronTentacle, CronTentacleConfig};
 pub use discord::{DiscordTentacle, DiscordTentacleConfig};
 pub use file_watcher::{FileWatcherTentacle, FileWatcherTentacleConfig};
 pub use google_pubsub::{GooglePubSubTentacle, GooglePubSubTentacleConfig};

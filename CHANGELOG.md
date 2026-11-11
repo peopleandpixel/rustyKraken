@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-11-11
+
+### Added
+
+#### Tentacles
+- **Cron/Scheduler Tentacle**: Generate periodic events based on cron expressions with:
+  - Support for 5-field and 6-field cron expressions (second minute hour day month weekday)
+  - Multiple independent cron jobs per tentacle configuration
+  - Cron field syntax: wildcards (`*`), ranges (`1-5`), steps (`*/15`), lists (`1,3,5`)
+  - Configurable topic per job
+  - Optional static body text per job
+  - Optional metadata map attached to each generated message
+  - Optional startup delay before first execution
+  - Named jobs for better logging
+  - 15 unit tests for cron parsing, schedule matching, and next occurrence calculation
+
 ## [0.25.0] - 2026-11-11
 
 ### Added

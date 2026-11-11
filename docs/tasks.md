@@ -224,7 +224,16 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Scheduling & Time
 
-- [ ] **Cron/Scheduler Tentacle** – Generiert periodische Events basierend auf Cron-Ausdrücken (interner Trigger)
+- [x] **Cron/Scheduler Tentacle** – Generiert periodische Events basierend auf Cron-Ausdrücken (interner Trigger)
+  - [x] 5-Feld und 6-Feld Cron-Ausdrücke (second minute hour day month weekday)
+  - [x] Mehrere unabhängige Cron-Jobs pro Tentacle-Konfiguration
+  - [x] Cron-Feld-Syntax: Wildcards (*), Bereiche (1-5), Schritte (*/15), Listen (1,3,5)
+  - [x] Konfigurierbares Topic pro Job
+  - [x] Optionaler statischer Body-Text pro Job
+  - [x] Optionales Metadata-Map an jede generierte Nachricht
+  - [x] Optionaler Startup-Delay vor erster Ausführung
+  - [x] Benannte Jobs für besseres Logging
+  - [x] 15 Unit-Tests (Cron-Parsing, Schedule-Matching, Next Occurrence, Deserialisierung)
 - [ ] **Geofence Tentacle** – Trigger Events wenn Geräte geografische Bereiche betreten/verlassen
 
 #### Messaging & Communication (zusätzlich)

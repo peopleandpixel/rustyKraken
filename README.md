@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.25.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.25.0)
+[![Version](https://img.shields.io/badge/version-0.26.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.26.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -302,6 +302,24 @@ config:
     "C123456": "/slack/alerts"
   allowed_channels: []        # empty = all
   allowed_users: []           # empty = all
+```
+
+**Cron/Scheduler** (`config/incoming/cron.yaml`):
+```yaml
+name: "scheduler"
+type: "cron"
+config:
+  startup_delay_secs: 0
+  jobs:
+    - name: "heartbeat"
+      schedule: "*/5 * * * *"
+      topic: "/cron/heartbeat"
+      body: "Heartbeat check"
+      metadata:
+        check_type: "heartbeat"
+    - name: "daily_report"
+      schedule: "0 0 * * *"
+      topic: "/cron/daily"
 ```
 
 **REST API Poller** (`config/incoming/rest_api.yaml`):
@@ -733,6 +751,7 @@ Messages are sorted by a path-based topic system:
 - [x] AWS SQS Tentacle
 - [x] Google Pub/Sub Tentacle
 - [x] Slack Tentacle
+- [x] Cron/Scheduler Tentacle
 
 ### Reflexes
 - [x] Telegram Bot Reflex
@@ -762,7 +781,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.25.0** (2026-11-11)
+Current version: **0.26.0** (2026-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
