@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-11-11
+
+### Added
+
+#### Reflexes
+- **File Write Reflex (Extended)**: Write Ink messages to files in multiple formats with:
+  - Four output formats: JSON, CSV, plain text, and XML
+  - Template engine for file content: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - CSV configuration: customizable columns, header row, delimiter character
+  - CSV field escaping (quotes, commas, newlines)
+  - XML output with proper character escaping
+  - File path templates (e.g., `/var/log/kraken/{{topic}}.log`)
+  - File rotation by size with configurable max files and suffix
+  - Append and overwrite modes
+  - Async file I/O with optional flush
+  - 20 unit tests
+
 ## [0.23.0] - 2026-11-11
 
 ### Added
@@ -478,7 +495,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.23.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.24.0
 [0.23.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.23.0
 [0.22.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.22.0
 [0.21.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.21.0

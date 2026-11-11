@@ -292,10 +292,14 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Dateibasierte Aktionen
 
-- [ ] **File Write Reflex** – Schreibt Nachrichten in Dateien (erweitert)
-  - [ ] Verschiedene Formate (JSON, CSV, plain text, XML)
-  - [ ] Template-Engine für Dateiinhalte
-  - [ ] Rotation und Größenlimits
+- [x] **File Write Reflex** – Schreibt Nachrichten in Dateien (erweitert)
+  - [x] Verschiedene Formate (JSON, CSV, plain text, XML)
+  - [x] Template-Engine für Dateiinhalte
+  - [x] Rotation und Größenlimits
+  - [x] CSV-Konfiguration (Spalten, Header, Delimiter)
+  - [x] XML-Ausgabe mit Escape-Funktion
+  - [x] Pfad-Template mit Platzhaltern
+  - [x] 20 Unit-Tests (Formate, Templates, Rotation, Deserialisierung)
 - [x] **Database Reflex** – Speichert Nachrichten in einer Datenbank
   - [x] SQLite-Unterstützung via sqlx
   - [x] PostgreSQL-Unterstützung via sqlx

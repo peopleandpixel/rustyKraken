@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.23.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.23.0)
+[![Version](https://img.shields.io/badge/version-0.24.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.24.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -659,6 +659,28 @@ action:
       API_KEY: "secret"
 ```
 
+**File Write** (`config/listener/file_output.yaml`):
+```yaml
+name: "file_output"
+trigger:
+  topics:
+    - "/sensor/**"
+action:
+  type: "file"
+  config:
+    path: "/var/log/kraken/sensors.log"
+    format: "csv"
+    mode: "append"
+    csv:
+      columns: ["{{timestamp}}", "{{topic}}", "{{body}}"]
+      header: true
+      delimiter: ","
+    rotation:
+      max_size_bytes: 10485760
+      max_files: 5
+      suffix: ".old"
+```
+
 ## Topics
 
 Messages are sorted by a path-based topic system:
@@ -726,6 +748,7 @@ Messages are sorted by a path-based topic system:
 - [x] Database Reflex
 - [x] Aggregator Reflex
 - [x] Script Reflex
+- [x] File Write Reflex (JSON, CSV, plaintext, XML)
 
 ### General
 - [ ] Web UI for message overview
@@ -739,7 +762,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.23.0** (2026-11-11)
+Current version: **0.24.0** (2026-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
