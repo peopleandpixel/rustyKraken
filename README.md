@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.7.0)
+[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.8.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -220,6 +220,53 @@ config:
   fallback_topic: "/stdin/default"
 ```
 
+**REST API Poller** (`config/incoming/rest_api.yaml`):
+```yaml
+name: "api_poller"
+type: "rest_api"
+config:
+  endpoints:
+    - url: "https://api.example.com/data"
+      method: "GET"
+      topic: "/api/data"
+      json_path: "data.items"
+      auth:
+        type: "bearer"
+        token: "my-token"
+  interval_seconds: 60
+  max_retries: 3
+  rate_limit_per_minute: 10
+```
+
+**WebSocket** (`config/incoming/websocket.yaml`):
+```yaml
+name: "ws_listener"
+type: "websocket"
+config:
+  url: "wss://example.com/ws"
+  topic_mode: "field"         # field, content, or all
+  topic_field: "event_type"
+  body_field: "payload"
+  fallback_topic: "/ws/default"
+  reconnect: true
+  reconnect_delay_seconds: 5
+```
+
+**RSS/Atom Feed** (`config/incoming/rss.yaml`):
+```yaml
+name: "feed_reader"
+type: "rss"
+config:
+  feeds:
+    - url: "https://example.com/feed.xml"
+      feed_type: "auto"       # auto, rss, or atom
+    - url: "https://example.com/atom.xml"
+      topic: "/feed/custom"
+  interval_seconds: 300
+  topic_mode: "feedtitle"
+  fallback_topic: "/rss/default"
+```
+
 #### Reflexes (Actions)
 
 Create YAML files in `config/listener/`:
@@ -301,8 +348,9 @@ Messages are sorted by a path-based topic system:
 - [x] Stdin Tentacle
 - [x] Telegram Bot Tentacle
 - [x] Discord Bot Tentacle
-- [ ] WebSocket Tentacle
-- [ ] RSS/Atom Feed Tentacle
+- [x] REST API Poller Tentacle
+- [x] WebSocket Tentacle
+- [x] RSS/Atom Feed Tentacle
 - [ ] Serial Port Tentacle
 - [ ] SNMP Trap Tentacle
 

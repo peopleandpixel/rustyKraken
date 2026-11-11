@@ -124,18 +124,31 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### API & Web Services
 
-- [ ] **REST API Poller Tentacle** – Periodisches Abfragen von REST-APIs
-  - [ ] Konfigurierbare URLs und Intervalle
-  - [ ] Authentifizierung (Bearer, Basic, API-Key)
-  - [ ] JSON-Parsing und Topic-Mapping
-  - [ ] Rate-Limiting und Fehlerbehandlung
-- [ ] **WebSocket Tentacle** – Verbindet zu WebSocket-Servern
-  - [ ] Einweg-Verbindung (nur empfangen)
-  - [ ] Topic-Mapping aus Nachrichteninhalt
-- [ ] **RSS/Atom Feed Tentacle** – Liest RSS/Atom-Feeds
-  - [ ] Periodisches Polling konfigurierbarer Feeds
-  - [ ] Neue Einträge erkennen und als Ink speichern
-  - [ ] Topic aus Feed-Titel oder Kategorie
+- [x] **REST API Poller Tentacle** – Periodisches Abfragen von REST-APIs
+  - [x] Konfigurierbare URLs und Intervalle
+  - [x] Authentifizierung (Bearer, Basic, API-Key)
+  - [x] JSON-Parsing und Topic-Mapping (json_path, topic_field, body_field)
+  - [x] Rate-Limiting und Fehlerbehandlung (Retry-Logik)
+  - [x] HTTP-Methoden: GET, POST, PUT, DELETE, PATCH
+  - [x] Custom-Header und Request-Body
+  - [x] 12 Unit-Tests (JSON-Pfad, String-Feld, Auth, Konfiguration)
+- [x] **WebSocket Tentacle** – Verbindet zu WebSocket-Servern
+  - [x] Einweg-Verbindung (nur empfangen)
+  - [x] Topic-Mapping aus Nachrichteninhalt (field, content, all)
+  - [x] ws:// und wss:// Unterstützung
+  - [x] Auto-Reconnection mit konfigurierbarer Verzögerung
+  - [x] Custom-Header und Subprotocol-Unterstützung
+  - [x] Binär-Nachrichten als Base64
+  - [x] Maximale Nachrichtengröße konfigurierbar
+  - [x] 15 Unit-Tests (Topic-Modi, Body-Extraktion, Konfiguration, Header)
+- [x] **RSS/Atom Feed Tentacle** – Liest RSS/Atom-Feeds
+  - [x] Periodisches Polling konfigurierbarer Feeds
+  - [x] Neue Einträge erkennen und als Ink speichern (Duplicate Detection)
+  - [x] Topic aus Feed-Titel, Eintragstitel, Creator oder Fallback
+  - [x] RSS 2.0, RSS 1.0 und Atom Feed Unterstützung
+  - [x] Auto-Erkennung des Feed-Typs
+  - [x] Retry-Logik bei Fehlern
+  - [x] 15 Unit-Tests (Topic-Modi, Body-Erstellung, Feed-Parsing, Konfiguration)
 
 #### IoT & Hardware
 

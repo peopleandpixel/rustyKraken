@@ -18,8 +18,9 @@ use tentacles::{
     DiscordTentacle, DiscordTentacleConfig, FileWatcherTentacle, FileWatcherTentacleConfig,
     HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig, MqttTentacle,
     MqttTentacleConfig, NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig,
-    SmtpTentacle, SmtpTentacleConfig, StdinTentacle, StdinTentacleConfig, TelegramTentacle,
-    TelegramTentacleConfig, Tentacle,
+    RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig, SmtpTentacle,
+    SmtpTentacleConfig, StdinTentacle, StdinTentacleConfig, TelegramTentacle,
+    TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
 };
 
 #[tokio::main]
@@ -201,6 +202,26 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
                 config.name.clone(),
                 stdin_config,
             )))
+        }
+        "rest_api" => {
+            let rest_api_config: RestApiTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(RestApiTentacle::new(
+                config.name.clone(),
+                rest_api_config,
+            )))
+        }
+        "websocket" => {
+            let websocket_config: WebSocketTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(WebSocketTentacle::new(
+                config.name.clone(),
+                websocket_config,
+            )))
+        }
+        "rss" => {
+            let rss_config: RssTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(RssTentacle::new(config.name.clone(), rss_config)))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),
     }

@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2025-11-11
+
+### Added
+
+#### Tentacles
+- **REST API Poller Tentacle**: Periodically poll REST APIs and convert responses to Ink messages with:
+  - Configurable endpoints with URLs, HTTP methods (GET, POST, PUT, DELETE, PATCH), and intervals
+  - Authentication: Bearer token, Basic Auth, and API-Key
+  - JSON path extraction (e.g., `data.items`) for nested responses
+  - Dynamic topic/body fields per message
+  - Custom headers and request body support
+  - Rate limiting (requests per minute)
+  - Retry logic with configurable max retries and delay
+  - 12 unit tests
+- **WebSocket Tentacle**: Connect to WebSocket servers and receive real-time messages with:
+  - ws:// and wss:// support via `tokio-tungstenite`
+  - Three topic modes: `field` (JSON field), `content` (/ prefix), and `all` (fallback)
+  - Auto-reconnection with configurable delay
+  - Custom headers and subprotocol support
+  - Binary message handling (Base64 encoded)
+  - Configurable max message size
+  - 15 unit tests
+- **RSS/Atom Feed Tentacle**: Poll RSS/Atom feeds and convert new entries to Ink messages with:
+  - RSS 2.0, RSS 1.0, and Atom feed support via `feed-parser` crate
+  - Auto-detection of feed type
+  - Duplicate detection to avoid reprocessing entries
+  - Four topic modes: `feedtitle`, `entrytitle`, `creator`, `all`
+  - Per-feed custom topic override
+  - Retry logic with configurable max retries and delay
+  - 15 unit tests
+
+### Changed
+- **Crate Updates**:
+  - Added `feed-parser 2.0` for RSS/Atom feed parsing
+  - Added `parking_lot 0.12` for efficient mutex in RSS tentacle
+
 ## [0.7.0] - 2025-11-11
 
 ### Added
@@ -152,7 +188,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - STARTTLS implemented for all three protocols
 - rustls-based TLS implementation without OpenSSL dependency
 
-[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/peopleandpixel/rustyKraken/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.8.0
 [0.7.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.7.0
 [0.6.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.6.0
 [0.5.0]: https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.5.0
