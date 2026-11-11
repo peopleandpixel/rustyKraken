@@ -308,9 +308,20 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [ ] JavaScript-Scripting mit `rquickjs`
   - [ ] Python-Scripting via Subprocess
   - [ ] Zugriff auf Ink-Daten im Skript
-- [ ] **Home Assistant Reflex** – Sendet Events an Home Assistant
-  - [ ] REST API Integration
-  - [ ] Event-Fire und Service-Call
+- [x] **Home Assistant Reflex** – Sendet Events an Home Assistant
+  - [x] REST API Integration
+  - [x] Event-Fire und Service-Call
+  - [x] Long-lived Access Token Authentifizierung
+  - [x] Zwei Aktionstypen: event (custom event) und service (service call)
+  - [x] Template-Engine für Titel und Nachricht ({{topic}}, {{body}}, {{id}}, {{timestamp}}, {{metadata.<key>}})
+  - [x] Topic-basiertes Event-Name-Mapping
+  - [x] Topic-basiertes Service-Call-Mapping (domain/service)
+  - [x] Topic-basiertes Message- und Title-Template-Mapping
+  - [x] Zusätzliche statische Daten (additional_data)
+  - [x] Ink-Metadaten als Event-Data-Felder
+  - [x] Retry-Logik bei Fehlern
+  - [x] Konfigurierbarer Timeout
+  - [x] 12 Unit-Tests (Event-Mapping, Service-Mapping, Templates, Metadaten, Payload, Deserialisierung)
 - [x] **Syslog Reflex** – Sendet Nachrichten an Syslog
   - [x] UDP/TCP Syslog
   - [x] Konfigurierbare Priorität und Facility

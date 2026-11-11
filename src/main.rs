@@ -15,9 +15,10 @@ use eventbus::EventBus;
 use mantle::Mantle;
 use reflexes::{
     CommandReflex, CommandReflexConfig, DiscordReflex, DiscordReflexConfig, EmailReflex,
-    EmailReflexConfig, FileReflex, FileReflexConfig, HttpReflex, HttpReflexConfig, MatrixReflex,
-    MatrixReflexConfig, NtfyReflex, NtfyReflexConfig, Reflex, SyslogReflex, SyslogReflexConfig,
-    TelegramReflex, TelegramReflexConfig, TentacleReflex, TentacleReflexConfig, WhatsAppReflex,
+    EmailReflexConfig, FileReflex, FileReflexConfig, HomeAssistantReflex,
+    HomeAssistantReflexConfig, HttpReflex, HttpReflexConfig, MatrixReflex, MatrixReflexConfig,
+    NtfyReflex, NtfyReflexConfig, Reflex, SyslogReflex, SyslogReflexConfig, TelegramReflex,
+    TelegramReflexConfig, TentacleReflex, TentacleReflexConfig, WhatsAppReflex,
     WhatsAppReflexConfig,
 };
 use tentacles::{
@@ -364,6 +365,14 @@ fn create_reflex_handler(
             Ok(Box::new(SyslogReflex::new(
                 config.name.clone(),
                 syslog_config,
+            )?))
+        }
+        "home_assistant" => {
+            let ha_config: HomeAssistantReflexConfig =
+                serde_yaml::from_value(config.action.config.clone())?;
+            Ok(Box::new(HomeAssistantReflex::new(
+                config.name.clone(),
+                ha_config,
             )?))
         }
         _ => anyhow::bail!("Unknown reflex type: {}", config.action.r#type),

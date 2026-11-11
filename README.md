@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.19.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.19.0)
+[![Version](https://img.shields.io/badge/version-0.20.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.20.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -578,6 +578,27 @@ action:
       "/kraken/critical": "emergency"
 ```
 
+**Home Assistant** (`config/listener/home_assistant_alerts.yaml`):
+```yaml
+name: "home_assistant_alerts"
+trigger:
+  topics:
+    - "/kraken/alerts/**"
+action:
+  type: "home_assistant"
+  config:
+    server: "http://homeassistant.local:8123"
+    access_token: "eyJ..."
+    action_type: "event"       # or "service"
+    event_name: "rustykraken_alert"
+    message_template: "{{body}}"
+    title_template: "{{topic}}"
+    topic_event_mapping:
+      "/kraken/critical": "critical_alert"
+    topic_service_mapping:
+      "/notify/phone": "notify/mobile_app_phone"
+```
+
 ## Topics
 
 Messages are sorted by a path-based topic system:
@@ -641,7 +662,7 @@ Messages are sorted by a path-based topic system:
 - [x] HTTP/Webhook Reflex
 - [x] Matrix/Element Reflex
 - [x] Syslog Reflex
-- [ ] Home Assistant Reflex
+- [x] Home Assistant Reflex
 - [ ] Database Reflex
 - [ ] Script Reflex
 
@@ -657,7 +678,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.19.0** (2026-11-11)
+Current version: **0.20.0** (2026-11-11)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

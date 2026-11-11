@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-11
+
+### Added
+
+#### Reflexes
+- **Home Assistant Reflex**: Send events and service calls to Home Assistant with:
+  - Home Assistant REST API integration
+  - Two action types: event (fire custom event) and service (call a service)
+  - Long-lived access token authentication
+  - Template engine for title and message: `{{topic}}`, `{{body}}`, `{{id}}`, `{{timestamp}}`, `{{metadata.<key>}}`
+  - Topic-based event name mapping for different custom events
+  - Topic-based service call mapping (domain/service format)
+  - Topic-based message and title template mapping
+  - Additional static data fields merged into event/service data
+  - Ink metadata included as event data fields
+  - Retry logic with configurable attempts and delay
+  - Configurable request timeout
+  - 12 unit tests
+
 ## [0.19.0] - 2026-11-11
 
 ### Added
