@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.29.0] - 2026-11-11
+
+### Added
+
+#### Tentacles
+- **Redis Streams Tentacle**: Consume messages from Redis Streams or Lists with:
+  - Two modes: `stream` (XREADGROUP with consumer groups) and `list` (BRPOP)
+  - Three topic modes: `name` (stream/list name based), `field` (JSON field extraction), `all` (single topic)
+  - Consumer group auto-creation with MKSTREAM
+  - Authentication: none, password, URL-based
+  - Configurable batch size, block timeout, and reconnect delay
+  - Rich metadata: redis_stream, redis_message_id
+  - 8 unit tests for topic resolution, metadata, and deserialization
+
 ## [0.28.0] - 2026-11-11
 
 ### Added
