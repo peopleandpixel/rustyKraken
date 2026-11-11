@@ -249,7 +249,16 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### System & Infrastruktur
 
-- [ ] **Journalctl/systemd Tentacle** – Tailt systemd Journal-Logs als Events
+- [x] **Journalctl/systemd Tentacle** – Tailt systemd Journal-Logs als Events
+  - [x] Follow-Modus mit `journalctl -f --output=export`
+  - [x] Unit und Priority Filtering
+  - [x] Vier Topic-Modi: identifier, unit, priority, all
+  - [x] Identifier und Unit-basiertes Topic-Mapping
+  - [x] Journal Export Format Parsing mit Metadaten-Extraktion
+  - [x] Konfigurierbarer `--since` Zeitfilter
+  - [x] Reiche Metadaten: journal_priority, journal_identifier, journal_unit
+  - [x] Fallback zu Polling-Modus wenn Follow fehlschlägt
+  - [x] 10 Unit-Tests (Topic-Auflösung, Parsing, Konfiguration, Command Building)
 - [ ] **Docker Events Tentacle** – Subscribt zu Docker Daemon Events (container start/stop, image pull, etc.)
 - [ ] **Kubernetes Events Tentacle** – Watcht Kubernetes Cluster Events via API
 - [ ] **Network Packet Capture Tentacle** – Listet auf spezifische Netzwerk-Muster (via libpcap)

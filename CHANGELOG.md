@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.33.0] - 2026-11-11
+
+### Added
+
+#### Tentacles
+- **Journalctl Tentacle**: Tail systemd journal logs as events with:
+  - Follow mode using `journalctl -f --output=export`
+  - Unit and priority filtering
+  - Four topic modes: `identifier` (SYSLOG_IDENTIFIER), `unit` (SYSTEMD_UNIT), `priority`, `all`
+  - Identifier and unit-based topic mapping
+  - Journal export format parsing with metadata extraction
+  - Configurable `--since` time filter
+  - Rich metadata: journal_priority, journal_identifier, journal_unit, CODE_FILE, etc.
+  - Fallback to polling mode if follow fails
+  - 10 unit tests for topic resolution, parsing, config, and command building
+
 ## [0.32.0] - 2026-11-11
 
 ### Added

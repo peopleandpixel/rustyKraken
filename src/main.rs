@@ -26,14 +26,14 @@ use tentacles::{
     AsbTentacle, AsbTentacleConfig, AwsSqsTentacle, AwsSqsTentacleConfig, CronTentacle,
     CronTentacleConfig, DiscordTentacle, DiscordTentacleConfig, FileWatcherTentacle,
     FileWatcherTentacleConfig, GooglePubSubTentacle, GooglePubSubTentacleConfig, HttpTentacle,
-    HttpTentacleConfig, ImapTentacle, ImapTentacleConfig, KafkaTentacle, KafkaTentacleConfig,
-    MqttTentacle, MqttTentacleConfig, NatsTentacle, NatsTentacleConfig, NtfyTentacle,
-    NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig, RabbitMqTentacle, RabbitMqTentacleConfig,
-    RedisTentacle, RedisTentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle,
-    RssTentacleConfig, SerialTentacle, SerialTentacleConfig, SlackTentacle, SlackTentacleConfig,
-    SmtpTentacle, SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle,
-    StdinTentacleConfig, SyslogTentacle, SyslogTentacleConfig, TelegramTentacle,
-    TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
+    HttpTentacleConfig, ImapTentacle, ImapTentacleConfig, JournalTentacle, JournalTentacleConfig,
+    KafkaTentacle, KafkaTentacleConfig, MqttTentacle, MqttTentacleConfig, NatsTentacle,
+    NatsTentacleConfig, NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig,
+    RabbitMqTentacle, RabbitMqTentacleConfig, RedisTentacle, RedisTentacleConfig, RestApiTentacle,
+    RestApiTentacleConfig, RssTentacle, RssTentacleConfig, SerialTentacle, SerialTentacleConfig,
+    SlackTentacle, SlackTentacleConfig, SmtpTentacle, SmtpTentacleConfig, SnmpTentacle,
+    SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig, SyslogTentacle, SyslogTentacleConfig,
+    TelegramTentacle, TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
 };
 
 #[tokio::main]
@@ -329,6 +329,14 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
         "azure_servicebus" => {
             let asb_config: AsbTentacleConfig = serde_yaml::from_value(config.config.clone())?;
             Ok(Box::new(AsbTentacle::new(config.name.clone(), asb_config)))
+        }
+        "journalctl" => {
+            let journal_config: JournalTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(JournalTentacle::new(
+                config.name.clone(),
+                journal_config,
+            )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),
     }
