@@ -301,7 +301,17 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Web & APIs (zusätzlich)
 
-- [ ] **GraphQL Subscriptions Tentacle** – Subscribt zu real-time GraphQL Endpoints
+- [x] **GraphQL Subscriptions Tentacle** – Subscribt zu real-time GraphQL Endpoints
+  - [x] GraphQL-WebSocket-Verbindung (graphql-ws Protokoll)
+  - [x] Connection-Init und connection_ack Handshake
+  - [x] Mehrere Subscriptions pro Verbindung
+  - [x] Drei Topic-Modi: subscription, field, all
+  - [x] Subscription-Namen-basiertes Topic-Mapping
+  - [x] JSON-Feld-Extraktion für Topic
+  - [x] Subscription-Variablen Support
+  - [x] Auto-Reconnect mit konfigurierbarer Verzögerung
+  - [x] Reiche Metadaten: subscription_name, subscription_id
+  - [x] 9 Unit-Tests (Topic-Modi, Mapping, Messages, Deserialisierung)
 - [ ] **gRPC Tentacle** – gRPC Server/Stream Listener für protobuf-basierte Services
 - [ ] **CalDAV/CardDAV Tentacle** – Monitoriert Calendar Events oder Contacts für Triggers
 - [ ] **Webhooks Poller Tentacle** – Periodisches Pollen von externen HTTP Endpoints für neue Daten

@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.37.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **GraphQL Subscriptions Tentacle**: Subscribe to real-time GraphQL endpoints via WebSocket with:
+  - GraphQL-WebSocket connection (graphql-ws protocol)
+  - Connection-init and connection_ack handshake
+  - Multiple subscriptions per connection
+  - Three topic modes: `subscription`, `field`, `all`
+  - Subscription-name-based topic mapping
+  - JSON field extraction for topic
+  - Subscription variables support
+  - Auto-reconnect with configurable delay
+  - Rich metadata: subscription_name, subscription_id
+  - 9 unit tests for topic modes, mapping, messages, and deserialization
+
 ## [0.36.0] - 2026-11-12
 
 ### Added
