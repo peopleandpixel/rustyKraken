@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.39.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **Database Poller Tentacle**: Poll databases periodically for new/changed rows with:
+  - Cross-database support via sqlx AnyPool (SQLite, PostgreSQL, MySQL)
+  - Configurable SQL query for polling
+  - Three topic modes: `table` (table name based), `field` (column value extraction), `all` (single topic)
+  - Table-based topic mapping for custom routing
+  - Incremental polling mode with offset tracking
+  - Change detection with configurable comparison operators
+  - Configurable poll interval, max rows per poll, and query timeout
+  - Automatic database type detection from connection URL
+  - Rich metadata: all column values as metadata fields
+  - 11 unit tests for topic modes, database type detection, ink creation, and deserialization
+
 ## [0.38.0] - 2026-11-12
 
 ### Added

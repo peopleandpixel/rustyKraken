@@ -330,7 +330,17 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Data & Storage
 
-- [ ] **Database Poller Tentacle** – Periodisches Abfragen von SQL/NoSQL Datenbanken für neue/geänderte Zeilen
+- [x] **Database Poller Tentacle** – Periodisches Abfragen von SQL/NoSQL Datenbanken für neue/geänderte Zeilen
+  - [x] Cross-Database-Support via sqlx AnyPool (SQLite, PostgreSQL, MySQL)
+  - [x] Konfigurierbare SQL-Abfrage zum Pollen
+  - [x] Drei Topic-Modi: table, field, all
+  - [x] Tabellen-basiertes Topic-Mapping
+  - [x] Incremental Polling mit Offset-Tracking
+  - [x] Change-Detection mit konfigurierbaren Vergleichsoperatoren
+  - [x] Konfigurierbares Poll-Interval, max Zeilen pro Poll, Query-Timeout
+  - [x] Automatische Datenbank-Typ-Erkennung aus URL
+  - [x] Reiche Metadaten: alle Spaltenwerte als Metadaten
+  - [x] 11 Unit-Tests (Topic-Modi, Datenbank-Typ-Erkennung, Ink-Erstellung, Deserialisierung)
 - [ ] **Elasticsearch Tentacle** – Watcht Elasticsearch Indices für neue Dokumente
 - [ ] **FTP/SFTP Tentacle** – Monitoriert FTP/SFTP Verzeichnisse für neue Datei-Uploads
 
