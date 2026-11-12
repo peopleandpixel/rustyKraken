@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.42.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.42.0)
+[![Version](https://img.shields.io/badge/version-0.43.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.43.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -852,17 +852,17 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.42.0** (2026-11-12)
+Current version: **0.43.0** (2026-11-12)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 ## Contributors
 
-- **Jens Reinemuth** – Creator and maintainer
+- **[Jens Reinemuth](https://jens.reinemuth.pt)** – Creator and maintainer
 
 ## License
 
-[GPL v3 or later](LICENSE) © 2025 peopleandpixel
+[GPL v3 or later](LICENSE) © 2025 [peopleandpixel](https://peopleandpixel.pt)
 
 ## Repository
 

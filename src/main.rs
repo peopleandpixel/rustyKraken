@@ -30,14 +30,15 @@ use tentacles::{
     GeofenceTentacle, GeofenceTentacleConfig, GooglePubSubTentacle, GooglePubSubTentacleConfig,
     GraphqlTentacle, GraphqlTentacleConfig, GrpcTentacle, GrpcTentacleConfig, HttpTentacle,
     HttpTentacleConfig, ImapTentacle, ImapTentacleConfig, JournalTentacle, JournalTentacleConfig,
-    K8sTentacle, K8sTentacleConfig, KafkaTentacle, KafkaTentacleConfig, MqttTentacle,
-    MqttTentacleConfig, NatsTentacle, NatsTentacleConfig, NtfyTentacle, NtfyTentacleConfig,
-    PacketCaptureConfig, PacketCaptureTentacle, Pop3Tentacle, Pop3TentacleConfig, RabbitMqTentacle,
-    RabbitMqTentacleConfig, RedisTentacle, RedisTentacleConfig, RestApiTentacle,
-    RestApiTentacleConfig, RssTentacle, RssTentacleConfig, SerialTentacle, SerialTentacleConfig,
-    SlackTentacle, SlackTentacleConfig, SmtpTentacle, SmtpTentacleConfig, SnmpTentacle,
-    SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig, SyslogTentacle, SyslogTentacleConfig,
-    TelegramTentacle, TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
+    K8sTentacle, K8sTentacleConfig, KafkaTentacle, KafkaTentacleConfig, MatrixTentacle,
+    MatrixTentacleConfig, MqttTentacle, MqttTentacleConfig, NatsTentacle, NatsTentacleConfig,
+    NtfyTentacle, NtfyTentacleConfig, PacketCaptureConfig, PacketCaptureTentacle, Pop3Tentacle,
+    Pop3TentacleConfig, RabbitMqTentacle, RabbitMqTentacleConfig, RedisTentacle,
+    RedisTentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig,
+    SerialTentacle, SerialTentacleConfig, SlackTentacle, SlackTentacleConfig, SmtpTentacle,
+    SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig,
+    SyslogTentacle, SyslogTentacleConfig, TelegramTentacle, TelegramTentacleConfig, Tentacle,
+    WebSocketTentacle, WebSocketTentacleConfig,
 };
 
 #[tokio::main]
@@ -401,6 +402,14 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(GeofenceTentacle::new(
                 config.name.clone(),
                 geofence_config,
+            )))
+        }
+        "matrix" => {
+            let matrix_config: MatrixTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(MatrixTentacle::new(
+                config.name.clone(),
+                matrix_config,
             )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),

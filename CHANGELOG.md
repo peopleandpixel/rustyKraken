@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.43.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **Matrix Tentacle**: Receive messages from Matrix rooms via Client-Server API with:
+  - Matrix Client-Server API v3 timeline endpoint
+  - Multiple room monitoring
+  - Access token authentication
+  - Message type filtering (m.room.message only mode)
+  - Since token pagination for incremental polling
+  - Configurable home server URL
+  - Rich metadata: room_id, sender, event_id, message_type, timestamp
+  - 10 unit tests for config, auth, ink creation, and deserialization
+
 ## [0.42.0] - 2026-11-12
 
 ### Added

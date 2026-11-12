@@ -387,7 +387,14 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Messaging & Communication (zusätzlich)
 
-- [ ] **Matrix Tentacle** – Empfängt Events von Matrix Rooms via Matrix Client-Server API
+- [x] **Matrix Tentacle** – Empfängt Events von Matrix Rooms via Matrix Client-Server API
+   - [x] Matrix Client-Server API v3 Timeline Endpoint
+   - [x] Mehrere Räume gleichzeitig überwachen
+   - [x] Access Token Authentifizierung
+   - [x] Nachrichtentyp-Filterung
+   - [x] Since Token Pagination
+   - [x] Konfigurierbarer Home Server
+   - [x] 10 Unit-Tests
 - [ ] **Signal Tentacle** – Listet auf Nachrichten via Signal Desktop oder Signal Gateway
 - [ ] **Microsoft Teams Tentacle** – Webhook-basierte oder bot-basierte eingehende Nachrichten von Teams Channels
 - [ ] **Google Chat Tentacle** – Eingehende Webhooks oder Bot Events von Google Workspace Chat
