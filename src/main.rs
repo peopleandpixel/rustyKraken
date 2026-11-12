@@ -25,18 +25,19 @@ use reflexes::{
 use tentacles::{
     AsbTentacle, AsbTentacleConfig, AwsSqsTentacle, AwsSqsTentacleConfig, CronTentacle,
     CronTentacleConfig, DbPollerTentacle, DbPollerTentacleConfig, DiscordTentacle,
-    DiscordTentacleConfig, DockerTentacle, DockerTentacleConfig, FileWatcherTentacle,
-    FileWatcherTentacleConfig, GooglePubSubTentacle, GooglePubSubTentacleConfig, GraphqlTentacle,
-    GraphqlTentacleConfig, GrpcTentacle, GrpcTentacleConfig, HttpTentacle, HttpTentacleConfig,
-    ImapTentacle, ImapTentacleConfig, JournalTentacle, JournalTentacleConfig, K8sTentacle,
-    K8sTentacleConfig, KafkaTentacle, KafkaTentacleConfig, MqttTentacle, MqttTentacleConfig,
-    NatsTentacle, NatsTentacleConfig, NtfyTentacle, NtfyTentacleConfig, PacketCaptureConfig,
-    PacketCaptureTentacle, Pop3Tentacle, Pop3TentacleConfig, RabbitMqTentacle,
-    RabbitMqTentacleConfig, RedisTentacle, RedisTentacleConfig, RestApiTentacle,
-    RestApiTentacleConfig, RssTentacle, RssTentacleConfig, SerialTentacle, SerialTentacleConfig,
-    SlackTentacle, SlackTentacleConfig, SmtpTentacle, SmtpTentacleConfig, SnmpTentacle,
-    SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig, SyslogTentacle, SyslogTentacleConfig,
-    TelegramTentacle, TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
+    DiscordTentacleConfig, DockerTentacle, DockerTentacleConfig, EsTentacle, EsTentacleConfig,
+    FileWatcherTentacle, FileWatcherTentacleConfig, GooglePubSubTentacle,
+    GooglePubSubTentacleConfig, GraphqlTentacle, GraphqlTentacleConfig, GrpcTentacle,
+    GrpcTentacleConfig, HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig,
+    JournalTentacle, JournalTentacleConfig, K8sTentacle, K8sTentacleConfig, KafkaTentacle,
+    KafkaTentacleConfig, MqttTentacle, MqttTentacleConfig, NatsTentacle, NatsTentacleConfig,
+    NtfyTentacle, NtfyTentacleConfig, PacketCaptureConfig, PacketCaptureTentacle, Pop3Tentacle,
+    Pop3TentacleConfig, RabbitMqTentacle, RabbitMqTentacleConfig, RedisTentacle,
+    RedisTentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig,
+    SerialTentacle, SerialTentacleConfig, SlackTentacle, SlackTentacleConfig, SmtpTentacle,
+    SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig,
+    SyslogTentacle, SyslogTentacleConfig, TelegramTentacle, TelegramTentacleConfig, Tentacle,
+    WebSocketTentacle, WebSocketTentacleConfig,
 };
 
 #[tokio::main]
@@ -382,6 +383,10 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
                 config.name.clone(),
                 db_poller_config,
             )))
+        }
+        "elasticsearch" => {
+            let es_config: EsTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(EsTentacle::new(config.name.clone(), es_config)))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),
     }

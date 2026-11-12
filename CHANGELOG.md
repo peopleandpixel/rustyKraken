@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **Elasticsearch Tentacle**: Monitor Elasticsearch indices for new documents with:
+  - REST API-based polling of Elasticsearch _search endpoint
+  - Configurable indices (wildcard support)
+  - Custom search query (JSON)
+  - Three topic modes: `index` (index name based), `field` (document field extraction), `all` (single topic)
+  - Index-based topic mapping for custom routing
+  - Authentication: None, Basic, API Key, Bearer Token
+  - Scroll API support for large result sets
+  - Change detection with last-seen field tracking
+  - Configurable poll interval and max docs per poll
+  - Rich metadata: es_index, es_doc_id, all document fields
+  - 11 unit tests for topic modes, auth variants, ink creation, and deserialization
+
 ## [0.39.0] - 2026-11-12
 
 ### Added

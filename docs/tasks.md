@@ -341,7 +341,18 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Automatische Datenbank-Typ-Erkennung aus URL
   - [x] Reiche Metadaten: alle Spaltenwerte als Metadaten
   - [x] 11 Unit-Tests (Topic-Modi, Datenbank-Typ-Erkennung, Ink-Erstellung, Deserialisierung)
-- [ ] **Elasticsearch Tentacle** – Watcht Elasticsearch Indices für neue Dokumente
+- [x] **Elasticsearch Tentacle** – Watcht Elasticsearch Indices für neue Dokumente
+  - [x] REST API-basiertes Polling des _search Endpoints
+  - [x] Konfigurierbare Indices (Wildcard-Support)
+  - [x] Custom Search-Query (JSON)
+  - [x] Drei Topic-Modi: index, field, all
+  - [x] Index-basiertes Topic-Mapping
+  - [x] Authentifizierung: None, Basic, API Key, Bearer Token
+  - [x] Scroll API Support für große Ergebnismengen
+  - [x] Change-Detection mit Last-Seen-Feld-Tracking
+  - [x] Konfigurierbares Poll-Interval und max Dokumente pro Poll
+  - [x] Reiche Metadaten: es_index, es_doc_id, alle Dokument-Felder
+  - [x] 11 Unit-Tests (Topic-Modi, Auth-Varianten, Ink-Erstellung, Deserialisierung)
 - [ ] **FTP/SFTP Tentacle** – Monitoriert FTP/SFTP Verzeichnisse für neue Datei-Uploads
 
 #### Scheduling & Time
