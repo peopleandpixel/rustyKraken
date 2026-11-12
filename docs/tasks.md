@@ -336,7 +336,16 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
    - [x] TLS-Verifikation konfigurierbar
    - [x] Custom Headers
    - [x] 12 Unit-Tests
-- [ ] **Webhooks Poller Tentacle** – Periodisches Pollen von externen HTTP Endpoints für neue Daten
+- [x] **Webhooks Poller Tentacle** – Periodisches Pollen von externen HTTP Endpoints für neue Daten
+   - [x] Mehrere Endpoints konfigurierbar
+   - [x] HTTP-Methoden: GET, POST, PUT, DELETE, PATCH
+   - [x] Drei Topic-Modi: fixed, field (JSON-Pfad), header
+   - [x] Authentifizierung: None, Basic, Bearer, API Key
+   - [x] Retry-Logik mit konfigurierbaren Retries
+   - [x] TLS-Verifikation konfigurierbar
+   - [x] Custom Headers
+   - [x] Topic-Präfix
+   - [x] 11 Unit-Tests
 
 #### Data & Storage
 

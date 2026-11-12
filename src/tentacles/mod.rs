@@ -43,6 +43,7 @@ pub mod stdin_tentacle;
 pub mod syslog_listener;
 pub mod teams;
 pub mod telegram;
+pub mod webhooks_poller;
 pub mod websocket;
 pub mod xmpp;
 
@@ -85,6 +86,7 @@ pub use stdin_tentacle::{StdinTentacle, StdinTentacleConfig};
 pub use syslog_listener::{SyslogTentacle, SyslogTentacleConfig};
 pub use teams::{TeamsTentacle, TeamsTentacleConfig};
 pub use telegram::{TelegramTentacle, TelegramTentacleConfig};
+pub use webhooks_poller::{WebhooksPollerTentacle, WebhooksPollerTentacleConfig};
 pub use websocket::{WebSocketTentacle, WebSocketTentacleConfig};
 pub use xmpp::{XmppTentacle, XmppTentacleConfig};
 

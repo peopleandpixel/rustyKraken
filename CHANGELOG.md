@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.49.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **Webhooks Poller Tentacle**: Periodically poll external HTTP endpoints for new data with:
+  - Multiple endpoint configuration
+  - HTTP methods: GET, POST, PUT, DELETE, PATCH
+  - Three topic modes: fixed, field (JSON path), header
+  - Authentication: None, Basic, Bearer Token, API Key
+  - Configurable polling interval per endpoint
+  - Retry logic with configurable retries and delay
+  - TLS verification toggle
+  - Custom headers support
+  - Topic prefix for routing
+  - 11 unit tests for config, auth, topic modes, and ink creation
+
 ## [0.48.0] - 2026-11-12
 
 ### Added

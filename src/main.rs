@@ -40,8 +40,8 @@ use tentacles::{
     SignalTentacle, SignalTentacleConfig, SlackTentacle, SlackTentacleConfig, SmtpTentacle,
     SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig,
     SyslogTentacle, SyslogTentacleConfig, TeamsTentacle, TeamsTentacleConfig, TelegramTentacle,
-    TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig, XmppTentacle,
-    XmppTentacleConfig,
+    TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
+    WebhooksPollerTentacle, WebhooksPollerTentacleConfig, XmppTentacle, XmppTentacleConfig,
 };
 
 #[tokio::main]
@@ -447,6 +447,14 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(XmppTentacle::new(
                 config.name.clone(),
                 xmpp_config,
+            )))
+        }
+        "webhooks_poller" => {
+            let poller_config: WebhooksPollerTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(WebhooksPollerTentacle::new(
+                config.name.clone(),
+                poller_config,
             )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),
