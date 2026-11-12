@@ -668,76 +668,76 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### Messaging & Communication (zusätzlich)
 
-- [ ] **Matrix Reflex** – Sendet Nachrichten an Matrix Rooms (completes bidirectional Matrix capability)
-- [ ] **Signal Reflex** – Sendet Nachrichten via Signal
-- [ ] **Microsoft Teams Reflex** – Postet an Teams via Webhooks oder Bot API
-- [ ] **Google Chat Reflex** – Sendet Cards oder Nachrichten an Google Chat Spaces
-- [ ] **IRC Reflex** – Sendet Nachrichten an IRC Channels
-- [ ] **Pushbullet Reflex** – Sendet Push-Benachrichtigungen an Geräte
-- [ ] **Gotify Reflex** – Self-hosted Push-Benachrichtigungsdienst
+- [x] **Matrix Reflex** – Sendet Nachrichten an Matrix Rooms (completes bidirectional Matrix capability)
+- [x] **Signal Reflex** – Sendet Nachrichten via Signal
+- [x] **Microsoft Teams Reflex** – Postet an Teams via Webhooks oder Bot API
+- [x] **Google Chat Reflex** – Sendet Cards oder Nachrichten an Google Chat Spaces
+- [x] **IRC Reflex** – Sendet Nachrichten an IRC Channels
+- [x] **Pushbullet Reflex** – Sendet Push-Benachrichtigungen an Geräte
+- [x] **Gotify Reflex** – Self-hosted Push-Benachrichtigungsdienst
 
 #### Cloud & Queue Services
 
-- [ ] **Azure Service Bus Reflex** – Publish Messages zu Azure Queues/Topics
-- [ ] **RabbitMQ Reflex** – Publish zu AMQP Exchanges
-- [ ] **Kafka Reflex** – Produce Messages zu Kafka Topics
-- [ ] **NATS Reflex** – Publish zu NATS Subjects
-- [ ] **AWS SNS Reflex** – Publish zu Amazon Simple Notification Service
+- [x] **Azure Service Bus Reflex** – Publish Messages zu Azure Queues/Topics
+- [x] **RabbitMQ Reflex** – Publish zu AMQP Exchanges
+- [x] **Kafka Reflex** – Produce Messages zu Kafka Topics
+- [x] **NATS Reflex** – Publish zu NATS Subjects
+- [x] **AWS SNS Reflex** – Publish zu Amazon Simple Notification Service
 
 #### System & Infrastruktur
 
-- [ ] **Docker Reflex** – Trigger Docker Actions (start/stop/restart containers, create images)
-- [ ] **Kubernetes Reflex** – Trigger kubectl Actions oder API Calls
-- [ ] **Ansible Reflex** – Trigger Ansible Playbooks
-- [ ] **SaltStack Reflex** – Execute Salt States oder Commands
-- [ ] **Puppet Reflex** – Trigger Puppet Runs
-- [ ] **PowerDNS Reflex** – Update DNS Records dynamisch
+- [x] **Docker Reflex** – Trigger Docker Actions (start/stop/restart containers, create images)
+- [x] **Kubernetes Reflex** – Trigger kubectl Actions oder API Calls
+- [x] **Ansible Reflex** – Trigger Ansible Playbooks
+- [x] **SaltStack Reflex** – Execute Salt States oder Commands
+- [x] **Puppet Reflex** – Trigger Puppet Runs
+- [x] **PowerDNS Reflex** – Update DNS Records dynamisch
 
 #### Home Automation & IoT
 
-- [ ] **MQTT Publish Reflex** – Publish Messages zu MQTT Topics (completes bidirectional MQTT capability)
-- [ ] **Zigbee2MQTT Reflex** – Control Zigbee Devices via MQTT Bridge
-- [ ] **Shelly Reflex** – Control Shelly Smart Devices
-- [ ] **Tasmota Reflex** – Control Tasmota-flashed Devices
-- [ ] **ESPHome Reflex** – Control ESPHome Devices
-- [ ] **FHEM Reflex** – Interact with FHEM Home Automation
-- [ ] **openHAB Reflex** – Send Commands to openHAB
+- [x] **MQTT Publish Reflex** – Publish Messages zu MQTT Topics (completes bidirectional MQTT capability)
+- [x] **Zigbee2MQTT Reflex** – Control Zigbee Devices via MQTT Bridge
+- [x] **Shelly Reflex** – Control Shelly Smart Devices
+- [x] **Tasmota Reflex** – Control Tasmota-flashed Devices
+- [x] **ESPHome Reflex** – Control ESPHome Devices
+- [x] **FHEM Reflex** – Interact with FHEM Home Automation
+- [x] **openHAB Reflex** – Send Commands to openHAB
 
 #### Notifications
 
-- [ ] **Pushover Reflex** – Sendet Push-Benachrichtigungen via Pushover API
-- [ ] **Bark Reflex** – iOS Push-Benachrichtigungen via Bark Server
-- [ ] **Custom Webhook Reflex** – Generic HTTP POST an beliebige Webhook-URLs mit Templating
-- [ ] **Sound/Alert Reflex** – Spielt Sounds oder triggert Alerts auf dem lokalen Rechner
-- [ ] **LED/Display Reflex** – Update LED Matrices, E-Ink Displays oder Smart Displays
+- [x] **Pushover Reflex** – Sendet Push-Benachrichtigungen via Pushover API
+- [x] **Bark Reflex** – iOS Push-Benachrichtigungen via Bark Server
+- [x] **Custom Webhook Reflex** – Generic HTTP POST an beliebige Webhook-URLs mit Templating
+- [x] **Sound/Alert Reflex** – Spielt Sounds oder triggert Alerts auf dem lokalen Rechner
+- [x] **LED/Display Reflex** – Update LED Matrices, E-Ink Displays oder Smart Displays
 
 #### Data & Storage
 
-- [ ] **Elasticsearch Reflex** – Index Events in Elasticsearch
-- [ ] **InfluxDB Reflex** – Schreibt Time-Series Daten nach InfluxDB
-- [ ] **Prometheus Reflex** – Exponiert Metriken im Prometheus Format
-- [ ] **S3/MinIO Reflex** – Upload Event-Daten zu Object Storage
-- [ ] **FTP/SFTP Upload Reflex** – Upload Dateien zu entfernten FTP/SFTP Servern
+- [x] **Elasticsearch Reflex** – Index Events in Elasticsearch
+- [x] **InfluxDB Reflex** – Schreibt Time-Series Daten nach InfluxDB
+- [x] **Prometheus Reflex** – Exponiert Metriken im Prometheus Format
+- [x] **S3/MinIO Reflex** – Upload Event-Daten zu Object Storage
+- [x] **FTP/SFTP Upload Reflex** – Upload Dateien zu entfernten FTP/SFTP Servern
 
 #### Security & Monitoring
 
-- [ ] **Fail2Ban Reflex** – Add/Remove IPs von Fail2Ban
-- [ ] **Grafana Reflex** – Sendet Annotations oder triggert Alerts in Grafana
-- [ ] **TheHive Reflex** – Erstellt Cases in TheHive SIEM
-- [ ] **Shodan Reflex** – Query oder Update Shodan Daten
+- [x] **Fail2Ban Reflex** – Add/Remove IPs von Fail2Ban
+- [x] **Grafana Reflex** – Sendet Annotations oder triggert Alerts in Grafana
+- [x] **TheHive Reflex** – Erstellt Cases in TheHive SIEM
+- [x] **Shodan Reflex** – Query oder Update Shodan Daten
 
 #### Scheduling & Workflow
 
-- [ ] **n8n/Node-RED Reflex** – Trigger externe Automation Workflows
-- [ ] **Make.com (Integromat) Reflex** – Trigger Make Scenarios
-- [ ] **Zapier Reflex** – Trigger Zapier Webhooks
-- [ ] **Temporal Reflex** – Startet Temporal Workflow Executions
+- [x] **n8n/Node-RED Reflex** – Trigger externe Automation Workflows
+- [x] **Make.com (Integromat) Reflex** – Trigger Make Scenarios
+- [x] **Zapier Reflex** – Trigger Zapier Webhooks
+- [x] **Temporal Reflex** – Startet Temporal Workflow Executions
 
 #### Creative & Fun
 
-- [ ] **TTS (Text-to-Speech) Reflex** – Konvertiert Event-Daten zu Speech und spielt sie ab
-- [ ] **Printer Reflex** – Druckt Event-Zusammenfassungen oder Labels
-- [ ] **3D Printer Reflex** – Trigger 3D Print Jobs
+- [x] **TTS (Text-to-Speech) Reflex** – Konvertiert Event-Daten zu Speech und spielt sie ab
+- [x] **Printer Reflex** – Druckt Event-Zusammenfassungen oder Labels
+- [x] **3D Printer Reflex** – Trigger 3D Print Jobs
 
 ---
 

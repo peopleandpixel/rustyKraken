@@ -839,6 +839,51 @@ Messages are sorted by a path-based topic system:
 - [x] Aggregator Reflex
 - [x] Script Reflex
 - [x] File Write Reflex (JSON, CSV, plaintext, XML)
+- [x] Signal Reflex
+- [x] Microsoft Teams Reflex
+- [x] Google Chat Reflex
+- [x] IRC Reflex
+- [x] Pushbullet Reflex
+- [x] Gotify Reflex
+- [x] Azure Service Bus Reflex
+- [x] RabbitMQ Reflex
+- [x] Kafka Reflex
+- [x] NATS Reflex
+- [x] AWS SNS Reflex
+- [x] Docker Reflex
+- [x] Kubernetes Reflex
+- [x] Ansible Reflex
+- [x] SaltStack Reflex
+- [x] Puppet Reflex
+- [x] PowerDNS Reflex
+- [x] MQTT Publish Reflex
+- [x] Zigbee2MQTT Reflex
+- [x] Shelly Reflex
+- [x] Tasmota Reflex
+- [x] ESPHome Reflex
+- [x] FHEM Reflex
+- [x] openHAB Reflex
+- [x] Pushover Reflex
+- [x] Bark Reflex
+- [x] Custom Webhook Reflex
+- [x] Sound/Alert Reflex
+- [x] LED/Display Reflex
+- [x] Elasticsearch Reflex
+- [x] InfluxDB Reflex
+- [x] Prometheus Reflex
+- [x] S3/MinIO Reflex
+- [x] FTP/SFTP Upload Reflex
+- [x] Fail2Ban Reflex
+- [x] Grafana Reflex
+- [x] TheHive Reflex
+- [x] Shodan Reflex
+- [x] n8n/Node-RED Reflex
+- [x] Make.com Reflex
+- [x] Zapier Reflex
+- [x] Temporal Reflex
+- [x] TTS Reflex
+- [x] Printer Reflex
+- [x] 3D Printer Reflex
 
 ### General
 - [ ] Web UI for message overview
@@ -852,7 +897,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.54.0** (2026-11-12)
+Current version: **0.55.0** (2026-11-12)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

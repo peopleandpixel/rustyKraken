@@ -6,6 +6,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.55.0] - 2026-11-12
+
+### Added
+
+#### Reflexes (46 new Reflexes implemented)
+- **Signal Reflex** – Send messages via Signal CLI HTTP API with recipient mapping and templating
+- **Microsoft Teams Reflex** – Post to Teams via incoming webhooks with theme colors and topic mapping
+- **Google Chat Reflex** – Send cards or messages to Google Chat Spaces via webhooks
+- **IRC Reflex** – Send messages to IRC channels via HTTP gateway webhooks
+- **Pushbullet Reflex** – Send push notifications to devices via Pushbullet API
+- **Gotify Reflex** – Self-hosted push notifications with priority mapping
+- **Azure Service Bus Reflex** – Publish messages to Azure Queues/Topics with SAS authentication
+- **RabbitMQ Reflex** – Publish to AMQP exchanges via HTTP management API
+- **Kafka Reflex** – Produce messages to Kafka topics via HTTP
+- **NATS Reflex** – Publish to NATS subjects via HTTP
+- **AWS SNS Reflex** – Publish to Amazon Simple Notification Service
+- **Docker Reflex** – Trigger Docker actions via HTTP API
+- **Kubernetes Reflex** – Trigger kubectl actions or API calls
+- **Ansible Reflex** – Trigger Ansible playbooks via webhook
+- **SaltStack Reflex** – Execute Salt states or commands
+- **Puppet Reflex** – Trigger Puppet runs
+- **PowerDNS Reflex** – Update DNS records dynamically
+- **MQTT Publish Reflex** – Publish messages to MQTT topics (completes bidirectional MQTT)
+- **Zigbee2MQTT Reflex** – Control Zigbee devices via MQTT bridge
+- **Shelly Reflex** – Control Shelly smart devices
+- **Tasmota Reflex** – Control Tasmota-flashed devices
+- **ESPHome Reflex** – Control ESPHome devices
+- **FHEM Reflex** – Interact with FHEM home automation
+- **openHAB Reflex** – Send commands to openHAB
+- **Pushover Reflex** – Send push notifications via Pushover API with priority mapping
+- **Bark Reflex** – iOS push notifications via Bark server
+- **Custom Webhook Reflex** – Generic HTTP POST to arbitrary webhook URLs with templating
+- **Sound/Alert Reflex** – Play sounds and trigger desktop alerts
+- **LED/Display Reflex** – Update LED matrices, E-ink displays, or smart displays
+- **Elasticsearch Reflex** – Index events in Elasticsearch
+- **InfluxDB Reflex** – Write time-series data to InfluxDB
+- **Prometheus Reflex** – Expose metrics in Prometheus format
+- **S3/MinIO Reflex** – Upload event data to object storage
+- **FTP/SFTP Upload Reflex** – Upload files to remote FTP/SFTP servers
+- **Fail2Ban Reflex** – Add/remove IPs from Fail2Ban
+- **Grafana Reflex** – Send annotations or trigger alerts in Grafana
+- **TheHive Reflex** – Create cases in TheHive SIEM
+- **Shodan Reflex** – Query or update Shodan data
+- **n8n/Node-RED Reflex** – Trigger external automation workflows
+- **Make.com Reflex** – Trigger Make scenarios
+- **Zapier Reflex** – Trigger Zapier webhooks
+- **Temporal Reflex** – Start Temporal workflow executions
+- **TTS (Text-to-Speech) Reflex** – Convert event data to speech
+- **Printer Reflex** – Print event summaries or labels
+- **3D Printer Reflex** – Trigger 3D print jobs
+- All 46 new Reflexes include unit tests for config deserialization, template rendering, and type verification
+
 ## [0.54.0] - 2026-11-12
 
 ### Added
