@@ -23,10 +23,10 @@ use reflexes::{
     WhatsAppReflexConfig,
 };
 use tentacles::{
-    AsbTentacle, AsbTentacleConfig, AwsSqsTentacle, AwsSqsTentacleConfig, CalDavTentacle,
-    CalDavTentacleConfig, CronTentacle, CronTentacleConfig, DbPollerTentacle,
-    DbPollerTentacleConfig, DiscordTentacle, DiscordTentacleConfig, DockerTentacle,
-    DockerTentacleConfig, EsTentacle, EsTentacleConfig, FileWatcherTentacle,
+    AsbTentacle, AsbTentacleConfig, AwsSqsTentacle, AwsSqsTentacleConfig, BleTentacle,
+    BleTentacleConfig, CalDavTentacle, CalDavTentacleConfig, CronTentacle, CronTentacleConfig,
+    DbPollerTentacle, DbPollerTentacleConfig, DiscordTentacle, DiscordTentacleConfig,
+    DockerTentacle, DockerTentacleConfig, EsTentacle, EsTentacleConfig, FileWatcherTentacle,
     FileWatcherTentacleConfig, FtpSftpTentacle, FtpSftpTentacleConfig, GeofenceTentacle,
     GeofenceTentacleConfig, GoogleChatTentacle, GoogleChatTentacleConfig, GooglePubSubTentacle,
     GooglePubSubTentacleConfig, GraphqlTentacle, GraphqlTentacleConfig, GrpcTentacle,
@@ -439,6 +439,10 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
                 config.name.clone(),
                 modbus_config,
             )))
+        }
+        "ble" => {
+            let ble_config: BleTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(BleTentacle::new(config.name.clone(), ble_config)))
         }
         "signal" => {
             let signal_config: SignalTentacleConfig =

@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.52.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **BLE/Bluetooth Low Energy Tentacle**: Scan for BLE devices and advertisements with:
+  - Passive BLE scanning mode via bluetoothctl
+  - Device filtering by MAC address, name prefix, service UUID, and RSSI
+  - Duplicate detection with configurable time window
+  - Watched service UUID filtering
+  - Configurable adapter name (e.g., hci0)
+  - Simulated devices fallback for testing
+  - 12 unit tests for filtering, parsing, deduplication, and ink creation
+
 ## [0.51.0] - 2026-11-12
 
 ### Added

@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 pub mod aws_sqs;
 pub mod azure_servicebus;
+pub mod ble;
 pub mod caldav;
 pub mod cron;
 pub mod database_poller;
@@ -51,6 +52,7 @@ pub mod xmpp;
 
 pub use aws_sqs::{AwsSqsTentacle, AwsSqsTentacleConfig};
 pub use azure_servicebus::{AsbTentacle, AsbTentacleConfig};
+pub use ble::{BleTentacle, BleTentacleConfig};
 pub use caldav::{CalDavTentacle, CalDavTentacleConfig};
 pub use cron::{CronTentacle, CronTentacleConfig};
 pub use database_poller::{DbPollerTentacle, DbPollerTentacleConfig};

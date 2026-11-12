@@ -463,7 +463,14 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Error Response Handling
   - [x] Simulierte Werte als Fallback für Testing
   - [x] 12 Unit-Tests
-- [ ] **BLE/Bluetooth Low Energy Tentacle** – Listet auf BLE Advertisements oder verbindet mit BLE Peripherals
+- [x] **BLE/Bluetooth Low Energy Tentacle** – Vollständige Implementierung
+  - [x] Passive BLE Scanning via bluetoothctl
+  - [x] Device-Filterung nach MAC, Name, Service UUID, RSSI
+  - [x] Duplicate Detection mit konfigurierbarem Zeitfenster
+  - [x] Watched Service UUID Filterung
+  - [x] Konfigurierbarer Adapter-Name
+  - [x] Simulierte Geräte als Fallback
+  - [x] 12 Unit-Tests
 - [ ] **Zigbee Tentacle** – Home Automation Protokoll (via Zigbee2MQTT Bridge oder nativ)
 - [ ] **Z-Wave Tentacle** – Weiteres Home Automation Protokoll
 
