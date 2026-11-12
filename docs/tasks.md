@@ -425,7 +425,15 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
    - [x] Azure AD Authentifizierung
    - [x] Mehrere Channels gleichzeitig
    - [x] 10 Unit-Tests
-- [ ] **Google Chat Tentacle** – Eingehende Webhooks oder Bot Events von Google Workspace Chat
+- [x] **Google Chat Tentacle** – Eingehende Webhooks oder Bot Events von Google Workspace Chat
+   - [x] Webhook-Modus mit Axum HTTP-Server
+   - [x] Bot-Modus mit Google Chat API Polling
+   - [x] Webhook-Signatur-Validierung
+   - [x] Service Account Authentifizierung
+   - [x] Space- und User-Filter
+   - [x] Card-Nachrichten mit Metadaten
+   - [x] System-Event-Handling
+   - [x] 10 Unit-Tests
 - [x] **IRC Tentacle** – Verbindet zu IRC Channels und fängt Nachrichten ab
    - [x] Direkte TCP-Verbindung zu IRC-Servern
    - [x] Nickname-Registrierung und Channel-Join

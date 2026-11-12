@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.50.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **Google Chat Tentacle**: Receive messages from Google Workspace Chat with:
+  - Webhook mode with Axum HTTP server
+  - Bot mode with Google Chat API polling
+  - Webhook signature validation
+  - Service account authentication support
+  - Space and user filtering
+  - Card message support with metadata
+  - System event handling
+  - 10 unit tests for config, auth, ink creation, and filtering
+
 ## [0.49.0] - 2026-11-12
 
 ### Added
