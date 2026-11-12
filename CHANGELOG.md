@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.42.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **Geofence Tentacle**: Detect when devices enter/leave geographic zones with:
+  - Two zone shapes: Circle (center + radius) and Polygon (coordinate list)
+  - Haversine distance calculation for circle zones
+  - Ray-casting algorithm for polygon zones
+  - Enter/Exit/Both event type filtering
+  - Hysteresis to prevent flapping at zone boundaries
+  - Configurable cooldown between events
+  - REST API-based position polling
+  - Per-device state tracking
+  - Rich metadata: zone_name, zone_shape, event_type, device_id, coordinates
+  - 12 unit tests for distance, polygon, zones, and ink creation
+
 ## [0.41.0] - 2026-11-12
 
 ### Added

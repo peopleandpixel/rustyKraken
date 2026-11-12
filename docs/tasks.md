@@ -375,7 +375,15 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Optionaler Startup-Delay vor erster Ausführung
   - [x] Benannte Jobs für besseres Logging
   - [x] 15 Unit-Tests (Cron-Parsing, Schedule-Matching, Next Occurrence, Deserialisierung)
-- [ ] **Geofence Tentacle** – Trigger Events wenn Geräte geografische Bereiche betreten/verlassen
+- [x] **Geofence Tentacle** – Trigger Events wenn Geräte geografische Bereiche betreten/verlassen
+   - [x] Zwei Zonenformen: Circle und Polygon
+   - [x] Haversine Distanzberechnung
+   - [x] Ray-Casting Algorithmus für Polygone
+   - [x] Enter/Exit/Both Event-Typen
+   - [x] Hysteresis gegen Flapping
+   - [x] Konfigurierbarer Cooldown
+   - [x] REST API Position Polling
+   - [x] 12 Unit-Tests
 
 #### Messaging & Communication (zusätzlich)
 
