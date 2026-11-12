@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.51.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **Modbus Tentacle**: Read industrial sensor data from PLCs and devices via Modbus TCP with:
+  - Modbus TCP connection (port 502)
+  - Serial connection support (RS232/RS485)
+  - Read functions: Coils, Discrete Inputs, Holding Registers, Input Registers
+  - Configurable polling points with name, address, quantity, slave ID
+  - Per-point topic mapping
+  - Change detection (only publish on value changes)
+  - MBAP frame serialization and response parsing
+  - Error response handling
+  - Simulated values fallback for testing
+  - 12 unit tests for frame parsing, response handling, and ink creation
+
 ## [0.50.0] - 2026-11-12
 
 ### Added

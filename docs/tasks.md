@@ -452,7 +452,17 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 #### IoT & Hardware (zusätzlich)
 
-- [ ] **Modbus Tentacle** – Industrieller Protokoll zum Lesen von Sensor-Daten von PLCs und Geräten
+- [x] **Modbus Tentacle** – Vollständige Implementierung mit Modbus TCP
+  - [x] Modbus TCP Verbindung (Port 502)
+  - [x] Serial Verbindung Support (RS232/RS485)
+  - [x] Read Coils, Discrete Inputs, Holding Registers, Input Registers
+  - [x] Konfigurierbare Polling-Punkte mit Name, Adresse, Quantity, Slave ID
+  - [x] Per-Point Topic-Mapping
+  - [x] Change Detection (nur bei Wertänderungen publishen)
+  - [x] MBAP Frame Serialisierung und Response Parsing
+  - [x] Error Response Handling
+  - [x] Simulierte Werte als Fallback für Testing
+  - [x] 12 Unit-Tests
 - [ ] **BLE/Bluetooth Low Energy Tentacle** – Listet auf BLE Advertisements oder verbindet mit BLE Peripherals
 - [ ] **Zigbee Tentacle** – Home Automation Protokoll (via Zigbee2MQTT Bridge oder nativ)
 - [ ] **Z-Wave Tentacle** – Weiteres Home Automation Protokoll

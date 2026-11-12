@@ -33,16 +33,16 @@ use tentacles::{
     GrpcTentacleConfig, HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig,
     IrcTentacle, IrcTentacleConfig, JournalTentacle, JournalTentacleConfig, K8sTentacle,
     K8sTentacleConfig, KafkaTentacle, KafkaTentacleConfig, MatrixTentacle, MatrixTentacleConfig,
-    MqttTentacle, MqttTentacleConfig, NatsTentacle, NatsTentacleConfig, NtfyTentacle,
-    NtfyTentacleConfig, PacketCaptureConfig, PacketCaptureTentacle, Pop3Tentacle,
-    Pop3TentacleConfig, RabbitMqTentacle, RabbitMqTentacleConfig, RedisTentacle,
-    RedisTentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig,
-    SerialTentacle, SerialTentacleConfig, SignalTentacle, SignalTentacleConfig, SlackTentacle,
-    SlackTentacleConfig, SmtpTentacle, SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig,
-    StdinTentacle, StdinTentacleConfig, SyslogTentacle, SyslogTentacleConfig, TeamsTentacle,
-    TeamsTentacleConfig, TelegramTentacle, TelegramTentacleConfig, Tentacle, WebSocketTentacle,
-    WebSocketTentacleConfig, WebhooksPollerTentacle, WebhooksPollerTentacleConfig, XmppTentacle,
-    XmppTentacleConfig,
+    ModbusTentacle, ModbusTentacleConfig, MqttTentacle, MqttTentacleConfig, NatsTentacle,
+    NatsTentacleConfig, NtfyTentacle, NtfyTentacleConfig, PacketCaptureConfig,
+    PacketCaptureTentacle, Pop3Tentacle, Pop3TentacleConfig, RabbitMqTentacle,
+    RabbitMqTentacleConfig, RedisTentacle, RedisTentacleConfig, RestApiTentacle,
+    RestApiTentacleConfig, RssTentacle, RssTentacleConfig, SerialTentacle, SerialTentacleConfig,
+    SignalTentacle, SignalTentacleConfig, SlackTentacle, SlackTentacleConfig, SmtpTentacle,
+    SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig,
+    SyslogTentacle, SyslogTentacleConfig, TeamsTentacle, TeamsTentacleConfig, TelegramTentacle,
+    TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
+    WebhooksPollerTentacle, WebhooksPollerTentacleConfig, XmppTentacle, XmppTentacleConfig,
 };
 
 #[tokio::main]
@@ -430,6 +430,14 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(MatrixTentacle::new(
                 config.name.clone(),
                 matrix_config,
+            )))
+        }
+        "modbus" => {
+            let modbus_config: ModbusTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(ModbusTentacle::new(
+                config.name.clone(),
+                modbus_config,
             )))
         }
         "signal" => {
