@@ -29,12 +29,13 @@ use tentacles::{
     GooglePubSubTentacleConfig, HttpTentacle, HttpTentacleConfig, ImapTentacle, ImapTentacleConfig,
     JournalTentacle, JournalTentacleConfig, K8sTentacle, K8sTentacleConfig, KafkaTentacle,
     KafkaTentacleConfig, MqttTentacle, MqttTentacleConfig, NatsTentacle, NatsTentacleConfig,
-    NtfyTentacle, NtfyTentacleConfig, Pop3Tentacle, Pop3TentacleConfig, RabbitMqTentacle,
-    RabbitMqTentacleConfig, RedisTentacle, RedisTentacleConfig, RestApiTentacle,
-    RestApiTentacleConfig, RssTentacle, RssTentacleConfig, SerialTentacle, SerialTentacleConfig,
-    SlackTentacle, SlackTentacleConfig, SmtpTentacle, SmtpTentacleConfig, SnmpTentacle,
-    SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig, SyslogTentacle, SyslogTentacleConfig,
-    TelegramTentacle, TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
+    NtfyTentacle, NtfyTentacleConfig, PacketCaptureConfig, PacketCaptureTentacle, Pop3Tentacle,
+    Pop3TentacleConfig, RabbitMqTentacle, RabbitMqTentacleConfig, RedisTentacle,
+    RedisTentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig,
+    SerialTentacle, SerialTentacleConfig, SlackTentacle, SlackTentacleConfig, SmtpTentacle,
+    SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig,
+    SyslogTentacle, SyslogTentacleConfig, TelegramTentacle, TelegramTentacleConfig, Tentacle,
+    WebSocketTentacle, WebSocketTentacleConfig,
 };
 
 #[tokio::main]
@@ -350,6 +351,13 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
         "kubernetes" => {
             let k8s_config: K8sTentacleConfig = serde_yaml::from_value(config.config.clone())?;
             Ok(Box::new(K8sTentacle::new(config.name.clone(), k8s_config)))
+        }
+        "packet_capture" => {
+            let packet_config: PacketCaptureConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(PacketCaptureTentacle::new(
+                config.name.clone(),
+                packet_config,
+            )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),
     }

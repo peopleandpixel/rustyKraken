@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **Network Packet Capture Tentacle**: Capture network packets via libpcap with:
+  - libpcap integration via pcap crate
+  - Configurable network interface
+  - BPF filter strings (e.g., "tcp port 80")
+  - Four topic modes: `protocol`, `port`, `ip`, `all`
+  - Port-based topic mapping
+  - IP-based topic mapping
+  - Protocol filtering (TCP, UDP, ICMP, ARP, DNS, HTTP, HTTPS)
+  - Rate limiting (max packets per second)
+  - Promiscuous mode configurable
+  - Rich metadata: protocol, src_ip, dst_ip, src_port, dst_port, packet_length, hex_data
+  - 13 unit tests for topic modes, protocol filtering, packet parsing, and deserialization
+
 ## [0.35.0] - 2026-11-11
 
 ### Added
