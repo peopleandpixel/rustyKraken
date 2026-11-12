@@ -23,16 +23,17 @@ use reflexes::{
     WhatsAppReflexConfig,
 };
 use tentacles::{
-    AsbTentacle, AsbTentacleConfig, AwsSqsTentacle, AwsSqsTentacleConfig, CronTentacle,
-    CronTentacleConfig, DbPollerTentacle, DbPollerTentacleConfig, DiscordTentacle,
-    DiscordTentacleConfig, DockerTentacle, DockerTentacleConfig, EsTentacle, EsTentacleConfig,
-    FileWatcherTentacle, FileWatcherTentacleConfig, FtpSftpTentacle, FtpSftpTentacleConfig,
-    GeofenceTentacle, GeofenceTentacleConfig, GooglePubSubTentacle, GooglePubSubTentacleConfig,
-    GraphqlTentacle, GraphqlTentacleConfig, GrpcTentacle, GrpcTentacleConfig, HttpTentacle,
-    HttpTentacleConfig, ImapTentacle, ImapTentacleConfig, IrcTentacle, IrcTentacleConfig,
-    JournalTentacle, JournalTentacleConfig, K8sTentacle, K8sTentacleConfig, KafkaTentacle,
-    KafkaTentacleConfig, MatrixTentacle, MatrixTentacleConfig, MqttTentacle, MqttTentacleConfig,
-    NatsTentacle, NatsTentacleConfig, NtfyTentacle, NtfyTentacleConfig, PacketCaptureConfig,
+    AsbTentacle, AsbTentacleConfig, AwsSqsTentacle, AwsSqsTentacleConfig, CalDavTentacle,
+    CalDavTentacleConfig, CronTentacle, CronTentacleConfig, DbPollerTentacle,
+    DbPollerTentacleConfig, DiscordTentacle, DiscordTentacleConfig, DockerTentacle,
+    DockerTentacleConfig, EsTentacle, EsTentacleConfig, FileWatcherTentacle,
+    FileWatcherTentacleConfig, FtpSftpTentacle, FtpSftpTentacleConfig, GeofenceTentacle,
+    GeofenceTentacleConfig, GooglePubSubTentacle, GooglePubSubTentacleConfig, GraphqlTentacle,
+    GraphqlTentacleConfig, GrpcTentacle, GrpcTentacleConfig, HttpTentacle, HttpTentacleConfig,
+    ImapTentacle, ImapTentacleConfig, IrcTentacle, IrcTentacleConfig, JournalTentacle,
+    JournalTentacleConfig, K8sTentacle, K8sTentacleConfig, KafkaTentacle, KafkaTentacleConfig,
+    MatrixTentacle, MatrixTentacleConfig, MqttTentacle, MqttTentacleConfig, NatsTentacle,
+    NatsTentacleConfig, NtfyTentacle, NtfyTentacleConfig, PacketCaptureConfig,
     PacketCaptureTentacle, Pop3Tentacle, Pop3TentacleConfig, RabbitMqTentacle,
     RabbitMqTentacleConfig, RedisTentacle, RedisTentacleConfig, RestApiTentacle,
     RestApiTentacleConfig, RssTentacle, RssTentacleConfig, SerialTentacle, SerialTentacleConfig,
@@ -287,6 +288,14 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(SlackTentacle::new(
                 config.name.clone(),
                 slack_config,
+            )))
+        }
+        "caldav" => {
+            let caldav_config: CalDavTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(CalDavTentacle::new(
+                config.name.clone(),
+                caldav_config,
             )))
         }
         "cron" => {

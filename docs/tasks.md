@@ -325,7 +325,17 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
    - [x] TLS-Support mit optionalem CA-Zertifikat
    - [x] gRPC-Metadata als Custom-Headers
    - [x] 16 Unit-Tests (Topic-Modi, Auth-Varianten, Header, Status-Extraktion, Ink-Erstellung)
-- [ ] **CalDAV/CardDAV Tentacle** – Monitoriert Calendar Events oder Contacts für Triggers
+- [x] **CalDAV/CardDAV Tentacle** – Monitoriert Calendar Events oder Contacts für Triggers
+   - [x] Zwei Modi: CalDAV (Kalender) und CardDAV (Kontakte)
+   - [x] iCalendar (ICS) Parsing für Calendar Events
+   - [x] vCard Parsing für Kontakte
+   - [x] Mehrere Kalender-URLs
+   - [x] Authentifizierung: Basic, Bearer Token, Digest
+   - [x] Future-only Event-Filter
+   - [x] Kontakt-Name-Filter
+   - [x] TLS-Verifikation konfigurierbar
+   - [x] Custom Headers
+   - [x] 12 Unit-Tests
 - [ ] **Webhooks Poller Tentacle** – Periodisches Pollen von externen HTTP Endpoints für neue Daten
 
 #### Data & Storage

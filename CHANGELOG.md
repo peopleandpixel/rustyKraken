@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.48.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **CalDAV/CardDAV Tentacle**: Monitor calendar events and contacts with:
+  - Two modes: CalDAV (calendar) and CardDAV (contacts)
+  - iCalendar (ICS) parsing for calendar events
+  - vCard parsing for contacts
+  - Multiple calendar URL support
+  - Authentication: Basic, Bearer Token, Digest
+  - Future-only event filtering
+  - Contact name filtering
+  - Configurable polling interval and time window
+  - TLS verification toggle
+  - Custom headers support
+  - 12 unit tests for parsing, ink creation, auth, and filtering
+
 ## [0.47.0] - 2026-11-12
 
 ### Added
