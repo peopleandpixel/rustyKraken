@@ -395,11 +395,33 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
    - [x] Since Token Pagination
    - [x] Konfigurierbarer Home Server
    - [x] 10 Unit-Tests
-- [ ] **Signal Tentacle** – Listet auf Nachrichten via Signal Desktop oder Signal Gateway
-- [ ] **Microsoft Teams Tentacle** – Webhook-basierte oder bot-basierte eingehende Nachrichten von Teams Channels
+- [x] **Signal Tentacle** – Listet auf Nachrichten via Signal Desktop oder Signal Gateway
+   - [x] Signal Service API Integration
+   - [x] REST API Mode für Signal Gateway
+   - [x] API Token Authentifizierung
+   - [x] Kontakt- und Gruppenüberwachung
+   - [x] 10 Unit-Tests
+- [x] **Microsoft Teams Tentacle** – Webhook-basierte oder bot-basierte eingehende Nachrichten von Teams Channels
+   - [x] Webhook Mode für Incoming Webhooks
+   - [x] Azure AD Authentifizierung
+   - [x] Mehrere Channels gleichzeitig
+   - [x] 10 Unit-Tests
 - [ ] **Google Chat Tentacle** – Eingehende Webhooks oder Bot Events von Google Workspace Chat
-- [ ] **IRC Tentacle** – Verbindet zu IRC Channels und fängt Nachrichten ab
-- [ ] **XMPP/Jabber Tentacle** – Listet auf Nachrichten in XMPP-Netzwerken
+- [x] **IRC Tentacle** – Verbindet zu IRC Channels und fängt Nachrichten ab
+   - [x] Direkte TCP-Verbindung zu IRC-Servern
+   - [x] Nickname-Registrierung und Channel-Join
+   - [x] PING/PONG Keepalive
+   - [x] PRIVMSG Parsing mit Own-Message-Filterung
+   - [x] TLS Support
+   - [x] Auto-Reconnect
+   - [x] 10 Unit-Tests
+- [x] **XMPP/Jabber Tentacle** – Listet auf Nachrichten in XMPP-Netzwerken
+   - [x] XMPP Server via REST API (Prosody HTTP API)
+   - [x] MUC (Multi-User Chat) Raumüberwachung
+   - [x] Private Kontaktüberwachung
+   - [x] Passwort und API Token Authentifizierung
+   - [x] TLS Support
+   - [x] 12 Unit-Tests
 
 #### IoT & Hardware (zusätzlich)
 

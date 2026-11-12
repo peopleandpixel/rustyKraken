@@ -29,16 +29,18 @@ use tentacles::{
     FileWatcherTentacle, FileWatcherTentacleConfig, FtpSftpTentacle, FtpSftpTentacleConfig,
     GeofenceTentacle, GeofenceTentacleConfig, GooglePubSubTentacle, GooglePubSubTentacleConfig,
     GraphqlTentacle, GraphqlTentacleConfig, GrpcTentacle, GrpcTentacleConfig, HttpTentacle,
-    HttpTentacleConfig, ImapTentacle, ImapTentacleConfig, JournalTentacle, JournalTentacleConfig,
-    K8sTentacle, K8sTentacleConfig, KafkaTentacle, KafkaTentacleConfig, MatrixTentacle,
-    MatrixTentacleConfig, MqttTentacle, MqttTentacleConfig, NatsTentacle, NatsTentacleConfig,
-    NtfyTentacle, NtfyTentacleConfig, PacketCaptureConfig, PacketCaptureTentacle, Pop3Tentacle,
-    Pop3TentacleConfig, RabbitMqTentacle, RabbitMqTentacleConfig, RedisTentacle,
-    RedisTentacleConfig, RestApiTentacle, RestApiTentacleConfig, RssTentacle, RssTentacleConfig,
-    SerialTentacle, SerialTentacleConfig, SlackTentacle, SlackTentacleConfig, SmtpTentacle,
+    HttpTentacleConfig, ImapTentacle, ImapTentacleConfig, IrcTentacle, IrcTentacleConfig,
+    JournalTentacle, JournalTentacleConfig, K8sTentacle, K8sTentacleConfig, KafkaTentacle,
+    KafkaTentacleConfig, MatrixTentacle, MatrixTentacleConfig, MqttTentacle, MqttTentacleConfig,
+    NatsTentacle, NatsTentacleConfig, NtfyTentacle, NtfyTentacleConfig, PacketCaptureConfig,
+    PacketCaptureTentacle, Pop3Tentacle, Pop3TentacleConfig, RabbitMqTentacle,
+    RabbitMqTentacleConfig, RedisTentacle, RedisTentacleConfig, RestApiTentacle,
+    RestApiTentacleConfig, RssTentacle, RssTentacleConfig, SerialTentacle, SerialTentacleConfig,
+    SignalTentacle, SignalTentacleConfig, SlackTentacle, SlackTentacleConfig, SmtpTentacle,
     SmtpTentacleConfig, SnmpTentacle, SnmpTentacleConfig, StdinTentacle, StdinTentacleConfig,
-    SyslogTentacle, SyslogTentacleConfig, TelegramTentacle, TelegramTentacleConfig, Tentacle,
-    WebSocketTentacle, WebSocketTentacleConfig,
+    SyslogTentacle, SyslogTentacleConfig, TeamsTentacle, TeamsTentacleConfig, TelegramTentacle,
+    TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig, XmppTentacle,
+    XmppTentacleConfig,
 };
 
 #[tokio::main]
@@ -410,6 +412,32 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(MatrixTentacle::new(
                 config.name.clone(),
                 matrix_config,
+            )))
+        }
+        "signal" => {
+            let signal_config: SignalTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(SignalTentacle::new(
+                config.name.clone(),
+                signal_config,
+            )))
+        }
+        "teams" => {
+            let teams_config: TeamsTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(TeamsTentacle::new(
+                config.name.clone(),
+                teams_config,
+            )))
+        }
+        "irc" => {
+            let irc_config: IrcTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(IrcTentacle::new(config.name.clone(), irc_config)))
+        }
+        "xmpp" => {
+            let xmpp_config: XmppTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(XmppTentacle::new(
+                config.name.clone(),
+                xmpp_config,
             )))
         }
         _ => anyhow::bail!("Unknown tentacle type: {}", config.r#type),

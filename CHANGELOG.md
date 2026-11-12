@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.47.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **Signal Tentacle**: Receive messages from Signal via REST API with:
+  - Signal Service API integration
+  - REST API mode for Signal Gateway/Provisioning
+  - API token authentication
+  - Contact and group monitoring
+  - Configurable polling interval
+  - 10 unit tests
+
+- **Microsoft Teams Tentacle**: Receive messages from Teams channels with:
+  - Webhook mode for Incoming Webhooks
+  - Azure AD authentication support
+  - Multiple channel monitoring
+  - Rich metadata: channel_id, sender, timestamp, subject
+  - 10 unit tests
+
+- **IRC Tentacle**: Connect to IRC channels and capture messages with:
+  - Direct TCP connection to IRC servers
+  - Nickname registration and channel joining
+  - PING/PONG keepalive handling
+  - PRIVMSG parsing with own-message filtering
+  - TLS support (port 6697)
+  - Password authentication
+  - Auto-reconnect with configurable delay
+  - 10 unit tests
+
+- **XMPP/Jabber Tentacle**: Listen for messages on XMPP networks with:
+  - XMPP server connection via REST API (Prosody HTTP API)
+  - MUC (Multi-User Chat) room monitoring
+  - Private contact monitoring
+  - Password and API token authentication
+  - TLS support
+  - 12 unit tests
+
 ## [0.43.0] - 2026-11-12
 
 ### Added
