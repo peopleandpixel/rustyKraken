@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **gRPC Tentacle**: Consume gRPC streams via HTTP/2 JSON-Transcoding with:
+  - gRPC-JSON-Transcoding over HTTP/2 (no proto files needed)
+  - Four call types: `unary`, `server_streaming`, `client_streaming`, `bidirectional`
+  - Three topic modes: `method` (service method based), `field` (JSON field extraction), `all` (single topic)
+  - Method-based topic mapping for custom routing
+  - Authentication: None, Bearer Token, API Key, Custom Header
+  - Configurable request payload for unary/streaming calls
+  - Polling interval for unary mode
+  - Streaming timeout and max messages per session
+  - Auto-reconnect with configurable delay
+  - TLS support with optional CA certificate
+  - gRPC metadata as custom headers
+  - 16 unit tests for topic modes, auth variants, headers, status extraction, and ink creation
+
 ## [0.37.0] - 2026-11-12
 
 ### Added

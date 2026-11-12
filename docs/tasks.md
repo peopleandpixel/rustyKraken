@@ -312,7 +312,19 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Auto-Reconnect mit konfigurierbarer Verzögerung
   - [x] Reiche Metadaten: subscription_name, subscription_id
   - [x] 9 Unit-Tests (Topic-Modi, Mapping, Messages, Deserialisierung)
-- [ ] **gRPC Tentacle** – gRPC Server/Stream Listener für protobuf-basierte Services
+- [x] **gRPC Tentacle** – gRPC Server/Stream Listener für protobuf-basierte Services
+   - [x] gRPC-JSON-Transcoding über HTTP/2 (keine proto-Dateien nötig)
+   - [x] Vier Aufruftypen: unary, server_streaming, client_streaming, bidirectional
+   - [x] Drei Topic-Modi: method, field, all
+   - [x] Method-basiertes Topic-Mapping
+   - [x] Authentifizierung: None, Bearer Token, API Key, Custom Header
+   - [x] Konfigurierbare Request-Payload
+   - [x] Polling-Interval für Unary-Modus
+   - [x] Streaming-Timeout und max Nachrichten pro Session
+   - [x] Auto-Reconnect mit konfigurierbarer Verzögerung
+   - [x] TLS-Support mit optionalem CA-Zertifikat
+   - [x] gRPC-Metadata als Custom-Headers
+   - [x] 16 Unit-Tests (Topic-Modi, Auth-Varianten, Header, Status-Extraktion, Ink-Erstellung)
 - [ ] **CalDAV/CardDAV Tentacle** – Monitoriert Calendar Events oder Contacts für Triggers
 - [ ] **Webhooks Poller Tentacle** – Periodisches Pollen von externen HTTP Endpoints für neue Daten
 
