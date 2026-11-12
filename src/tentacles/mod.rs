@@ -49,6 +49,8 @@ pub mod telegram;
 pub mod webhooks_poller;
 pub mod websocket;
 pub mod xmpp;
+pub mod zigbee;
+pub mod zwave;
 
 pub use aws_sqs::{AwsSqsTentacle, AwsSqsTentacleConfig};
 pub use azure_servicebus::{AsbTentacle, AsbTentacleConfig};
@@ -95,6 +97,8 @@ pub use telegram::{TelegramTentacle, TelegramTentacleConfig};
 pub use webhooks_poller::{WebhooksPollerTentacle, WebhooksPollerTentacleConfig};
 pub use websocket::{WebSocketTentacle, WebSocketTentacleConfig};
 pub use xmpp::{XmppTentacle, XmppTentacleConfig};
+pub use zigbee::{ZigbeeTentacle, ZigbeeTentacleConfig};
+pub use zwave::{ZwaveTentacle, ZwaveTentacleConfig};
 
 /// Ein Tentacle ist eine Nachrichtenquelle, die Ink in das Event Bus einspeist.
 #[allow(dead_code)]

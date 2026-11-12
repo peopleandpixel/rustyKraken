@@ -471,8 +471,22 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Konfigurierbarer Adapter-Name
   - [x] Simulierte Geräte als Fallback
   - [x] 12 Unit-Tests
-- [ ] **Zigbee Tentacle** – Home Automation Protokoll (via Zigbee2MQTT Bridge oder nativ)
-- [ ] **Z-Wave Tentacle** – Weiteres Home Automation Protokoll
+- [x] **Zigbee Tentacle** – Vollständige Implementierung
+  - [x] Zigbee2MQTT Bridge-Modus via MQTT
+  - [x] Native Zigbee-Modus (benötigt Hardware)
+  - [x] Device-Filterung nach Name, IEEE-Adresse, Modell
+  - [x] Zigbee2MQTT JSON-Nachrichten-Parsing
+  - [x] Change Detection für Device-States
+  - [x] Battery und Link Quality Tracking
+  - [x] 10 Unit-Tests
+- [x] **Z-Wave Tentacle** – Vollständige Implementierung
+  - [x] Z-Wave JS WebSocket-Modus
+  - [x] OpenZWave-Modus
+  - [x] Node-Filterung nach Node-ID und Value-Type
+  - [x] Change Detection für Node-Werte
+  - [x] Battery Level Tracking
+  - [x] Simulierte Nodes für Testing
+  - [x] 8 Unit-Tests
 
 ---
 

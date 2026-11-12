@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.54.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **Zigbee Tentacle**: Monitor Zigbee home automation devices with:
+  - Zigbee2MQTT bridge mode via MQTT
+  - Native Zigbee mode (requires hardware)
+  - Device filtering by friendly name, IEEE address, and model
+  - Zigbee2MQTT JSON message parsing
+  - Change detection for device states
+  - Battery and link quality tracking
+  - 10 unit tests for filtering, parsing, and ink creation
+
+- **Z-Wave Tentacle**: Monitor Z-Wave home automation nodes with:
+  - Z-Wave JS WebSocket mode
+  - OpenZWave mode
+  - Node filtering by node ID and value type
+  - Change detection for node values
+  - Battery level tracking
+  - Simulated nodes for testing
+  - 8 unit tests for filtering, ink creation, and simulation
+
+## [0.53.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **Zigbee Tentacle**: Initial release (merged into 0.54.0)
+
 ## [0.52.0] - 2026-11-12
 
 ### Added

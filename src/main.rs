@@ -43,6 +43,7 @@ use tentacles::{
     SyslogTentacle, SyslogTentacleConfig, TeamsTentacle, TeamsTentacleConfig, TelegramTentacle,
     TelegramTentacleConfig, Tentacle, WebSocketTentacle, WebSocketTentacleConfig,
     WebhooksPollerTentacle, WebhooksPollerTentacleConfig, XmppTentacle, XmppTentacleConfig,
+    ZigbeeTentacle, ZigbeeTentacleConfig, ZwaveTentacle, ZwaveTentacleConfig,
 };
 
 #[tokio::main]
@@ -443,6 +444,21 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
         "ble" => {
             let ble_config: BleTentacleConfig = serde_yaml::from_value(config.config.clone())?;
             Ok(Box::new(BleTentacle::new(config.name.clone(), ble_config)))
+        }
+        "zigbee" => {
+            let zigbee_config: ZigbeeTentacleConfig =
+                serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(ZigbeeTentacle::new(
+                config.name.clone(),
+                zigbee_config,
+            )))
+        }
+        "zwave" => {
+            let zwave_config: ZwaveTentacleConfig = serde_yaml::from_value(config.config.clone())?;
+            Ok(Box::new(ZwaveTentacle::new(
+                config.name.clone(),
+                zwave_config,
+            )))
         }
         "signal" => {
             let signal_config: SignalTentacleConfig =
