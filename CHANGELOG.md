@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.41.0] - 2026-11-12
+
+### Added
+
+#### Tentacles
+- **FTP/SFTP Tentacle**: Monitor remote directories via FTP, FTPES, or SFTP with:
+  - Three protocol types: FTP, FTPES (FTP over TLS), SFTP (SSH File Transfer)
+  - REST API mode for FTP servers with REST interface
+  - File pattern filtering (e.g., "*.log", "*.txt")
+  - Configurable polling interval
+  - Delete after download option
+  - New files only mode
+  - Max file size limit
+  - Local directory storage
+  - Recursive directory scanning
+  - Authentication: Password, SSH Key (SFTP)
+  - 15 unit tests for config, pattern matching, ink creation, and auth variants
+
 ## [0.40.0] - 2026-11-12
 
 ### Added

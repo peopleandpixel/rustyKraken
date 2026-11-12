@@ -353,7 +353,15 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
   - [x] Konfigurierbares Poll-Interval und max Dokumente pro Poll
   - [x] Reiche Metadaten: es_index, es_doc_id, alle Dokument-Felder
   - [x] 11 Unit-Tests (Topic-Modi, Auth-Varianten, Ink-Erstellung, Deserialisierung)
-- [ ] **FTP/SFTP Tentacle** – Monitoriert FTP/SFTP Verzeichnisse für neue Datei-Uploads
+- [x] **FTP/SFTP Tentacle** – Monitoriert FTP/SFTP Verzeichnisse für neue Datei-Uploads
+   - [x] Drei Protokolle: FTP, FTPES, SFTP
+   - [x] REST API Mode für FTP-Server mit REST-Schnittstelle
+   - [x] Dateimuster-Filterung
+   - [x] Konfigurierbares Polling-Interval
+   - [x] Delete after Download
+   - [x] Max Dateigröße Limit
+   - [x] Authentifizierung: Password, SSH Key
+   - [x] 15 Unit-Tests
 
 #### Scheduling & Time
 
