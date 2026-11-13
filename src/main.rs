@@ -23,13 +23,13 @@ use reflexes::{
     Fail2BanReflex, Fail2BanReflexConfig, FhemReflex, FhemReflexConfig, FileReflex,
     FileReflexConfig, FtpSftpUploadReflex, FtpSftpUploadReflexConfig, GoogleChatReflex,
     GoogleChatReflexConfig, GotifyReflex, GotifyReflexConfig, GrafanaReflex, GrafanaReflexConfig,
-    HomeAssistantReflex, HomeAssistantReflexConfig, HttpReflex, HttpReflexConfig, InfluxDbReflex,
-    InfluxDbReflexConfig, IrcReflex, IrcReflexConfig, KafkaReflex, KafkaReflexConfig,
+    HomeAssistantReflex, HomeAssistantReflexConfig, HttpReflex, HttpReflexConfig, InfluxdbReflex,
+    InfluxdbReflexConfig, IrcReflex, IrcReflexConfig, KafkaReflex, KafkaReflexConfig,
     KubernetesReflex, KubernetesReflexConfig, LedDisplayReflex, LedDisplayReflexConfig, MakeReflex,
     MakeReflexConfig, MatrixReflex, MatrixReflexConfig, MqttPublishReflex, MqttPublishReflexConfig,
     N8nReflex, N8nReflexConfig, NatsReflex, NatsReflexConfig, NtfyReflex, NtfyReflexConfig,
-    OpenhabReflex, OpenhabReflexConfig, PowerDnsReflex, PowerDnsReflexConfig, Printer3DReflex,
-    Printer3DReflexConfig, PrinterReflex, PrinterReflexConfig, PrometheusReflex,
+    OpenhabReflex, OpenhabReflexConfig, PowerDnsReflex, PowerDnsReflexConfig, Printer3dReflex,
+    Printer3dReflexConfig, PrinterReflex, PrinterReflexConfig, PrometheusReflex,
     PrometheusReflexConfig, PuppetReflex, PuppetReflexConfig, PushbulletReflex,
     PushbulletReflexConfig, PushoverReflex, PushoverReflexConfig, RabbitMqReflex,
     RabbitMqReflexConfig, S3MinioReflex, S3MinioReflexConfig, SaltStackReflex,
@@ -786,9 +786,9 @@ fn create_reflex_handler(
             Ok(Box::new(ElasticsearchReflex::new(config.name.clone(), es_config)))
         }
         "influxdb" => {
-            let influx_config: InfluxDbReflexConfig =
+            let influx_config: InfluxdbReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(InfluxDbReflex::new(config.name.clone(), influx_config)))
+            Ok(Box::new(InfluxdbReflex::new(config.name.clone(), influx_config)))
         }
         "prometheus" => {
             let prom_config: PrometheusReflexConfig =
@@ -856,9 +856,9 @@ fn create_reflex_handler(
             Ok(Box::new(PrinterReflex::new(config.name.clone(), printer_config)))
         }
         "printer_3d" => {
-            let p3d_config: Printer3DReflexConfig =
+            let p3d_config: Printer3dReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(Printer3DReflex::new(config.name.clone(), p3d_config)))
+            Ok(Box::new(Printer3dReflex::new(config.name.clone(), p3d_config)))
         }
         _ => anyhow::bail!("Unknown reflex type: {}", config.action.r#type),
     }

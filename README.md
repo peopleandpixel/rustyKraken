@@ -1,6 +1,6 @@
 # 🦑 rustyKraken
 
-[![Version](https://img.shields.io/badge/version-0.54.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.54.0)
+[![Version](https://img.shields.io/badge/version-0.56.0-blue.svg)](https://github.com/peopleandpixel/rustyKraken/releases/tag/v0.56.0)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)](https://www.rust-lang.org/)
 [![CI](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml/badge.svg)](https://github.com/peopleandpixel/rustyKraken/actions/workflows/ci.yml)
@@ -897,7 +897,7 @@ Messages are sorted by a path-based topic system:
 
 ## Version
 
-Current version: **0.55.0** (2026-11-12)
+Current version: **0.56.0** (2026-11-13)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 

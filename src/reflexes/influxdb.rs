@@ -1,63 +1,112 @@
+#![allow(dead_code)]
+
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for InfluxDB Reflex
+/// Writes metrics to InfluxDB via HTTP API
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InfluxDbReflexConfig {
-    /// API endpoint http://localhost:8086
-    pub api_url: String,
+pub struct InfluxdbReflexConfig {
+    /// InfluxDB host URL (e.g., "http://localhost:8086")
+    pub host: String,
 
-    /// API key or token (optional)
+    /// InfluxDB organization
+    pub organization: String,
+
+    /// InfluxDB bucket
+    pub bucket: String,
+
+    /// InfluxDB token
+    pub token: String,
+
+    /// Default measurement name
+    #[serde(default = "default_measurement")]
+    pub measurement: String,
+
+    /// Template for measurement name
     #[serde(default)]
-    pub api_key: Option<String>,
+    pub measurement_template: Option<String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
-
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
-
-    /// Optional: mapping from Ink topics to API http://localhost:8086s
+    /// Template for tags (JSON object)
     #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    pub tags_template: Option<String>,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
+    /// Template for fields (JSON object)
+    #[serde(default = "default_fields_template")]
+    pub fields_template: String,
 
-    /// Custom headers
+    /// Optional: mapping from Ink topics to measurements
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub topic_measurement_mapping: HashMap<String, String>,
+
+    /// Precision for timestamps: "ns", "us", "ms", "s", "m", "h"
+    #[serde(default = "default_precision")]
+    pub precision: String,
+
+    /// Whether to verify TLS certificates
+    #[serde(default = "default_verify_ssl")]
+    pub verify_ssl: bool,
+
+    /// Timeout in seconds
+    #[serde(default = "default_timeout")]
+    pub timeout: u64,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_measurement() -> String {
+    "kraken_events".to_string()
+}
+fn default_fields_template() -> String {
+    r#"{"value": 1}"#.to_string()
+}
+fn default_precision() -> String {
+    "ns".to_string()
+}
+fn default_verify_ssl() -> bool {
+    true
+}
+fn default_timeout() -> u64 {
+    30
+}
 
-pub struct InfluxDbReflex {
+pub struct InfluxdbReflex {
     name: String,
-    config: InfluxDbReflexConfig,
+    config: InfluxdbReflexConfig,
     client: reqwest::Client,
 }
 
-impl InfluxDbReflex {
-    pub fn new(name: String, config: InfluxDbReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+impl InfluxdbReflex {
+    pub fn new(name: String, config: InfluxdbReflexConfig) -> Self {
+        let verify_ssl = config.verify_ssl;
+        Self {
+            name,
+            config,
+            client: reqwest::Client::builder()
+                .danger_accept_invalid_certs(!verify_ssl)
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
+        }
     }
 
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+    /// Resolve measurement name for a given Ink
+    fn resolve_measurement(&self, ink: &Ink) -> String {
+        if let Some(measurement) = self
+            .config
+            .topic_measurement_mapping
+            .get(&ink.topic)
+            .filter(|m| !m.is_empty())
+        {
+            return measurement.clone();
         }
-        self.config.api_url.clone()
+        if let Some(ref template) = self.config.measurement_template {
+            return self.render_template(template, ink);
+        }
+        self.config.measurement.clone()
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,35 +127,234 @@ impl InfluxDbReflex {
         }
         rendered
     }
-}
 
-#[async_trait]
-impl Reflex for InfluxDbReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "influxdb" }
+    /// Build Line Protocol from tags and fields
+    fn build_line_protocol(
+        &self,
+        measurement: &str,
+        tags: &serde_json::Value,
+        fields: &serde_json::Value,
+        timestamp: i64,
+    ) -> String {
+        let mut line = measurement.to_string();
 
-    async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("InfluxDB reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("InfluxDB reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
-
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
+        // Add tags
+        if let Some(tag_obj) = tags.as_object() {
+            for (key, value) in tag_obj {
+                let value_str = match value {
+                    serde_json::Value::String(s) => s.clone(),
+                    _ => value.to_string(),
+                };
+                line.push_str(&format!(",{}={}", key, value_str));
+            }
         }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
+
+        line.push(' ');
+
+        // Add fields
+        if let Some(field_obj) = fields.as_object() {
+            let mut first = true;
+            for (key, value) in field_obj {
+                if !first {
+                    line.push(',');
+                }
+                first = false;
+
+                match value {
+                    serde_json::Value::String(s) => {
+                        let escaped = s.replace('\\', "\\\\").replace('"', "\\\"");
+                        line.push_str(&format!("{}=\"{}\"", key, escaped));
+                    }
+                    serde_json::Value::Number(n) => {
+                        if let Some(i) = n.as_i64() {
+                            line.push_str(&format!("{}={}", key, i));
+                        } else if let Some(f) = n.as_f64() {
+                            line.push_str(&format!("{}={}", key, f));
+                        }
+                    }
+                    serde_json::Value::Bool(b) => {
+                        line.push_str(&format!("{}={}", key, b));
+                    }
+                    _ => {
+                        line.push_str(&format!("{}=\"{}\"", key, value));
+                    }
+                }
+            }
         }
-        let response = request.send().await.with_context(|| format!("Failed to send InfluxDB request"))?;
+
+        // Add timestamp
+        line.push_str(&format!(" {}", timestamp));
+
+        line
+    }
+
+    /// Write data to InfluxDB
+    async fn write_data(&self, line_protocol: &str) -> Result<()> {
+        let url = format!(
+            "{}/api/v2/write",
+            self.config.host.trim_end_matches('/')
+        );
+
+        let query = format!(
+            "?org={}&bucket={}&precision={}",
+            self.config.organization, self.config.bucket, self.config.precision
+        );
+
+        let response = self
+            .client
+            .post(format!("{}{}", url, query))
+            .header("Authorization", format!("Token {}", self.config.token))
+            .header("Content-Type", "text/plain")
+            .body(line_protocol.to_string())
+            .send()
+            .await
+            .with_context(|| format!("Failed to write to InfluxDB at {}", url))?;
+
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("InfluxDB API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "InfluxDB write error ({}): {}",
+                status,
+                error_body
+            ));
         }
-        info!("InfluxDB reflex '{}' sent message for topic: {}", self.name, ink.topic);
+
+        Ok(())
+    }
+
+    /// Query data from InfluxDB
+    async fn query_data(&self, query: &str) -> Result<serde_json::Value> {
+        let url = format!(
+            "{}/api/v2/query",
+            self.config.host.trim_end_matches('/')
+        );
+
+        let payload = serde_json::json!({
+            "query": query,
+            "org": self.config.organization
+        });
+
+        let response = self
+            .client
+            .post(&url)
+            .header("Authorization", format!("Token {}", self.config.token))
+            .header("Content-Type", "application/json")
+            .json(&payload)
+            .send()
+            .await
+            .with_context(|| format!("Failed to query InfluxDB at {}", url))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "InfluxDB query error ({}): {}",
+                status,
+                error_body
+            ));
+        }
+
+        response.json().await.context("Failed to parse InfluxDB query response")
+    }
+
+    /// List buckets
+    async fn list_buckets(&self) -> Result<Vec<String>> {
+        let url = format!(
+            "{}/api/v2/buckets?org={}",
+            self.config.host.trim_end_matches('/'),
+            self.config.organization
+        );
+
+        let response = self
+            .client
+            .get(&url)
+            .header("Authorization", format!("Token {}", self.config.token))
+            .send()
+            .await
+            .context("Failed to list InfluxDB buckets")?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            return Err(anyhow::anyhow!("InfluxDB list buckets error: {}", status));
+        }
+
+        let result: serde_json::Value =
+            response.json().await.context("Failed to parse buckets response")?;
+
+        Ok(result["buckets"]
+            .as_array()
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|b| b["name"].as_str().map(|s| s.to_string()))
+                    .collect()
+            })
+            .unwrap_or_default())
+    }
+}
+
+#[async_trait]
+impl Reflex for InfluxdbReflex {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn r#type(&self) -> &str {
+        "influxdb"
+    }
+
+    async fn handle(&self, ink: &Ink) -> Result<()> {
+        info!(
+            "InfluxDB reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
+
+        // Resolve measurement
+        let measurement = self.resolve_measurement(ink);
+        debug!(
+            "InfluxDB reflex '{}' resolved measurement: {}",
+            self.name, measurement
+        );
+
+        // Render tags
+        let tags: serde_json::Value = if let Some(ref template) = self.config.tags_template {
+            let rendered = self.render_template(template, ink);
+            serde_json::from_str(&rendered).context("tags_template must render to valid JSON")?
+        } else {
+            serde_json::json!({
+                "topic": ink.topic,
+                "source": ink.source
+            })
+        };
+
+        // Render fields
+        let fields_rendered = self.render_template(&self.config.fields_template, ink);
+        let fields: serde_json::Value = serde_json::from_str(&fields_rendered)
+            .context("fields_template must render to valid JSON")?;
+
+        debug!(
+            "InfluxDB reflex '{}' tags={}, fields={}",
+            self.name, tags, fields
+        );
+
+        // Build Line Protocol
+        let timestamp = ink.timestamp.timestamp_nanos_opt().unwrap_or(0);
+        let line_protocol =
+            self.build_line_protocol(&measurement, &tags, &fields, timestamp);
+
+        debug!(
+            "InfluxDB reflex '{}' line protocol: {}",
+            self.name, line_protocol
+        );
+
+        // Write data
+        self.write_data(&line_protocol).await?;
+
+        info!(
+            "InfluxDB reflex '{}' wrote data to measurement: {}",
+            self.name, measurement
+        );
+
         Ok(())
     }
 }
@@ -115,15 +363,20 @@ impl Reflex for InfluxDbReflex {
 mod tests {
     use super::*;
 
-    fn create_test_config() -> InfluxDbReflexConfig {
-        InfluxDbReflexConfig {
-            api_url: "http://localhost:8086".to_string(),
-            api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+    fn create_test_config() -> InfluxdbReflexConfig {
+        InfluxdbReflexConfig {
+            host: "http://localhost:8086".to_string(),
+            organization: "kraken".to_string(),
+            bucket: "events".to_string(),
+            token: "my-token".to_string(),
+            measurement: "kraken_events".to_string(),
+            measurement_template: None,
+            tags_template: None,
+            fields_template: default_fields_template(),
+            topic_measurement_mapping: HashMap::new(),
+            precision: "ns".to_string(),
+            verify_ssl: true,
+            timeout: 30,
         }
     }
 
@@ -134,25 +387,43 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = InfluxDbReflex::new("test".to_string(), config);
+        let reflex = InfluxdbReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("{{topic}}-{{body}}", &ink),
+            "/test/topic-test body"
+        );
     }
 
     #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "http://localhost:8086"
-            message_template: "[{{topic}}] {{body}}"
+            host: "http://influx.example.com:8086"
+            organization: "myorg"
+            bucket: "metrics"
+            token: "secret"
         "#;
-        let config: InfluxDbReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "http://localhost:8086");
+        let config: InfluxdbReflexConfig = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(config.organization, "myorg");
+        assert_eq!(config.bucket, "metrics");
     }
 
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = InfluxDbReflex::new("test".to_string(), config);
+        let reflex = InfluxdbReflex::new("test".to_string(), config);
         assert_eq!(reflex.r#type(), "influxdb");
+    }
+
+    #[test]
+    fn test_line_protocol() {
+        let config = create_test_config();
+        let reflex = InfluxdbReflex::new("test".to_string(), config);
+        let tags = serde_json::json!({"host": "web01"});
+        let fields = serde_json::json!({"value": 42, "name": "test"});
+        let line = reflex.build_line_protocol("cpu", &tags, &fields, 1234567890);
+        assert!(line.contains("cpu,host=web01"));
+        assert!(line.contains("value=42"));
+        assert!(line.contains("name=\"test\""));
     }
 }

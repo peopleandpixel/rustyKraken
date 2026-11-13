@@ -2,45 +2,44 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for Tasmota Reflex
+/// Controls Tasmota devices via HTTP API
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TasmotaReflexConfig {
-    /// API endpoint http://192.168.1.1
-    pub api_url: String,
+    /// Tasmota device IP or hostname
+    pub host: String,
 
-    /// API key or token (optional)
+    /// Username (optional)
     #[serde(default)]
-    pub api_key: Option<String>,
+    pub username: Option<String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
-
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
-
-    /// Optional: mapping from Ink topics to API http://192.168.1.1s
+    /// Password (optional)
     #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    pub password: Option<String>,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
-
-    /// Custom headers
+    /// Default command (e.g., "Power1", "Backlight", "Dimmer")
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub command: Option<String>,
+
+    /// Template for command
+    #[serde(default)]
+    pub command_template: Option<String>,
+
+    /// Optional: mapping from Ink topics to commands
+    #[serde(default)]
+    pub topic_command_mapping: HashMap<String, String>,
+
+    /// Verify SSL
+    #[serde(default = "default_verify_ssl")]
+    pub verify_ssl: bool,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_verify_ssl() -> bool { true }
 
 pub struct TasmotaReflex {
     name: String,
@@ -50,14 +49,15 @@ pub struct TasmotaReflex {
 
 impl TasmotaReflex {
     pub fn new(name: String, config: TasmotaReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
-    }
-
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+        let verify_ssl = config.verify_ssl;
+        Self {
+            name,
+            config,
+            client: reqwest::Client::builder()
+                .danger_accept_invalid_certs(!verify_ssl)
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
         }
-        self.config.api_url.clone()
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,6 +78,21 @@ impl TasmotaReflex {
         }
         rendered
     }
+
+    fn resolve_command(&self, ink: &Ink) -> String {
+        if let Some(cmd) = self
+            .config
+            .topic_command_mapping
+            .get(&ink.topic)
+            .filter(|c| !c.is_empty())
+        {
+            return cmd.clone();
+        }
+        if let Some(ref template) = self.config.command_template {
+            return self.render_template(template, ink);
+        }
+        self.config.command.clone().unwrap_or_else(|| ink.body.clone())
+    }
 }
 
 #[async_trait]
@@ -87,26 +102,41 @@ impl Reflex for TasmotaReflex {
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
         info!("Tasmota reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("Tasmota reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
+        let command = self.resolve_command(ink);
+
+        debug!(
+            "Tasmota reflex '{}' command={} on {}",
+            self.name, command, self.config.host
+        );
+
+        // Tasmota HTTP API: /cm?cmnd={command}
+        let url = format!(
+            "http://{}/cm?cmnd={}",
+            self.config.host,
+            urlencoding::encode(&command)
+        );
+
+        let mut request = self.client.get(&url);
+        if let (Some(user), Some(pass)) = (&self.config.username, &self.config.password) {
+            request = request.basic_auth(user, Some(pass));
         }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
-        }
-        let response = request.send().await.with_context(|| format!("Failed to send Tasmota request"))?;
+
+        let response = request
+            .send()
+            .await
+            .with_context(|| format!("Failed to send Tasmota command to {}", self.config.host))?;
+
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
             return Err(anyhow::anyhow!("Tasmota API error ({}): {}", status, error_body));
         }
-        info!("Tasmota reflex '{}' sent message for topic: {}", self.name, ink.topic);
+
+        info!(
+            "Tasmota reflex '{}' sent command '{}' to {}",
+            self.name, command, self.config.host
+        );
         Ok(())
     }
 }
@@ -117,13 +147,13 @@ mod tests {
 
     fn create_test_config() -> TasmotaReflexConfig {
         TasmotaReflexConfig {
-            api_url: "http://192.168.1.1".to_string(),
-            api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            host: "192.168.1.50".to_string(),
+            username: None,
+            password: None,
+            command: Some("Power1".to_string()),
+            command_template: None,
+            topic_command_mapping: HashMap::new(),
+            verify_ssl: true,
         }
     }
 
@@ -136,17 +166,25 @@ mod tests {
         let config = create_test_config();
         let reflex = TasmotaReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(reflex.render_template("{{topic}}-{{body}}", &ink), "/test/topic-test body");
+    }
+
+    #[test]
+    fn test_resolve_command() {
+        let config = create_test_config();
+        let reflex = TasmotaReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(reflex.resolve_command(&ink), "Power1");
     }
 
     #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "http://192.168.1.1"
-            message_template: "[{{topic}}] {{body}}"
+            host: "192.168.1.100"
+            command: "Dimmer 50"
         "#;
         let config: TasmotaReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "http://192.168.1.1");
+        assert_eq!(config.host, "192.168.1.100");
     }
 
     #[test]

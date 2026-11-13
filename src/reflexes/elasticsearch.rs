@@ -1,46 +1,82 @@
+#![allow(dead_code)]
+
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for Elasticsearch Reflex
+/// Indexes documents to Elasticsearch
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ElasticsearchReflexConfig {
-    /// API endpoint http://localhost:9200
-    pub api_url: String,
+    /// Elasticsearch host URL (e.g., "http://localhost:9200")
+    pub host: String,
 
-    /// API key or token (optional)
+    /// Default index name
+    #[serde(default = "default_index")]
+    pub index: String,
+
+    /// Template for index name
+    #[serde(default)]
+    pub index_template: Option<String>,
+
+    /// Document ID field
+    #[serde(default)]
+    pub document_id: Option<String>,
+
+    /// Template for document ID
+    #[serde(default)]
+    pub document_id_template: Option<String>,
+
+    /// Template for document body (JSON)
+    #[serde(default = "default_body_template")]
+    pub body_template: String,
+
+    /// Optional: mapping from Ink topics to index names
+    #[serde(default)]
+    pub topic_index_mapping: HashMap<String, String>,
+
+    /// API key for authentication (optional)
     #[serde(default)]
     pub api_key: Option<String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
-
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
-
-    /// Optional: mapping from Ink topics to API http://localhost:9200s
+    /// Username for basic auth (optional)
     #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    pub username: Option<String>,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
+    /// Password for basic auth (optional)
+    #[serde(default)]
+    pub password: Option<String>,
+
+    /// Whether to verify TLS certificates
+    #[serde(default = "default_verify_ssl")]
+    pub verify_ssl: bool,
+
+    /// Timeout in seconds
+    #[serde(default = "default_timeout")]
+    pub timeout: u64,
 
     /// Custom headers
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub custom_headers: HashMap<String, String>,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_index() -> String {
+    "kraken-logs".to_string()
+}
+fn default_body_template() -> String {
+    r#"{"topic": "{{topic}}", "body": "{{body}}", "id": "{{id}}", "timestamp": "{{timestamp}}"}"#.to_string()
+}
+fn default_verify_ssl() -> bool {
+    true
+}
+fn default_timeout() -> u64 {
+    30
+}
 
 pub struct ElasticsearchReflex {
     name: String,
@@ -50,14 +86,39 @@ pub struct ElasticsearchReflex {
 
 impl ElasticsearchReflex {
     pub fn new(name: String, config: ElasticsearchReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        let verify_ssl = config.verify_ssl;
+        Self {
+            name,
+            config,
+            client: reqwest::Client::builder()
+                .danger_accept_invalid_certs(!verify_ssl)
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
+        }
     }
 
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+    /// Resolve index name for a given Ink
+    fn resolve_index(&self, ink: &Ink) -> String {
+        if let Some(index) = self
+            .config
+            .topic_index_mapping
+            .get(&ink.topic)
+            .filter(|i| !i.is_empty())
+        {
+            return index.clone();
         }
-        self.config.api_url.clone()
+        if let Some(ref template) = self.config.index_template {
+            return self.render_template(template, ink);
+        }
+        self.config.index.clone()
+    }
+
+    /// Resolve document ID for a given Ink
+    fn resolve_document_id(&self, ink: &Ink) -> Option<String> {
+        if let Some(ref template) = self.config.document_id_template {
+            return Some(self.render_template(template, ink));
+        }
+        self.config.document_id.clone()
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,35 +139,186 @@ impl ElasticsearchReflex {
         }
         rendered
     }
+
+    /// Build auth request
+    fn build_auth_request(&self, request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+        let mut req = request;
+        if let Some(ref api_key) = self.config.api_key {
+            req = req.header("Authorization", format!("ApiKey {}", api_key));
+        } else if let (Some(user), Some(pass)) =
+            (&self.config.username, &self.config.password)
+        {
+            req = req.basic_auth(user, Some(pass));
+        }
+        for (k, v) in &self.config.custom_headers {
+            req = req.header(k, v);
+        }
+        req
+    }
+
+    /// Index a document
+    async fn index_document(
+        &self,
+        index: &str,
+        document_id: Option<&str>,
+        body: &serde_json::Value,
+    ) -> Result<serde_json::Value> {
+        let url = if let Some(id) = document_id {
+            format!("{}/{}/_doc/{}", self.config.host.trim_end_matches('/'), index, id)
+        } else {
+            format!("{}/{}/_doc", self.config.host.trim_end_matches('/'), index)
+        };
+
+        let method = if document_id.is_some() { "PUT" } else { "POST" };
+
+        let response = self
+            .build_auth_request(match method {
+                "PUT" => self.client.put(&url),
+                _ => self.client.post(&url),
+            })
+            .json(body)
+            .send()
+            .await
+            .with_context(|| format!("Failed to index document to Elasticsearch at {}", url))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Elasticsearch index error ({}): {}",
+                status,
+                error_body
+            ));
+        }
+
+        response.json().await.context("Failed to parse Elasticsearch response")
+    }
+
+    /// Search documents
+    async fn search(
+        &self,
+        index: &str,
+        query: &serde_json::Value,
+    ) -> Result<serde_json::Value> {
+        let url = format!(
+            "{}/{}/_search",
+            self.config.host.trim_end_matches('/'),
+            index
+        );
+
+        let response = self
+            .build_auth_request(self.client.post(&url))
+            .json(query)
+            .send()
+            .await
+            .with_context(|| format!("Failed to search Elasticsearch at {}", url))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Elasticsearch search error ({}): {}",
+                status,
+                error_body
+            ));
+        }
+
+        response.json().await.context("Failed to parse Elasticsearch search response")
+    }
+
+    /// Delete a document
+    async fn delete_document(&self, index: &str, document_id: &str) -> Result<()> {
+        let url = format!(
+            "{}/{}/_doc/{}",
+            self.config.host.trim_end_matches('/'),
+            index,
+            document_id
+        );
+
+        let response = self
+            .build_auth_request(self.client.delete(&url))
+            .send()
+            .await
+            .with_context(|| "Failed to delete document from Elasticsearch".to_string())?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Elasticsearch delete error ({}): {}",
+                status,
+                error_body
+            ));
+        }
+
+        Ok(())
+    }
+
+    /// Check cluster health
+    async fn cluster_health(&self) -> Result<serde_json::Value> {
+        let url = format!("{}/_cluster/health", self.config.host.trim_end_matches('/'));
+
+        let response = self
+            .build_auth_request(self.client.get(&url))
+            .send()
+            .await
+            .context("Failed to get Elasticsearch cluster health")?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            return Err(anyhow::anyhow!("Elasticsearch cluster health error: {}", status));
+        }
+
+        response.json().await.context("Failed to parse cluster health response")
+    }
 }
 
 #[async_trait]
 impl Reflex for ElasticsearchReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "elasticsearch" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn r#type(&self) -> &str {
+        "elasticsearch"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Elasticsearch reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("Elasticsearch reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
+        info!(
+            "Elasticsearch reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
-        }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
-        }
-        let response = request.send().await.with_context(|| format!("Failed to send Elasticsearch request"))?;
-        if !response.status().is_success() {
-            let status = response.status();
-            let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Elasticsearch API error ({}): {}", status, error_body));
-        }
-        info!("Elasticsearch reflex '{}' sent message for topic: {}", self.name, ink.topic);
+        // Resolve index
+        let index = self.resolve_index(ink);
+        debug!(
+            "Elasticsearch reflex '{}' resolved index: {}",
+            self.name, index
+        );
+
+        // Resolve document ID
+        let document_id = self.resolve_document_id(ink);
+
+        // Render document body
+        let body_rendered = self.render_template(&self.config.body_template, ink);
+        let body: serde_json::Value = serde_json::from_str(&body_rendered)
+            .context("body_template must render to valid JSON")?;
+
+        debug!(
+            "Elasticsearch reflex '{}' document body: {}",
+            self.name, body
+        );
+
+        // Index the document
+        let result = self
+            .index_document(&index, document_id.as_deref(), &body)
+            .await?;
+
+        info!(
+            "Elasticsearch reflex '{}' indexed document in {}: {}",
+            self.name, index, result
+        );
+
         Ok(())
     }
 }
@@ -117,13 +329,19 @@ mod tests {
 
     fn create_test_config() -> ElasticsearchReflexConfig {
         ElasticsearchReflexConfig {
-            api_url: "http://localhost:9200".to_string(),
+            host: "http://localhost:9200".to_string(),
+            index: "kraken-logs".to_string(),
+            index_template: None,
+            document_id: None,
+            document_id_template: None,
+            body_template: default_body_template(),
+            topic_index_mapping: HashMap::new(),
             api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            username: None,
+            password: None,
+            verify_ssl: true,
+            timeout: 30,
+            custom_headers: HashMap::new(),
         }
     }
 
@@ -134,19 +352,25 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = ElasticsearchReflex::new("test".to_string(), config);
+        let reflex = ElasticsearchReflex::new("test".to_string(), config.clone());
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        let rendered = reflex.render_template(&config.body_template, &ink);
+        let body: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+        assert_eq!(body["topic"], "/test/topic");
+        assert_eq!(body["body"], "test body");
     }
 
     #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "http://localhost:9200"
-            message_template: "[{{topic}}] {{body}}"
+            host: "http://es.example.com:9200"
+            index: "alerts"
+            username: "elastic"
+            password: "secret"
         "#;
         let config: ElasticsearchReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "http://localhost:9200");
+        assert_eq!(config.host, "http://es.example.com:9200");
+        assert_eq!(config.index, "alerts");
     }
 
     #[test]
@@ -154,5 +378,17 @@ mod tests {
         let config = create_test_config();
         let reflex = ElasticsearchReflex::new("test".to_string(), config);
         assert_eq!(reflex.r#type(), "elasticsearch");
+    }
+
+    #[test]
+    fn test_resolve_index_from_mapping() {
+        let mut config = create_test_config();
+        let mut mapping = HashMap::new();
+        mapping.insert("/alerts/critical".to_string(), "critical-alerts".to_string());
+        config.topic_index_mapping = mapping;
+
+        let reflex = ElasticsearchReflex::new("test".to_string(), config);
+        let ink = Ink::new("/alerts/critical", "test", "test_source", "body");
+        assert_eq!(reflex.resolve_index(&ink), "critical-alerts");
     }
 }

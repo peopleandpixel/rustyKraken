@@ -2,45 +2,59 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for Zapier Reflex
+/// Triggers Zapier webhooks
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ZapierReflexConfig {
-    /// API endpoint https://hooks.zapier.com
-    pub api_url: String,
+    /// Zapier webhook URL
+    pub webhook_url: String,
 
-    /// API key or token (optional)
+    /// Template for webhook URL
     #[serde(default)]
-    pub api_key: Option<String>,
+    pub webhook_url_template: Option<String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
+    /// Template for payload (JSON)
+    #[serde(default = "default_payload_template")]
+    pub payload_template: String,
 
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
-
-    /// Optional: mapping from Ink topics to API https://hooks.zapier.coms
-    #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
-
-    /// HTTP method
+    /// HTTP method: "POST", "GET"
     #[serde(default = "default_method")]
     pub method: String,
 
-    /// Custom headers
+    /// Optional: mapping from Ink topics to webhook URLs
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub topic_webhook_mapping: HashMap<String, String>,
+
+    /// Optional: mapping from Ink topics to payload templates
+    #[serde(default)]
+    pub topic_payload_mapping: HashMap<String, String>,
+
+    /// Whether to verify TLS certificates
+    #[serde(default = "default_verify_ssl")]
+    pub verify_ssl: bool,
+
+    /// Timeout in seconds
+    #[serde(default = "default_timeout")]
+    pub timeout: u64,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_payload_template() -> String {
+    r#"{"topic": "{{topic}}", "body": "{{body}}", "id": "{{id}}", "timestamp": "{{timestamp}}"}"#.to_string()
+}
+fn default_method() -> String {
+    "POST".to_string()
+}
+fn default_verify_ssl() -> bool {
+    true
+}
+fn default_timeout() -> u64 {
+    30
+}
 
 pub struct ZapierReflex {
     name: String,
@@ -50,14 +64,44 @@ pub struct ZapierReflex {
 
 impl ZapierReflex {
     pub fn new(name: String, config: ZapierReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        let verify_ssl = config.verify_ssl;
+        Self {
+            name,
+            config,
+            client: reqwest::Client::builder()
+                .danger_accept_invalid_certs(!verify_ssl)
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
+        }
     }
 
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+    /// Resolve webhook URL for a given Ink
+    fn resolve_webhook_url(&self, ink: &Ink) -> String {
+        if let Some(url) = self
+            .config
+            .topic_webhook_mapping
+            .get(&ink.topic)
+            .filter(|u| !u.is_empty())
+        {
+            return self.render_template(url, ink);
         }
-        self.config.api_url.clone()
+        if let Some(ref template) = self.config.webhook_url_template {
+            return self.render_template(template, ink);
+        }
+        self.config.webhook_url.clone()
+    }
+
+    /// Resolve payload template for a given Ink
+    fn resolve_payload_template(&self, ink: &Ink) -> String {
+        if let Some(template) = self
+            .config
+            .topic_payload_mapping
+            .get(&ink.topic)
+            .filter(|t| !t.is_empty())
+        {
+            return template.clone();
+        }
+        self.config.payload_template.clone()
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,35 +122,79 @@ impl ZapierReflex {
         }
         rendered
     }
+
+    /// Trigger Zapier webhook
+    async fn trigger_webhook(
+        &self,
+        url: &str,
+        payload: &serde_json::Value,
+    ) -> Result<()> {
+        let request = match self.config.method.as_str() {
+            "GET" => self.client.get(url),
+            _ => self.client.post(url).json(payload),
+        };
+
+        let response = request
+            .send()
+            .await
+            .with_context(|| format!("Failed to trigger Zapier webhook at {}", url))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Zapier webhook error ({}): {}",
+                status,
+                error_body
+            ));
+        }
+
+        Ok(())
+    }
 }
 
 #[async_trait]
 impl Reflex for ZapierReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "zapier" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn r#type(&self) -> &str {
+        "zapier"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Zapier reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("Zapier reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
+        info!(
+            "Zapier reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
-        }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
-        }
-        let response = request.send().await.with_context(|| format!("Failed to send Zapier request"))?;
-        if !response.status().is_success() {
-            let status = response.status();
-            let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Zapier API error ({}): {}", status, error_body));
-        }
-        info!("Zapier reflex '{}' sent message for topic: {}", self.name, ink.topic);
+        // Resolve webhook URL
+        let webhook_url = self.resolve_webhook_url(ink);
+        debug!(
+            "Zapier reflex '{}' resolved webhook URL: {}",
+            self.name, webhook_url
+        );
+
+        // Resolve and render payload
+        let payload_template = self.resolve_payload_template(ink);
+        let payload_rendered = self.render_template(&payload_template, ink);
+        let payload: serde_json::Value = serde_json::from_str(&payload_rendered)
+            .context("payload_template must render to valid JSON")?;
+
+        debug!(
+            "Zapier reflex '{}' payload: {}",
+            self.name, payload
+        );
+
+        // Trigger webhook
+        self.trigger_webhook(&webhook_url, &payload).await?;
+
+        info!(
+            "Zapier reflex '{}' triggered webhook successfully",
+            self.name
+        );
+
         Ok(())
     }
 }
@@ -117,13 +205,14 @@ mod tests {
 
     fn create_test_config() -> ZapierReflexConfig {
         ZapierReflexConfig {
-            api_url: "https://hooks.zapier.com".to_string(),
-            api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
+            webhook_url: "https://hooks.zapier.com/hooks/catch/test".to_string(),
+            webhook_url_template: None,
+            payload_template: default_payload_template(),
             method: "POST".to_string(),
-            headers: HashMap::new(),
+            topic_webhook_mapping: HashMap::new(),
+            topic_payload_mapping: HashMap::new(),
+            verify_ssl: true,
+            timeout: 30,
         }
     }
 
@@ -134,19 +223,22 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = ZapierReflex::new("test".to_string(), config);
+        let reflex = ZapierReflex::new("test".to_string(), config.clone());
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        let rendered = reflex.render_template(&config.payload_template, &ink);
+        let payload: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+        assert_eq!(payload["topic"], "/test/topic");
+        assert_eq!(payload["body"], "test body");
     }
 
     #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "https://hooks.zapier.com"
-            message_template: "[{{topic}}] {{body}}"
+            webhook_url: "https://hooks.zapier.com/hooks/catch/myhook"
+            method: "POST"
         "#;
         let config: ZapierReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "https://hooks.zapier.com");
+        assert!(config.webhook_url.contains("zapier"));
     }
 
     #[test]
@@ -154,5 +246,17 @@ mod tests {
         let config = create_test_config();
         let reflex = ZapierReflex::new("test".to_string(), config);
         assert_eq!(reflex.r#type(), "zapier");
+    }
+
+    #[test]
+    fn test_resolve_webhook_from_mapping() {
+        let mut config = create_test_config();
+        let mut mapping = HashMap::new();
+        mapping.insert("/zapier/alerts".to_string(), "https://hooks.zapier.com/alerts".to_string());
+        config.topic_webhook_mapping = mapping;
+
+        let reflex = ZapierReflex::new("test".to_string(), config);
+        let ink = Ink::new("/zapier/alerts", "test", "test_source", "body");
+        assert!(reflex.resolve_webhook_url(&ink).contains("alerts"));
     }
 }

@@ -1,46 +1,59 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
+use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for AWS SNS Reflex
+/// Publishes notifications to Amazon Simple Notification Service
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AwsSnsReflexConfig {
-    /// API endpoint https://sns.us-east-1.amazonaws.com
-    pub api_url: String,
+    /// AWS Region (e.g., "us-east-1")
+    pub region: String,
 
-    /// API key or token (optional)
+    /// AWS Access Key ID
+    pub access_key_id: String,
+
+    /// AWS Secret Access Key
+    pub secret_access_key: String,
+
+    /// SNS Topic ARN (e.g., "arn:aws:sns:us-east-1:123456789:my-topic")
     #[serde(default)]
-    pub api_key: Option<String>,
+    pub topic_arn: Option<String>,
 
     /// Template for the message body
     #[serde(default = "default_message_template")]
     pub message_template: String,
 
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
+    /// Template for the subject/title
+    #[serde(default = "default_subject_template")]
+    pub subject_template: String,
 
-    /// Optional: mapping from Ink topics to API https://sns.us-east-1.amazonaws.coms
+    /// Optional: mapping from Ink topics to SNS Topic ARNs
     #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    pub topic_arn_mapping: HashMap<String, String>,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
-
-    /// Custom headers
+    /// Message attributes (key-value pairs passed to SNS)
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub message_attributes: HashMap<String, String>,
+
+    /// Whether to use HTTPS (default: true)
+    #[serde(default = "default_use_https")]
+    pub use_https: bool,
+
+    /// Custom User-Agent suffix
+    #[serde(default)]
+    pub user_agent_suffix: Option<String>,
 }
 
 fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_subject_template() -> String { "{{topic}}".to_string() }
+fn default_use_https() -> bool { true }
 
 pub struct AwsSnsReflex {
     name: String,
@@ -53,11 +66,20 @@ impl AwsSnsReflex {
         Self { name, config, client: reqwest::Client::new() }
     }
 
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+    /// Resolve SNS Topic ARN for a given Ink
+    fn resolve_topic_arn(&self, ink: &Ink) -> Result<String> {
+        if let Some(arn) = self
+            .config
+            .topic_arn_mapping
+            .get(&ink.topic)
+            .filter(|a| !a.is_empty())
+        {
+            return Ok(arn.clone());
         }
-        self.config.api_url.clone()
+        self.config
+            .topic_arn
+            .clone()
+            .context("SNS Topic ARN is required - set topic_arn or topic_arn_mapping")
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,6 +100,106 @@ impl AwsSnsReflex {
         }
         rendered
     }
+
+    /// Build SNS endpoint URL for the region
+    fn sns_endpoint(&self) -> String {
+        let scheme = if self.config.use_https { "https" } else { "http" };
+        format!(
+            "{}://sns.{}.amazonaws.com",
+            scheme, self.config.region
+        )
+    }
+
+    /// Create message attributes for SNS
+    fn build_message_attributes(&self, ink: &Ink) -> serde_json::Value {
+        let mut attrs = serde_json::Map::new();
+        for (key, value) in &self.config.message_attributes {
+            attrs.insert(
+                key.clone(),
+                serde_json::json!({
+                    "DataType": "String",
+                    "StringValue": value
+                }),
+            );
+        }
+        // Add topic as attribute
+        attrs.insert(
+            "kraken_topic".to_string(),
+            serde_json::json!({
+                "DataType": "String",
+                "StringValue": ink.topic.clone()
+            }),
+        );
+        serde_json::Value::Object(attrs)
+    }
+
+    /// AWS Signature v4 signing
+    fn sign_request(
+        &self,
+        method: &str,
+        body: &str,
+        timestamp: &str,
+        date_stamp: &str,
+    ) -> (String, String) {
+        let region = &self.config.region;
+        let service = "sns";
+
+        let canonical_uri = "/";
+        let canonical_querystring = "";
+        let canonical_headers = format!(
+            "content-type:application/x-www-form-urlencoded\nhost:sns.{}.amazonaws.com\nx-amz-date:{}\nx-amz-target:AmazonSNS.Publish\n",
+            self.config.region, timestamp
+        );
+        let signed_headers = "content-type;host;x-amz-date;x-amz-target";
+
+        let payload_hash = hex::encode(Sha256::digest(body.as_bytes()));
+
+        let canonical_request = format!(
+            "{}\n{}\n{}\n{}\n{}\n{}",
+            method, canonical_uri, canonical_querystring, canonical_headers, signed_headers, payload_hash
+        );
+
+        let credential_scope = format!("{}/{}/{}/aws4_request", date_stamp, region, service);
+        let string_to_sign = format!(
+            "AWS4-HMAC-SHA256\n{}\n{}\n{}",
+            timestamp,
+            credential_scope,
+            hex::encode(Sha256::digest(canonical_request.as_bytes()))
+        );
+
+        let signing_key = {
+            let key = format!("AWS4{}", self.config.secret_access_key).into_bytes();
+            let date_sig = {
+                let mut m: Hmac<Sha256> = Hmac::new_from_slice(&key).expect("HMAC key ok");
+                m.update(date_stamp.as_bytes());
+                m.finalize().into_bytes().to_vec()
+            };
+            let region_sig = {
+                let mut m: Hmac<Sha256> = Hmac::new_from_slice(&date_sig).expect("HMAC key ok");
+                m.update(region.as_bytes());
+                m.finalize().into_bytes().to_vec()
+            };
+            let service_sig = {
+                let mut m: Hmac<Sha256> = Hmac::new_from_slice(&region_sig).expect("HMAC key ok");
+                m.update(service.as_bytes());
+                m.finalize().into_bytes().to_vec()
+            };
+            let mut m: Hmac<Sha256> = Hmac::new_from_slice(&service_sig).expect("HMAC key ok");
+            m.update(b"aws4_request");
+            m.finalize().into_bytes().to_vec()
+        };
+
+        let mut m: Hmac<Sha256> = Hmac::new_from_slice(&signing_key).expect("HMAC key ok");
+        m.update(string_to_sign.as_bytes());
+        let signature = hex::encode(m.finalize().into_bytes());
+
+        let authorization = format!(
+            "AWS4-HMAC-SHA256 Credential={}/{}, SignedHeaders={}, Signature={}",
+            self.config.access_key_id, credential_scope, signed_headers, signature
+        );
+
+        (authorization, timestamp.to_string())
+    }
 }
 
 #[async_trait]
@@ -87,26 +209,65 @@ impl Reflex for AwsSnsReflex {
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
         info!("AWS SNS reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("AWS SNS reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
-        }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
-        }
-        let response = request.send().await.with_context(|| format!("Failed to send AWS SNS request"))?;
+        let topic_arn = self.resolve_topic_arn(ink)?;
+        let message = self.render_template(&self.config.message_template, ink);
+        let subject = self.render_template(&self.config.subject_template, ink);
+        let message_attributes = self.build_message_attributes(ink);
+
+        debug!(
+            "AWS SNS reflex '{}' publishing to topic {} with message: {}",
+            self.name, topic_arn, message
+        );
+
+        // Build SNS Publish action payload (JSON for x-amz-target)
+        let payload = serde_json::json!({
+            "TopicArn": topic_arn,
+            "Message": message,
+            "Subject": subject,
+            "MessageAttributes": message_attributes
+        });
+        let body = format!("Action=Publish&Version=2010-03-31&{}", urlencoding::encode(&payload.to_string()));
+
+        // Generate timestamp
+        let now = ink.timestamp;
+        let timestamp = now.format("%Y%m%dT%H%M%SZ").to_string();
+        let date_stamp = now.format("%Y%m%d").to_string();
+
+        let (authorization, _ts) = self.sign_request("POST", &body, &timestamp, &date_stamp);
+        let endpoint = self.sns_endpoint();
+        let host = format!("sns.{}.amazonaws.com", self.config.region);
+
+        let response = self
+            .client
+            .post(&endpoint)
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .header("Host", &host)
+            .header("X-Amz-Date", &timestamp)
+            .header("X-Amz-Target", "AmazonSNS.Publish")
+            .header("Authorization", &authorization)
+            .body(body)
+            .send()
+            .await
+            .with_context(|| format!("Failed to send AWS SNS request to {}", endpoint))?;
+
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
             return Err(anyhow::anyhow!("AWS SNS API error ({}): {}", status, error_body));
         }
-        info!("AWS SNS reflex '{}' sent message for topic: {}", self.name, ink.topic);
+
+        // Parse response to get MessageId
+        let resp_text = response.text().await.unwrap_or_default();
+        if let Some(start) = resp_text.find("<MessageId>")
+            && let Some(msg_id) = resp_text[start..].find('>') {
+                let end = start + msg_id + 1;
+                if let Some(end_tag) = resp_text[end..].find("</MessageId>") {
+                    let id = &resp_text[end..end + end_tag];
+                    info!("AWS SNS reflex '{}' published message with ID: {}", self.name, id);
+                }
+            }
+
         Ok(())
     }
 }
@@ -117,13 +278,16 @@ mod tests {
 
     fn create_test_config() -> AwsSnsReflexConfig {
         AwsSnsReflexConfig {
-            api_url: "https://sns.us-east-1.amazonaws.com".to_string(),
-            api_key: None,
+            region: "us-east-1".to_string(),
+            access_key_id: "AKIAIOSFODNN7EXAMPLE".to_string(),
+            secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY".to_string(),
+            topic_arn: Some("arn:aws:sns:us-east-1:123456789:my-topic".to_string()),
             message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            subject_template: "{{topic}}".to_string(),
+            topic_arn_mapping: HashMap::new(),
+            message_attributes: HashMap::new(),
+            use_https: true,
+            user_agent_suffix: None,
         }
     }
 
@@ -140,13 +304,49 @@ mod tests {
     }
 
     #[test]
+    fn test_resolve_topic_arn() {
+        let config = create_test_config();
+        let reflex = AwsSnsReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(
+            reflex.resolve_topic_arn(&ink).unwrap(),
+            "arn:aws:sns:us-east-1:123456789:my-topic"
+        );
+    }
+
+    #[test]
+    fn test_resolve_topic_arn_mapping() {
+        let mut config = create_test_config();
+        config.topic_arn_mapping.insert(
+            "/test/topic".to_string(),
+            "arn:aws:sns:us-east-1:123456789:mapped-topic".to_string(),
+        );
+        let reflex = AwsSnsReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(
+            reflex.resolve_topic_arn(&ink).unwrap(),
+            "arn:aws:sns:us-east-1:123456789:mapped-topic"
+        );
+    }
+
+    #[test]
+    fn test_sns_endpoint() {
+        let config = create_test_config();
+        let reflex = AwsSnsReflex::new("test".to_string(), config);
+        assert_eq!(reflex.sns_endpoint(), "https://sns.us-east-1.amazonaws.com");
+    }
+
+    #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "https://sns.us-east-1.amazonaws.com"
+            region: "eu-west-1"
+            access_key_id: "AKIAIOSFODNN7EXAMPLE"
+            secret_access_key: "secret"
+            topic_arn: "arn:aws:sns:eu-west-1:123:topic"
             message_template: "[{{topic}}] {{body}}"
         "#;
         let config: AwsSnsReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "https://sns.us-east-1.amazonaws.com");
+        assert_eq!(config.region, "eu-west-1");
     }
 
     #[test]

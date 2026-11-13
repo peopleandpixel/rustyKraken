@@ -8,39 +8,60 @@ use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for Grafana Reflex
+/// Interacts with Grafana API for dashboards, alerts, and annotations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrafanaReflexConfig {
-    /// API endpoint http://localhost:3000
-    pub api_url: String,
+    /// Grafana server URL (e.g., "http://localhost:3000")
+    pub host: String,
 
-    /// API key or token (optional)
+    /// Grafana API key
+    pub api_key: String,
+
+    /// Default action: "annotation", "alert", "dashboard", "provision"
+    #[serde(default = "default_action")]
+    pub action: String,
+
+    /// Default dashboard UID
     #[serde(default)]
-    pub api_key: Option<String>,
+    pub dashboard_uid: Option<String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
-
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
-
-    /// Optional: mapping from Ink topics to API http://localhost:3000s
+    /// Template for dashboard UID
     #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    pub dashboard_uid_template: Option<String>,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
+    /// Template for annotation text
+    #[serde(default = "default_annotation_template")]
+    pub annotation_template: String,
 
-    /// Custom headers
+    /// Optional: mapping from Ink topics to actions
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub topic_action_mapping: HashMap<String, String>,
+
+    /// Optional: mapping from Ink topics to dashboard UIDs
+    #[serde(default)]
+    pub topic_dashboard_mapping: HashMap<String, String>,
+
+    /// Whether to verify TLS certificates
+    #[serde(default = "default_verify_ssl")]
+    pub verify_ssl: bool,
+
+    /// Timeout in seconds
+    #[serde(default = "default_timeout")]
+    pub timeout: u64,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_action() -> String {
+    "annotation".to_string()
+}
+fn default_annotation_template() -> String {
+    "[{{topic}}] {{body}}".to_string()
+}
+fn default_verify_ssl() -> bool {
+    true
+}
+fn default_timeout() -> u64 {
+    30
+}
 
 pub struct GrafanaReflex {
     name: String,
@@ -50,14 +71,44 @@ pub struct GrafanaReflex {
 
 impl GrafanaReflex {
     pub fn new(name: String, config: GrafanaReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        let verify_ssl = config.verify_ssl;
+        Self {
+            name,
+            config,
+            client: reqwest::Client::builder()
+                .danger_accept_invalid_certs(!verify_ssl)
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
+        }
     }
 
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+    /// Resolve action for a given Ink
+    fn resolve_action(&self, ink: &Ink) -> String {
+        if let Some(action) = self
+            .config
+            .topic_action_mapping
+            .get(&ink.topic)
+            .filter(|a| !a.is_empty())
+        {
+            return action.clone();
         }
-        self.config.api_url.clone()
+        self.config.action.clone()
+    }
+
+    /// Resolve dashboard UID for a given Ink
+    fn resolve_dashboard_uid(&self, ink: &Ink) -> Option<String> {
+        if let Some(uid) = self
+            .config
+            .topic_dashboard_mapping
+            .get(&ink.topic)
+            .filter(|u| !u.is_empty())
+        {
+            return Some(uid.clone());
+        }
+        if let Some(ref template) = self.config.dashboard_uid_template {
+            return Some(self.render_template(template, ink));
+        }
+        self.config.dashboard_uid.clone()
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,35 +129,206 @@ impl GrafanaReflex {
         }
         rendered
     }
+
+    /// Build Grafana API URL
+    fn grafana_url(&self, path: &str) -> String {
+        let host = self.config.host.trim_end_matches('/');
+        format!("{}/api/{}", host, path)
+    }
+
+    /// Build auth request
+    fn build_auth_request(&self, request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+        request.header("Authorization", format!("Bearer {}", self.config.api_key))
+    }
+
+    /// Add an annotation to a dashboard
+    async fn add_annotation(&self, dashboard_uid: &str, ink: &Ink) -> Result<serde_json::Value> {
+        let url = self.grafana_url(&format!("dashboards/uid/{}/annotations", dashboard_uid));
+
+        let annotation_text = self.render_template(&self.config.annotation_template, ink);
+
+        let payload = serde_json::json!({
+            "dashboardId": 0,
+            "panelId": 0,
+            "time": ink.timestamp.timestamp_nanos_opt().unwrap_or(0) / 1_000_000,
+            "timeEnd": 0,
+            "text": annotation_text,
+            "tags": ["kraken", ink.topic.replace('/', "_")],
+            "type": "event"
+        });
+
+        let response = self
+            .build_auth_request(self.client.post(&url).json(&payload))
+            .send()
+            .await
+            .with_context(|| format!("Failed to add annotation to Grafana dashboard {}", dashboard_uid))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Grafana annotation error ({}): {}",
+                status,
+                error_body
+            ));
+        }
+
+        response.json().await.context("Failed to parse Grafana annotation response")
+    }
+
+    /// Get dashboard by UID
+    async fn get_dashboard(&self, uid: &str) -> Result<serde_json::Value> {
+        let url = self.grafana_url(&format!("dashboards/uid/{}", uid));
+
+        let response = self
+            .build_auth_request(self.client.get(&url))
+            .send()
+            .await
+            .with_context(|| format!("Failed to get Grafana dashboard {}", uid))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Grafana dashboard error ({}): {}",
+                status,
+                error_body
+            ));
+        }
+
+        response.json().await.context("Failed to parse Grafana dashboard response")
+    }
+
+    /// List alert rules
+    async fn list_alerts(&self) -> Result<Vec<serde_json::Value>> {
+        let url = self.grafana_url("alerts");
+
+        let response = self
+            .build_auth_request(self.client.get(&url))
+            .send()
+            .await
+            .context("Failed to list Grafana alerts")?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            return Err(anyhow::anyhow!("Grafana list alerts error: {}", status));
+        }
+
+        let result: Vec<serde_json::Value> =
+            response.json().await.context("Failed to parse alerts response")?;
+        Ok(result)
+    }
+
+    /// Get Grafana health
+    async fn health_check(&self) -> Result<String> {
+        let url = format!("{}/api/health", self.config.host.trim_end_matches('/'));
+
+        let response = self.client.get(&url).send().await
+            .context("Failed to check Grafana health")?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            return Err(anyhow::anyhow!("Grafana health check error: {}", status));
+        }
+
+        response.text().await.context("Failed to read Grafana health response")
+    }
+
+    /// Search dashboards
+    async fn search_dashboards(&self, query: &str) -> Result<Vec<serde_json::Value>> {
+        let url = self.grafana_url(&format!("search?query={}", urlencoding::encode(query)));
+
+        let response = self
+            .build_auth_request(self.client.get(&url))
+            .send()
+            .await
+            .with_context(|| "Failed to search Grafana dashboards".to_string())?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            return Err(anyhow::anyhow!("Grafana search error: {}", status));
+        }
+
+        let result: Vec<serde_json::Value> =
+            response.json().await.context("Failed to parse search response")?;
+        Ok(result)
+    }
 }
 
 #[async_trait]
 impl Reflex for GrafanaReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "grafana" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn r#type(&self) -> &str {
+        "grafana"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Grafana reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("Grafana reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
+        info!(
+            "Grafana reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
+        let action = self.resolve_action(ink);
+        debug!(
+            "Grafana reflex '{}' resolved action: {}",
+            self.name, action
+        );
+
+        match action.as_str() {
+            "annotation" | "annotate" => {
+                let dashboard_uid = self.resolve_dashboard_uid(ink).context(
+                    "Dashboard UID is required for annotation action",
+                )?;
+                let result = self.add_annotation(&dashboard_uid, ink).await?;
+                info!(
+                    "Grafana reflex '{}' added annotation to dashboard {}: {}",
+                    self.name, dashboard_uid, result
+                );
+            }
+            "dashboard" | "get-dashboard" => {
+                let dashboard_uid = self.resolve_dashboard_uid(ink).context(
+                    "Dashboard UID is required for dashboard action",
+                )?;
+                let dashboard = self.get_dashboard(&dashboard_uid).await?;
+                debug!(
+                    "Grafana reflex '{}' got dashboard: {}",
+                    self.name, dashboard
+                );
+            }
+            "alerts" | "list-alerts" => {
+                let alerts = self.list_alerts().await?;
+                info!(
+                    "Grafana reflex '{}' found {} alerts",
+                    self.name, alerts.len()
+                );
+            }
+            "health" | "ping" => {
+                let health = self.health_check().await?;
+                debug!(
+                    "Grafana reflex '{}' health: {}",
+                    self.name, health
+                );
+            }
+            "search" | "search-dashboards" => {
+                let query = ink.body.clone();
+                let results = self.search_dashboards(&query).await?;
+                info!(
+                    "Grafana reflex '{}' search for '{}' found {} results",
+                    self.name, query, results.len()
+                );
+            }
+            _ => {
+                error!(
+                    "Grafana reflex '{}' unknown action: {}",
+                    self.name, action
+                );
+                return Err(anyhow::anyhow!("Unknown Grafana action: {}", action));
+            }
         }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
-        }
-        let response = request.send().await.with_context(|| format!("Failed to send Grafana request"))?;
-        if !response.status().is_success() {
-            let status = response.status();
-            let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Grafana API error ({}): {}", status, error_body));
-        }
-        info!("Grafana reflex '{}' sent message for topic: {}", self.name, ink.topic);
+
         Ok(())
     }
 }
@@ -117,13 +339,16 @@ mod tests {
 
     fn create_test_config() -> GrafanaReflexConfig {
         GrafanaReflexConfig {
-            api_url: "http://localhost:3000".to_string(),
-            api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            host: "http://localhost:3000".to_string(),
+            api_key: "my-api-key".to_string(),
+            action: "annotation".to_string(),
+            dashboard_uid: None,
+            dashboard_uid_template: None,
+            annotation_template: "[{{topic}}] {{body}}".to_string(),
+            topic_action_mapping: HashMap::new(),
+            topic_dashboard_mapping: HashMap::new(),
+            verify_ssl: true,
+            timeout: 30,
         }
     }
 
@@ -136,17 +361,22 @@ mod tests {
         let config = create_test_config();
         let reflex = GrafanaReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "http://localhost:3000"
-            message_template: "[{{topic}}] {{body}}"
+            host: "http://grafana:3000"
+            api_key: "secret"
+            action: "alerts"
         "#;
         let config: GrafanaReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "http://localhost:3000");
+        assert_eq!(config.host, "http://grafana:3000");
+        assert_eq!(config.action, "alerts");
     }
 
     #[test]
@@ -154,5 +384,17 @@ mod tests {
         let config = create_test_config();
         let reflex = GrafanaReflex::new("test".to_string(), config);
         assert_eq!(reflex.r#type(), "grafana");
+    }
+
+    #[test]
+    fn test_resolve_action_from_mapping() {
+        let mut config = create_test_config();
+        let mut mapping = HashMap::new();
+        mapping.insert("/grafana/alerts".to_string(), "alerts".to_string());
+        config.topic_action_mapping = mapping;
+
+        let reflex = GrafanaReflex::new("test".to_string(), config);
+        let ink = Ink::new("/grafana/alerts", "test", "test_source", "body");
+        assert_eq!(reflex.resolve_action(&ink), "alerts");
     }
 }

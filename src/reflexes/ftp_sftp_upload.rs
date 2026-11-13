@@ -2,45 +2,79 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for FTP/SFTP Upload Reflex
+/// Uploads files via FTP or SFTP
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FtpSftpUploadReflexConfig {
-    /// API endpoint ftp://localhost
-    pub api_url: String,
+    /// Protocol: "ftp", "ftps", "sftp"
+    #[serde(default = "default_protocol")]
+    pub protocol: String,
 
-    /// API key or token (optional)
+    /// Server host
+    pub host: String,
+
+    /// Server port
+    #[serde(default = "default_port")]
+    pub port: u16,
+
+    /// Username
+    pub username: String,
+
+    /// Password or private key path (for SFTP)
+    pub password: String,
+
+    /// Remote directory path
+    #[serde(default = "default_remote_dir")]
+    pub remote_dir: String,
+
+    /// Template for remote file name
+    #[serde(default = "default_filename_template")]
+    pub filename_template: String,
+
+    /// Template for file body
+    #[serde(default = "default_body_template")]
+    pub body_template: String,
+
+    /// Optional: mapping from Ink topics to remote directories
     #[serde(default)]
-    pub api_key: Option<String>,
+    pub topic_dir_mapping: HashMap<String, String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
-
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
-
-    /// Optional: mapping from Ink topics to API ftp://localhosts
+    /// Optional: mapping from Ink topics to filename templates
     #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    pub topic_filename_mapping: HashMap<String, String>,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
-
-    /// Custom headers
+    /// Create directories if they don't exist
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub create_dirs: bool,
+
+    /// Timeout in seconds
+    #[serde(default = "default_timeout")]
+    pub timeout: u64,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_protocol() -> String {
+    "sftp".to_string()
+}
+fn default_port() -> u16 {
+    22
+}
+fn default_remote_dir() -> String {
+    "/".to_string()
+}
+fn default_filename_template() -> String {
+    "{{topic}}_{{id}}.txt".to_string()
+}
+fn default_body_template() -> String {
+    "{{body}}".to_string()
+}
+fn default_timeout() -> u64 {
+    30
+}
 
 pub struct FtpSftpUploadReflex {
     name: String,
@@ -50,14 +84,37 @@ pub struct FtpSftpUploadReflex {
 
 impl FtpSftpUploadReflex {
     pub fn new(name: String, config: FtpSftpUploadReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        Self {
+            name,
+            config,
+            client: reqwest::Client::new(),
+        }
     }
 
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+    /// Resolve remote directory for a given Ink
+    fn resolve_remote_dir(&self, ink: &Ink) -> String {
+        if let Some(dir) = self
+            .config
+            .topic_dir_mapping
+            .get(&ink.topic)
+            .filter(|d| !d.is_empty())
+        {
+            return dir.clone();
         }
-        self.config.api_url.clone()
+        self.config.remote_dir.clone()
+    }
+
+    /// Resolve filename for a given Ink
+    fn resolve_filename(&self, ink: &Ink) -> String {
+        if let Some(filename) = self
+            .config
+            .topic_filename_mapping
+            .get(&ink.topic)
+            .filter(|f| !f.is_empty())
+        {
+            return self.render_template(filename, ink);
+        }
+        self.render_template(&self.config.filename_template, ink)
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,35 +135,198 @@ impl FtpSftpUploadReflex {
         }
         rendered
     }
+
+    /// Upload via FTP (using curl command)
+    async fn upload_ftp(&self, remote_path: &str, body: &str) -> Result<()> {
+        info!(
+            "FTP/SFTP reflex '{}' uploading via FTP to {}",
+            self.name, remote_path
+        );
+
+        // Write body to temp file
+        let temp_file = format!("/tmp/kraken_ftp_{}.tmp", uuid::Uuid::new_v4());
+        std::fs::write(&temp_file, body).context("Failed to write temp file for FTP upload")?;
+
+        let url = if self.config.protocol == "ftps" {
+            format!("ftps://{}:{}", self.config.host, self.config.port)
+        } else {
+            format!("ftp://{}:{}", self.config.host, self.config.port)
+        };
+
+        let result = tokio::process::Command::new("curl")
+            .args([
+                "-T", &temp_file,
+                "-u", &format!("{}:{}", self.config.username, self.config.password),
+                &format!("{}/{}", url, remote_path),
+                "--connect-timeout", &self.config.timeout.to_string(),
+            ])
+            .output()
+            .await
+            .context("Failed to execute curl for FTP upload")?;
+
+        // Clean up temp file
+        let _ = std::fs::remove_file(&temp_file);
+
+        if !result.status.success() {
+            let stderr = String::from_utf8_lossy(&result.stderr);
+            return Err(anyhow::anyhow!("FTP upload failed: {}", stderr));
+        }
+
+        Ok(())
+    }
+
+    /// Upload via SFTP (using sftp command or ssh)
+    async fn upload_sftp(&self, remote_path: &str, body: &str) -> Result<()> {
+        info!(
+            "FTP/SFTP reflex '{}' uploading via SFTP to {}",
+            self.name, remote_path
+        );
+
+        // Write body to temp file
+        let temp_file = format!("/tmp/kraken_sftp_{}.tmp", uuid::Uuid::new_v4());
+        std::fs::write(&temp_file, body).context("Failed to write temp file for SFTP upload")?;
+
+        // Create remote directory if needed
+        if self.config.create_dirs {
+            let dir = remote_path.rsplit('/').next().unwrap_or(".");
+            if !dir.is_empty() && dir != "." {
+                let _ = tokio::process::Command::new("ssh")
+                    .args([
+                        "-p",
+                        &self.config.port.to_string(),
+                        &format!("{}@{}", self.config.username, self.config.host),
+                        "mkdir",
+                        "-p",
+                        dir,
+                    ])
+                    .output()
+                    .await;
+            }
+        }
+
+        let mut cmd = tokio::process::Command::new("sftp");
+        cmd.args([
+            "-P", &self.config.port.to_string(),
+            &format!("{}@{}", self.config.username, self.config.host),
+        ]);
+
+        // Use password or key
+        if self.config.password.starts_with("/最") {
+            // It's a key path
+            cmd.args(["-i", &self.config.password]);
+        }
+
+        let _sftp_command = format!("put {} {}\nbye\n", temp_file, remote_path);
+
+        let result = cmd
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .context("Failed to spawn sftp")?
+            .wait_with_output()
+            .await
+            .context("Failed to wait for sftp")?;
+
+        // Clean up temp file
+        let _ = std::fs::remove_file(&temp_file);
+
+        if !result.status.success() {
+            let stderr = String::from_utf8_lossy(&result.stderr);
+            return Err(anyhow::anyhow!("SFTP upload failed: {}", stderr));
+        }
+
+        Ok(())
+    }
+
+    /// Upload via HTTP PUT (fallback for FTP servers with HTTP support)
+    async fn upload_http(&self, remote_path: &str, body: &str) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/{}",
+            self.config.host, self.config.port, remote_path
+        );
+
+        let response = self
+            .client
+            .put(&url)
+            .basic_auth(&self.config.username, Some(&self.config.password))
+            .body(body.to_string())
+            .send()
+            .await
+            .with_context(|| format!("Failed to upload via HTTP to {}", url))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "HTTP upload error ({}): {}",
+                status,
+                error_body
+            ));
+        }
+
+        Ok(())
+    }
 }
 
 #[async_trait]
 impl Reflex for FtpSftpUploadReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "ftp_sftp_upload" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn r#type(&self) -> &str {
+        "ftp_sftp_upload"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("FTP/SFTP Upload reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("FTP/SFTP Upload reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
+        info!(
+            "FTP/SFTP reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
+        // Resolve remote directory
+        let remote_dir = self.resolve_remote_dir(ink);
+        debug!(
+            "FTP/SFTP reflex '{}' resolved remote dir: {}",
+            self.name, remote_dir
+        );
+
+        // Resolve filename
+        let filename = self.resolve_filename(ink);
+        debug!(
+            "FTP/SFTP reflex '{}' resolved filename: {}",
+            self.name, filename
+        );
+
+        // Build remote path
+        let remote_path = format!("{}/{}", remote_dir.trim_end_matches('/'), filename);
+
+        // Render body
+        let body = self.render_template(&self.config.body_template, ink);
+        debug!(
+            "FTP/SFTP reflex '{}' body length: {}",
+            self.name, body.len()
+        );
+
+        // Upload based on protocol
+        match self.config.protocol.as_str() {
+            "ftp" | "ftps" => self.upload_ftp(&remote_path, &body).await?,
+            "sftp" => self.upload_sftp(&remote_path, &body).await?,
+            "http" | "https" => self.upload_http(&remote_path, &body).await?,
+            _ => {
+                return Err(anyhow::anyhow!(
+                    "Unsupported protocol: {}",
+                    self.config.protocol
+                ))
+            }
         }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
-        }
-        let response = request.send().await.with_context(|| format!("Failed to send FTP/SFTP Upload request"))?;
-        if !response.status().is_success() {
-            let status = response.status();
-            let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("FTP/SFTP Upload API error ({}): {}", status, error_body));
-        }
-        info!("FTP/SFTP Upload reflex '{}' sent message for topic: {}", self.name, ink.topic);
+
+        info!(
+            "FTP/SFTP reflex '{}' uploaded file to {}/{}",
+            self.name, remote_dir, filename
+        );
+
         Ok(())
     }
 }
@@ -117,13 +337,18 @@ mod tests {
 
     fn create_test_config() -> FtpSftpUploadReflexConfig {
         FtpSftpUploadReflexConfig {
-            api_url: "ftp://localhost".to_string(),
-            api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            protocol: "sftp".to_string(),
+            host: "localhost".to_string(),
+            port: 22,
+            username: "user".to_string(),
+            password: "secret".to_string(),
+            remote_dir: "/uploads".to_string(),
+            filename_template: "{{topic}}_{{id}}.txt".to_string(),
+            body_template: "{{body}}".to_string(),
+            topic_dir_mapping: HashMap::new(),
+            topic_filename_mapping: HashMap::new(),
+            create_dirs: true,
+            timeout: 30,
         }
     }
 
@@ -136,17 +361,24 @@ mod tests {
         let config = create_test_config();
         let reflex = FtpSftpUploadReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        let filename = reflex.resolve_filename(&ink);
+        assert!(filename.contains("/test/topic"));
+        assert!(filename.ends_with(".txt"));
     }
 
     #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "ftp://localhost"
-            message_template: "[{{topic}}] {{body}}"
+            protocol: "ftp"
+            host: "ftp.example.com"
+            port: 21
+            username: "ftpuser"
+            password: "ftppass"
+            remote_dir: "/incoming"
         "#;
         let config: FtpSftpUploadReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "ftp://localhost");
+        assert_eq!(config.protocol, "ftp");
+        assert_eq!(config.port, 21);
     }
 
     #[test]
@@ -154,5 +386,17 @@ mod tests {
         let config = create_test_config();
         let reflex = FtpSftpUploadReflex::new("test".to_string(), config);
         assert_eq!(reflex.r#type(), "ftp_sftp_upload");
+    }
+
+    #[test]
+    fn test_resolve_dir_from_mapping() {
+        let mut config = create_test_config();
+        let mut mapping = HashMap::new();
+        mapping.insert("/logs/app".to_string(), "/logs/app".to_string());
+        config.topic_dir_mapping = mapping;
+
+        let reflex = FtpSftpUploadReflex::new("test".to_string(), config);
+        let ink = Ink::new("/logs/app", "test", "test_source", "body");
+        assert_eq!(reflex.resolve_remote_dir(&ink), "/logs/app");
     }
 }

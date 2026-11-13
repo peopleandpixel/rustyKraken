@@ -2,45 +2,62 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for ESPHome Reflex
+/// Controls ESPHome devices via REST API
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EsphomeReflexConfig {
-    /// API endpoint http://192.168.1.1
-    pub api_url: String,
+    /// ESPHome device URL (e.g., "http://192.168.1.100")
+    pub host: String,
 
-    /// API key or token (optional)
+    /// API port (default: 80)
+    #[serde(default = "default_port")]
+    pub port: u16,
+
+    /// API password (optional)
     #[serde(default)]
-    pub api_key: Option<String>,
+    pub password: Option<String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
+    /// Default action: command, status
+    #[serde(default = "default_action")]
+    pub action: String,
 
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
-
-    /// Optional: mapping from Ink topics to API http://192.168.1.1s
+    /// Default command (e.g., "light.toggle", "switch.turn_on")
     #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    pub command: Option<String>,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
-
-    /// Custom headers
+    /// Default entity ID
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub entity_id: Option<String>,
+
+    /// Template for entity ID
+    #[serde(default)]
+    pub entity_id_template: Option<String>,
+
+    /// Template for command data
+    #[serde(default)]
+    pub command_data_template: Option<String>,
+
+    /// Optional: mapping from Ink topics to entity IDs
+    #[serde(default)]
+    pub topic_entity_mapping: HashMap<String, String>,
+
+    /// Optional: mapping from Ink topics to commands
+    #[serde(default)]
+    pub topic_command_mapping: HashMap<String, String>,
+
+    /// Verify SSL
+    #[serde(default = "default_verify_ssl")]
+    pub verify_ssl: bool,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_port() -> u16 { 80 }
+fn default_action() -> String { "command".to_string() }
+fn default_verify_ssl() -> bool { true }
 
 pub struct EsphomeReflex {
     name: String,
@@ -50,14 +67,15 @@ pub struct EsphomeReflex {
 
 impl EsphomeReflex {
     pub fn new(name: String, config: EsphomeReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
-    }
-
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+        let verify_ssl = config.verify_ssl;
+        Self {
+            name,
+            config,
+            client: reqwest::Client::builder()
+                .danger_accept_invalid_certs(!verify_ssl)
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
         }
-        self.config.api_url.clone()
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,6 +96,36 @@ impl EsphomeReflex {
         }
         rendered
     }
+
+    fn resolve_entity_id(&self, ink: &Ink) -> Result<String> {
+        if let Some(entity) = self
+            .config
+            .topic_entity_mapping
+            .get(&ink.topic)
+            .filter(|e| !e.is_empty())
+        {
+            return Ok(entity.clone());
+        }
+        if let Some(ref template) = self.config.entity_id_template {
+            return Ok(self.render_template(template, ink));
+        }
+        self.config
+            .entity_id
+            .clone()
+            .context("ESPHome entity_id is required - set entity_id, entity_id_template, or topic_entity_mapping")
+    }
+
+    fn resolve_command(&self, ink: &Ink) -> String {
+        if let Some(cmd) = self
+            .config
+            .topic_command_mapping
+            .get(&ink.topic)
+            .filter(|c| !c.is_empty())
+        {
+            return cmd.clone();
+        }
+        self.config.command.clone().unwrap_or("light.toggle".to_string())
+    }
 }
 
 #[async_trait]
@@ -87,26 +135,53 @@ impl Reflex for EsphomeReflex {
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
         info!("ESPHome reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("ESPHome reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
 
-        let payload = serde_json::json!({"title": title, "message": body});
+        let entity_id = self.resolve_entity_id(ink)?;
+        let command = self.resolve_command(ink);
+
+        debug!(
+            "ESPHome reflex '{}' command={} entity={} on {}",
+            self.name, command, entity_id, self.config.host
+        );
+
+        let host = format!("{}:{}", self.config.host, self.config.port);
+
+        // ESPHome REST API: POST /command/{entity_id}
+        let url = format!("{}/command/{}", host, entity_id);
+
+        let payload = if let Some(ref template) = self.config.command_data_template {
+            let data = self.render_template(template, ink);
+            serde_json::from_str(&data).unwrap_or(serde_json::json!({
+                "command": command,
+                "value": ink.body.clone()
+            }))
+        } else {
+            serde_json::json!({
+                "command": command,
+                "value": ink.body.clone()
+            })
+        };
+
         let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
+        if let Some(ref password) = self.config.password {
+            request = request.basic_auth("", Some(password));
         }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
-        }
-        let response = request.send().await.with_context(|| format!("Failed to send ESPHome request"))?;
+
+        let response = request
+            .send()
+            .await
+            .with_context(|| format!("Failed to send ESPHome command to {}", host))?;
+
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
             return Err(anyhow::anyhow!("ESPHome API error ({}): {}", status, error_body));
         }
-        info!("ESPHome reflex '{}' sent message for topic: {}", self.name, ink.topic);
+
+        info!(
+            "ESPHome reflex '{}' sent command {} to entity {}",
+            self.name, command, entity_id
+        );
         Ok(())
     }
 }
@@ -117,13 +192,17 @@ mod tests {
 
     fn create_test_config() -> EsphomeReflexConfig {
         EsphomeReflexConfig {
-            api_url: "http://192.168.1.1".to_string(),
-            api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            host: "192.168.1.100".to_string(),
+            port: 80,
+            password: None,
+            action: "command".to_string(),
+            command: Some("light.toggle".to_string()),
+            entity_id: Some("light.living_room".to_string()),
+            entity_id_template: None,
+            command_data_template: None,
+            topic_entity_mapping: HashMap::new(),
+            topic_command_mapping: HashMap::new(),
+            verify_ssl: true,
         }
     }
 
@@ -136,17 +215,35 @@ mod tests {
         let config = create_test_config();
         let reflex = EsphomeReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(reflex.render_template("{{topic}}-{{body}}", &ink), "/test/topic-test body");
+    }
+
+    #[test]
+    fn test_resolve_entity_id() {
+        let config = create_test_config();
+        let reflex = EsphomeReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(reflex.resolve_entity_id(&ink).unwrap(), "light.living_room");
+    }
+
+    #[test]
+    fn test_resolve_command() {
+        let config = create_test_config();
+        let reflex = EsphomeReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(reflex.resolve_command(&ink), "light.toggle");
     }
 
     #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "http://192.168.1.1"
-            message_template: "[{{topic}}] {{body}}"
+            host: "192.168.1.50"
+            port: 8080
+            entity_id: "switch.garage"
+            command: "switch.turn_on"
         "#;
         let config: EsphomeReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "http://192.168.1.1");
+        assert_eq!(config.host, "192.168.1.50");
     }
 
     #[test]

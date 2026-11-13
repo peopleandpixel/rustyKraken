@@ -2,45 +2,49 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for openHAB Reflex
+/// Sends commands to openHAB via REST API
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OpenhabReflexConfig {
-    /// API endpoint http://192.168.1.1:8080
-    pub api_url: String,
+    /// openHAB server URL (e.g., "http://192.168.1.100:8080")
+    pub host: String,
 
-    /// API key or token (optional)
+    /// API username (optional)
     #[serde(default)]
-    pub api_key: Option<String>,
+    pub username: Option<String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
-
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
-
-    /// Optional: mapping from Ink topics to API http://192.168.1.1:8080s
+    /// API password (optional)
     #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    pub password: Option<String>,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
-
-    /// Custom headers
+    /// Default item name
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub item: Option<String>,
+
+    /// Template for item name
+    #[serde(default)]
+    pub item_template: Option<String>,
+
+    /// Template for command value
+    #[serde(default = "default_value_template")]
+    pub value_template: String,
+
+    /// Optional: mapping from Ink topics to items
+    #[serde(default)]
+    pub topic_item_mapping: HashMap<String, String>,
+
+    /// Verify SSL
+    #[serde(default = "default_verify_ssl")]
+    pub verify_ssl: bool,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_value_template() -> String { "{{body}}".to_string() }
+fn default_verify_ssl() -> bool { true }
 
 pub struct OpenhabReflex {
     name: String,
@@ -50,14 +54,15 @@ pub struct OpenhabReflex {
 
 impl OpenhabReflex {
     pub fn new(name: String, config: OpenhabReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
-    }
-
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+        let verify_ssl = config.verify_ssl;
+        Self {
+            name,
+            config,
+            client: reqwest::Client::builder()
+                .danger_accept_invalid_certs(!verify_ssl)
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
         }
-        self.config.api_url.clone()
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,6 +83,24 @@ impl OpenhabReflex {
         }
         rendered
     }
+
+    fn resolve_item(&self, ink: &Ink) -> Result<String> {
+        if let Some(item) = self
+            .config
+            .topic_item_mapping
+            .get(&ink.topic)
+            .filter(|i| !i.is_empty())
+        {
+            return Ok(item.clone());
+        }
+        if let Some(ref template) = self.config.item_template {
+            return Ok(self.render_template(template, ink));
+        }
+        self.config
+            .item
+            .clone()
+            .context("openHAB item is required - set item, item_template, or topic_item_mapping")
+    }
 }
 
 #[async_trait]
@@ -87,26 +110,43 @@ impl Reflex for OpenhabReflex {
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
         info!("openHAB reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("openHAB reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
+        let item = self.resolve_item(ink)?;
+        let value = self.render_template(&self.config.value_template, ink);
+        let value_for_log = value.clone();
+
+        debug!(
+            "openHAB reflex '{}' item={} value={} on {}",
+            self.name, item, value_for_log, self.config.host
+        );
+
+        // openHAB REST API: PUT /rest/items/{item}/state
+        let url = format!(
+            "{}/rest/items/{}/state",
+            self.config.host.trim_end_matches('/'),
+            item
+        );
+
+        let mut request = self.client.put(&url).body(value);
+        if let (Some(user), Some(pass)) = (&self.config.username, &self.config.password) {
+            request = request.basic_auth(user, Some(pass));
         }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
-        }
-        let response = request.send().await.with_context(|| format!("Failed to send openHAB request"))?;
+
+        let response = request
+            .send()
+            .await
+            .with_context(|| format!("Failed to send openHAB command to {}", self.config.host))?;
+
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
             return Err(anyhow::anyhow!("openHAB API error ({}): {}", status, error_body));
         }
-        info!("openHAB reflex '{}' sent message for topic: {}", self.name, ink.topic);
+
+        info!(
+            "openHAB reflex '{}' sent value '{}' to item {}",
+            self.name, value_for_log, item
+        );
         Ok(())
     }
 }
@@ -117,13 +157,14 @@ mod tests {
 
     fn create_test_config() -> OpenhabReflexConfig {
         OpenhabReflexConfig {
-            api_url: "http://192.168.1.1:8080".to_string(),
-            api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            host: "http://192.168.1.100:8080".to_string(),
+            username: None,
+            password: None,
+            item: Some("LivingRoom_Light".to_string()),
+            item_template: None,
+            value_template: "{{body}}".to_string(),
+            topic_item_mapping: HashMap::new(),
+            verify_ssl: true,
         }
     }
 
@@ -136,17 +177,26 @@ mod tests {
         let config = create_test_config();
         let reflex = OpenhabReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(reflex.render_template("{{topic}}-{{body}}", &ink), "/test/topic-test body");
+    }
+
+    #[test]
+    fn test_resolve_item() {
+        let config = create_test_config();
+        let reflex = OpenhabReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(reflex.resolve_item(&ink).unwrap(), "LivingRoom_Light");
     }
 
     #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "http://192.168.1.1:8080"
-            message_template: "[{{topic}}] {{body}}"
+            host: "http://openhab.local:8080"
+            item: "GarageDoor"
+            value_template: "{{body}}"
         "#;
         let config: OpenhabReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "http://192.168.1.1:8080");
+        assert_eq!(config.host, "http://openhab.local:8080");
     }
 
     #[test]

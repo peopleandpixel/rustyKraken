@@ -2,45 +2,52 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for FHEM Reflex
+/// Controls FHEM devices via JSON2 API
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FhemReflexConfig {
-    /// API endpoint http://192.168.1.1:8083
-    pub api_url: String,
+    /// FHEM server URL (e.g., "http://192.168.1.100:8083")
+    pub host: String,
 
-    /// API key or token (optional)
+    /// FHEM password (optional)
     #[serde(default)]
-    pub api_key: Option<String>,
+    pub password: Option<String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
-
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
-
-    /// Optional: mapping from Ink topics to API http://192.168.1.1:8083s
+    /// Default FHEM command
     #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    pub command: Option<String>,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
-
-    /// Custom headers
+    /// Default device name
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub device: Option<String>,
+
+    /// Template for device name
+    #[serde(default)]
+    pub device_template: Option<String>,
+
+    /// Template for command
+    #[serde(default)]
+    pub command_template: Option<String>,
+
+    /// Optional: mapping from Ink topics to devices
+    #[serde(default)]
+    pub topic_device_mapping: HashMap<String, String>,
+
+    /// Optional: mapping from Ink topics to commands
+    #[serde(default)]
+    pub topic_command_mapping: HashMap<String, String>,
+
+    /// Verify SSL
+    #[serde(default = "default_verify_ssl")]
+    pub verify_ssl: bool,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_verify_ssl() -> bool { true }
 
 pub struct FhemReflex {
     name: String,
@@ -50,14 +57,15 @@ pub struct FhemReflex {
 
 impl FhemReflex {
     pub fn new(name: String, config: FhemReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
-    }
-
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+        let verify_ssl = config.verify_ssl;
+        Self {
+            name,
+            config,
+            client: reqwest::Client::builder()
+                .danger_accept_invalid_certs(!verify_ssl)
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
         }
-        self.config.api_url.clone()
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,6 +86,39 @@ impl FhemReflex {
         }
         rendered
     }
+
+    fn resolve_device(&self, ink: &Ink) -> Result<String> {
+        if let Some(device) = self
+            .config
+            .topic_device_mapping
+            .get(&ink.topic)
+            .filter(|d| !d.is_empty())
+        {
+            return Ok(device.clone());
+        }
+        if let Some(ref template) = self.config.device_template {
+            return Ok(self.render_template(template, ink));
+        }
+        self.config
+            .device
+            .clone()
+            .context("FHEM device is required - set device, device_template, or topic_device_mapping")
+    }
+
+    fn resolve_command(&self, ink: &Ink) -> String {
+        if let Some(cmd) = self
+            .config
+            .topic_command_mapping
+            .get(&ink.topic)
+            .filter(|c| !c.is_empty())
+        {
+            return cmd.clone();
+        }
+        if let Some(ref template) = self.config.command_template {
+            return self.render_template(template, ink);
+        }
+        self.config.command.clone().unwrap_or(ink.body.clone())
+    }
 }
 
 #[async_trait]
@@ -87,26 +128,43 @@ impl Reflex for FhemReflex {
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
         info!("FHEM reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("FHEM reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
+        let device = self.resolve_device(ink)?;
+        let command = self.resolve_command(ink);
+
+        debug!(
+            "FHEM reflex '{}' device={} command={} on {}",
+            self.name, device, command, self.config.host
+        );
+
+        // FHEM JSON2 API: /fhem?cmd={device}%20{command}&fwid=0&json=2
+        let fhem_cmd = format!("{} {}", device, command);
+        let url = format!(
+            "{}/fhem?cmd={}&fwid=0&json=2",
+            self.config.host.trim_end_matches('/'),
+            urlencoding::encode(&fhem_cmd)
+        );
+
+        let mut request = self.client.get(&url);
+        if let Some(ref password) = self.config.password {
+            request = request.basic_auth("admin", Some(password));
         }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
-        }
-        let response = request.send().await.with_context(|| format!("Failed to send FHEM request"))?;
+
+        let response = request
+            .send()
+            .await
+            .with_context(|| format!("Failed to send FHEM command to {}", self.config.host))?;
+
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
             return Err(anyhow::anyhow!("FHEM API error ({}): {}", status, error_body));
         }
-        info!("FHEM reflex '{}' sent message for topic: {}", self.name, ink.topic);
+
+        info!(
+            "FHEM reflex '{}' sent command '{}' to device {}",
+            self.name, command, device
+        );
         Ok(())
     }
 }
@@ -117,13 +175,15 @@ mod tests {
 
     fn create_test_config() -> FhemReflexConfig {
         FhemReflexConfig {
-            api_url: "http://192.168.1.1:8083".to_string(),
-            api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            host: "http://192.168.1.100:8083".to_string(),
+            password: None,
+            command: Some("on".to_string()),
+            device: Some("Light_LivingRoom".to_string()),
+            device_template: None,
+            command_template: None,
+            topic_device_mapping: HashMap::new(),
+            topic_command_mapping: HashMap::new(),
+            verify_ssl: true,
         }
     }
 
@@ -136,17 +196,34 @@ mod tests {
         let config = create_test_config();
         let reflex = FhemReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(reflex.render_template("{{topic}}-{{body}}", &ink), "/test/topic-test body");
+    }
+
+    #[test]
+    fn test_resolve_device() {
+        let config = create_test_config();
+        let reflex = FhemReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(reflex.resolve_device(&ink).unwrap(), "Light_LivingRoom");
+    }
+
+    #[test]
+    fn test_resolve_command() {
+        let config = create_test_config();
+        let reflex = FhemReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(reflex.resolve_command(&ink), "on");
     }
 
     #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "http://192.168.1.1:8083"
-            message_template: "[{{topic}}] {{body}}"
+            host: "http://fhem.local:8083"
+            device: "Switch_Garage"
+            command: "on"
         "#;
         let config: FhemReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "http://192.168.1.1:8083");
+        assert_eq!(config.host, "http://fhem.local:8083");
     }
 
     #[test]

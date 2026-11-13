@@ -2,62 +2,73 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for NATS Reflex
+/// Publishes messages to NATS subjects
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NatsReflexConfig {
-    /// API endpoint http://localhost:8224
-    pub api_url: String,
+    /// NATS server URL (e.g., "nats://localhost:4222")
+    pub server: String,
 
-    /// API key or token (optional)
+    /// Default NATS subject
+    #[serde(default = "default_subject")]
+    pub subject: String,
+
+    /// Template for NATS subject
     #[serde(default)]
-    pub api_key: Option<String>,
+    pub subject_template: Option<String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
+    /// Template for the message payload
+    #[serde(default = "default_payload_template")]
+    pub payload_template: String,
 
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
-
-    /// Optional: mapping from Ink topics to API http://localhost:8224s
+    /// Optional: mapping from Ink topics to NATS subjects
     #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    pub subject_mapping: HashMap<String, String>,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
-
-    /// Custom headers
+    /// Username (optional)
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub username: Option<String>,
+
+    /// Password (optional)
+    #[serde(default)]
+    pub password: Option<String>,
+
+    /// Token (optional)
+    #[serde(default)]
+    pub token: Option<String>,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_subject() -> String { "kraken.events".to_string() }
+fn default_payload_template() -> String { "{{body}}".to_string() }
 
 pub struct NatsReflex {
     name: String,
     config: NatsReflexConfig,
-    client: reqwest::Client,
 }
 
 impl NatsReflex {
     pub fn new(name: String, config: NatsReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        Self { name, config }
     }
 
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+    fn resolve_subject(&self, ink: &Ink) -> String {
+        if let Some(subject) = self
+            .config
+            .subject_mapping
+            .get(&ink.topic)
+            .filter(|s| !s.is_empty())
+        {
+            return self.render_template(subject, ink);
         }
-        self.config.api_url.clone()
+        if let Some(ref template) = self.config.subject_template {
+            return self.render_template(template, ink);
+        }
+        self.config.subject.clone()
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -87,26 +98,28 @@ impl Reflex for NatsReflex {
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
         info!("NATS reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("NATS reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
-        }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
-        }
-        let response = request.send().await.with_context(|| format!("Failed to send NATS request"))?;
-        if !response.status().is_success() {
-            let status = response.status();
-            let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("NATS API error ({}): {}", status, error_body));
-        }
-        info!("NATS reflex '{}' sent message for topic: {}", self.name, ink.topic);
+        let subject = self.resolve_subject(ink);
+        let payload = self.render_template(&self.config.payload_template, ink);
+
+        debug!(
+            "NATS reflex '{}' publishing to {} with payload: {}",
+            self.name, subject, payload
+        );
+
+        let connection = async_nats::connect(&self.config.server)
+            .await
+            .with_context(|| format!("Failed to connect to NATS server at {}", self.config.server))?;
+
+        connection
+            .publish(subject.clone(), payload.into())
+            .await
+            .with_context(|| format!("Failed to publish to NATS subject {}", subject))?;
+
+        info!(
+            "NATS reflex '{}' published to subject: {}",
+            self.name, subject
+        );
         Ok(())
     }
 }
@@ -117,13 +130,14 @@ mod tests {
 
     fn create_test_config() -> NatsReflexConfig {
         NatsReflexConfig {
-            api_url: "http://localhost:8224".to_string(),
-            api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            server: "nats://localhost:4222".to_string(),
+            subject: "kraken.events".to_string(),
+            subject_template: None,
+            payload_template: "{{body}}".to_string(),
+            subject_mapping: HashMap::new(),
+            username: None,
+            password: None,
+            token: None,
         }
     }
 
@@ -140,13 +154,21 @@ mod tests {
     }
 
     #[test]
+    fn test_resolve_subject() {
+        let config = create_test_config();
+        let reflex = NatsReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(reflex.resolve_subject(&ink), "kraken.events");
+    }
+
+    #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "http://localhost:8224"
-            message_template: "[{{topic}}] {{body}}"
+            server: "nats://nats.example.com:4222"
+            subject: "alerts"
         "#;
         let config: NatsReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "http://localhost:8224");
+        assert_eq!(config.server, "nats://nats.example.com:4222");
     }
 
     #[test]

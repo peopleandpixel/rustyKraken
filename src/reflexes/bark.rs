@@ -2,45 +2,65 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for Bark Reflex
+/// Sends push notifications to iOS devices via Bark server
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BarkReflexConfig {
-    /// API endpoint https://api.day.app
-    pub api_url: String,
+    /// Bark server URL (e.g., "https://api.day.app" or self-hosted)
+    pub server: String,
 
-    /// API key or token (optional)
-    #[serde(default)]
-    pub api_key: Option<String>,
+    /// Device key (from Bark app)
+    pub device_key: String,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
-
-    /// Template for the title/subject
+    /// Template for the title
     #[serde(default = "default_title_template")]
     pub title_template: String,
 
-    /// Optional: mapping from Ink topics to API https://api.day.apps
-    #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    /// Template for the body/message
+    #[serde(default = "default_body_template")]
+    pub body_template: String,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
+    /// Priority: 5 (emergency), 10 (high), 25 (default), 50 (low)
+    #[serde(default = "default_priority")]
+    pub priority: u32,
 
-    /// Custom headers
+    /// Optional: mapping from Ink topics to device keys
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub topic_device_mapping: HashMap<String, String>,
+
+    /// Optional: mapping from Ink topics to priorities
+    #[serde(default)]
+    pub topic_priority_mapping: HashMap<String, u32>,
+
+    /// Sound name (e.g., "minuet")
+    #[serde(default)]
+    pub sound: Option<String>,
+
+    /// Icon URL
+    #[serde(default)]
+    pub icon: Option<String>,
+
+    /// Group ID for grouping notifications
+    #[serde(default)]
+    pub group: Option<String>,
+
+    /// Is it a push notification (isPush: 1)
+    #[serde(default)]
+    pub is_push: bool,
+
+    /// Copy URL to clipboard
+    #[serde(default)]
+    pub url: Option<String>,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
 fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_body_template() -> String { "{{body}}".to_string() }
+fn default_priority() -> u32 { 25 }
 
 pub struct BarkReflex {
     name: String,
@@ -53,11 +73,25 @@ impl BarkReflex {
         Self { name, config, client: reqwest::Client::new() }
     }
 
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+    /// Resolve device key for a given Ink
+    fn resolve_device_key(&self, ink: &Ink) -> String {
+        if let Some(key) = self
+            .config
+            .topic_device_mapping
+            .get(&ink.topic)
+            .filter(|k| !k.is_empty())
+        {
+            return key.clone();
         }
-        self.config.api_url.clone()
+        self.config.device_key.clone()
+    }
+
+    /// Resolve priority for a given Ink
+    fn resolve_priority(&self, ink: &Ink) -> u32 {
+        if let Some(priority) = self.config.topic_priority_mapping.get(&ink.topic) {
+            return *priority;
+        }
+        self.config.priority
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -87,26 +121,63 @@ impl Reflex for BarkReflex {
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
         info!("Bark reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("Bark reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
+        let device_key = self.resolve_device_key(ink);
+        let priority = self.resolve_priority(ink);
+        let title = self.render_template(&self.config.title_template, ink);
+        let body = self.render_template(&self.config.body_template, ink);
+
+        debug!(
+            "Bark reflex '{}' sending to device {} with priority {}",
+            self.name, device_key, priority
+        );
+
+        // Bark API: POST /push/:deviceKey
+        let url = format!("{}/push/{}", self.config.server.trim_end_matches('/'), device_key);
+
+        // Bark API: POST /push/:deviceKey with form-encoded body
+        let mut form_parts = vec![
+            format!("title={}", urlencoding::encode(&title)),
+            format!("body={}", urlencoding::encode(&body)),
+            format!("device_key={}", urlencoding::encode(&device_key)),
+            format!("priority={}", priority),
+        ];
+
+        if let Some(ref sound) = self.config.sound {
+            form_parts.push(format!("sound={}", urlencoding::encode(sound)));
         }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
+        if let Some(ref icon) = self.config.icon {
+            form_parts.push(format!("icon={}", urlencoding::encode(icon)));
         }
-        let response = request.send().await.with_context(|| format!("Failed to send Bark request"))?;
+        if let Some(ref group) = self.config.group {
+            form_parts.push(format!("group={}", urlencoding::encode(group)));
+        }
+        if self.config.is_push {
+            form_parts.push("isPush=1".to_string());
+        }
+        if let Some(ref u) = self.config.url {
+            form_parts.push(format!("url={}", urlencoding::encode(u)));
+        }
+
+        let form_body = form_parts.join("&");
+        let request = self
+            .client
+            .post(&url)
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(form_body);
+
+        let response = request
+            .send()
+            .await
+            .with_context(|| format!("Failed to send Bark request to {}", url))?;
+
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
             return Err(anyhow::anyhow!("Bark API error ({}): {}", status, error_body));
         }
-        info!("Bark reflex '{}' sent message for topic: {}", self.name, ink.topic);
+
+        info!("Bark reflex '{}' sent notification to device: {}", self.name, device_key);
         Ok(())
     }
 }
@@ -117,13 +188,18 @@ mod tests {
 
     fn create_test_config() -> BarkReflexConfig {
         BarkReflexConfig {
-            api_url: "https://api.day.app".to_string(),
-            api_key: None,
-            message_template: "{{body}}".to_string(),
+            server: "https://api.day.app".to_string(),
+            device_key: "test-device-key".to_string(),
             title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            body_template: "{{body}}".to_string(),
+            priority: 25,
+            topic_device_mapping: HashMap::new(),
+            topic_priority_mapping: HashMap::new(),
+            sound: None,
+            icon: None,
+            group: None,
+            is_push: false,
+            url: None,
         }
     }
 
@@ -140,13 +216,33 @@ mod tests {
     }
 
     #[test]
+    fn test_resolve_device_key() {
+        let config = create_test_config();
+        let reflex = BarkReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(reflex.resolve_device_key(&ink), "test-device-key");
+    }
+
+    #[test]
+    fn test_resolve_priority() {
+        let mut config = create_test_config();
+        config.topic_priority_mapping.insert("/test/topic".to_string(), 10);
+        let reflex = BarkReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(reflex.resolve_priority(&ink), 10);
+    }
+
+    #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "https://api.day.app"
-            message_template: "[{{topic}}] {{body}}"
+            server: "https://bark.example.com"
+            device_key: "my-key"
+            priority: 10
+            sound: "minuet"
         "#;
         let config: BarkReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "https://api.day.app");
+        assert_eq!(config.server, "https://bark.example.com");
+        assert_eq!(config.priority, 10);
     }
 
     #[test]

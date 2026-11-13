@@ -2,30 +2,45 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
-/// Configuration for Signal Reflex (HTTP API)
+/// Configuration for Signal Reflex
+/// Sends messages via Signal CLI HTTP API
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignalReflexConfig {
-    /// Signal CLI base URL (e.g., "http://localhost:8080/v1")
-    pub base_url: String,
-    /// Signal CLI API password
+    /// Signal CLI HTTP API URL (e.g., "http://localhost:8080/v2")
+    pub api_url: String,
+
+    /// API password for authentication
+    pub password: String,
+
+    /// Default recipient (e.g., "+49123456789" or "group-name")
     #[serde(default)]
-    pub password: Option<String>,
-    /// Default recipient number(s)
-    pub recipients: Vec<String>,
+    pub recipient: Option<String>,
+
     /// Template for the message body
     #[serde(default = "default_message_template")]
     pub message_template: String,
-    /// Optional: mapping from Ink topics to recipient numbers
+
+    /// Optional: mapping from Ink topics to recipients
     #[serde(default)]
-    pub topic_recipient_mapping: HashMap<String, Vec<String>>,
+    pub topic_recipient_mapping: HashMap<String, String>,
+
+    /// Whether to use HTTPS
+    #[serde(default = "default_use_https")]
+    pub use_https: bool,
+
+    /// Request timeout in seconds
+    #[serde(default = "default_timeout")]
+    pub timeout: u64,
 }
 
 fn default_message_template() -> String { "{{body}}".to_string() }
+fn default_use_https() -> bool { false }
+fn default_timeout() -> u64 { 30 }
 
 pub struct SignalReflex {
     name: String,
@@ -35,14 +50,31 @@ pub struct SignalReflex {
 
 impl SignalReflex {
     pub fn new(name: String, config: SignalReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        let verify_ssl = config.use_https;
+        Self {
+            name,
+            config,
+            client: reqwest::Client::builder()
+                .danger_accept_invalid_certs(!verify_ssl)
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
+        }
     }
 
-    fn resolve_recipients(&self, ink: &Ink) -> Vec<String> {
-        if let Some(recipients) = self.config.topic_recipient_mapping.get(&ink.topic).filter(|r| !r.is_empty()) {
-            return recipients.clone();
+    /// Resolve recipient for a given Ink
+    fn resolve_recipient(&self, ink: &Ink) -> Result<String> {
+        if let Some(recipient) = self
+            .config
+            .topic_recipient_mapping
+            .get(&ink.topic)
+            .filter(|r| !r.is_empty())
+        {
+            return Ok(recipient.clone());
         }
-        self.config.recipients.clone()
+        self.config
+            .recipient
+            .clone()
+            .context("Signal recipient is required - set recipient or topic_recipient_mapping")
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -72,33 +104,46 @@ impl Reflex for SignalReflex {
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
         info!("Signal reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let recipients = self.resolve_recipients(ink);
+
+        let recipient = self.resolve_recipient(ink)?;
         let message = self.render_template(&self.config.message_template, ink);
-        debug!("Signal reflex '{}' sending to {:?} for topic: {}", self.name, recipients, ink.topic);
 
-        for recipient in &recipients {
-            let url = format!("{}/message/send/{}", self.config.base_url, recipient);
-            let body = serde_json::json!({
-                "type": "text",
-                "message": message,
-            });
+        debug!(
+            "Signal reflex '{}' sending to {} with message: {}",
+            self.name, recipient, message
+        );
 
-            let mut request = self.client.post(&url).json(&body);
-            if let Some(ref password) = self.config.password {
-                request = request.header("X-Signal-Password", password);
-            }
+        // Signal CLI HTTP API: POST /v2/message/{recipient}
+        let url = format!(
+            "{}/message/{}",
+            self.config.api_url.trim_end_matches('/'),
+            urlencoding::encode(&recipient)
+        );
 
-            let response = request.send().await
-                .with_context(|| format!("Failed to send Signal message to {}", recipient))?;
+        let payload = serde_json::json!({
+            "message": message,
+            "is_group": false
+        });
 
-            if !response.status().is_success() {
-                let status = response.status();
-                let error_body = response.text().await.unwrap_or_default();
-                return Err(anyhow::anyhow!("Signal API error ({}): {}", status, error_body));
-            }
+        let response = self
+            .client
+            .post(&url)
+            .header("X-Signal-Password", &self.config.password)
+            .json(&payload)
+            .send()
+            .await
+            .with_context(|| format!("Failed to send Signal message to {}", recipient))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!("Signal API error ({}): {}", status, error_body));
         }
 
-        info!("Signal reflex '{}' sent message to {:?} for topic: {}", self.name, recipients, ink.topic);
+        info!(
+            "Signal reflex '{}' sent message to recipient: {}",
+            self.name, recipient
+        );
         Ok(())
     }
 }
@@ -109,25 +154,18 @@ mod tests {
 
     fn create_test_config() -> SignalReflexConfig {
         SignalReflexConfig {
-            base_url: "http://localhost:8080/v1".to_string(),
-            password: Some("testpass".to_string()),
-            recipients: vec!["+1234567890".to_string()],
+            api_url: "http://localhost:8080/v2".to_string(),
+            password: "test-password".to_string(),
+            recipient: Some("+49123456789".to_string()),
             message_template: "{{body}}".to_string(),
             topic_recipient_mapping: HashMap::new(),
+            use_https: false,
+            timeout: 30,
         }
     }
 
     fn create_test_ink() -> Ink {
         Ink::new("/test/topic", "test", "test_source", "test body")
-    }
-
-    #[test]
-    fn test_default_recipients() {
-        let config = create_test_config();
-        let reflex = SignalReflex::new("test".to_string(), config);
-        let ink = create_test_ink();
-        let recipients = reflex.resolve_recipients(&ink);
-        assert_eq!(recipients, vec!["+1234567890"]);
     }
 
     #[test]
@@ -139,14 +177,34 @@ mod tests {
     }
 
     #[test]
+    fn test_resolve_recipient() {
+        let config = create_test_config();
+        let reflex = SignalReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(reflex.resolve_recipient(&ink).unwrap(), "+49123456789");
+    }
+
+    #[test]
+    fn test_resolve_recipient_mapping() {
+        let mut config = create_test_config();
+        config.topic_recipient_mapping.insert(
+            "/test/topic".to_string(),
+            "+49987654321".to_string(),
+        );
+        let reflex = SignalReflex::new("test".to_string(), config);
+        let ink = create_test_ink();
+        assert_eq!(reflex.resolve_recipient(&ink).unwrap(), "+49987654321");
+    }
+
+    #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            base_url: "http://localhost:8080/v1"
+            api_url: "http://signal-cli:8080/v2"
             password: "secret"
-            recipients: ["+1234567890"]
+            recipient: "+49123456789"
         "#;
         let config: SignalReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.base_url, "http://localhost:8080/v1");
+        assert_eq!(config.api_url, "http://signal-cli:8080/v2");
     }
 
     #[test]

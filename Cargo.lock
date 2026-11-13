@@ -3198,7 +3198,7 @@ checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
 name = "rustyKraken"
-version = "0.55.0"
+version = "0.56.0"
 dependencies = [
  "anyhow",
  "async-imap",
@@ -3209,6 +3209,7 @@ dependencies = [
  "chrono",
  "feed-parser",
  "futures-util",
+ "hex",
  "hmac 0.12.1",
  "hostname",
  "http",

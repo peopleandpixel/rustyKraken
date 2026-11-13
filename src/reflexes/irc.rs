@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
@@ -87,7 +87,7 @@ impl Reflex for IrcReflex {
             .json(&payload)
             .send()
             .await
-            .with_context(|| format!("Failed to send IRC message via webhook"))?;
+            .with_context(|| "Failed to send IRC message via webhook".to_string())?;
 
         if !response.status().is_success() {
             let status = response.status();

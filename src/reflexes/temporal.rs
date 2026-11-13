@@ -1,46 +1,72 @@
+#![allow(dead_code)]
+
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
 /// Configuration for Temporal Reflex
+/// Starts Temporal workflows via gRPC/HTTP
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TemporalReflexConfig {
-    /// API endpoint http://localhost:7233
-    pub api_url: String,
+    /// Temporal frontend address (e.g., "localhost:7233")
+    pub host: String,
 
-    /// API key or token (optional)
+    /// Workflow type name
+    pub workflow_type: String,
+
+    /// Task queue
+    #[serde(default = "default_task_queue")]
+    pub task_queue: String,
+
+    /// Template for workflow input (JSON)
+    #[serde(default = "default_input_template")]
+    pub input_template: String,
+
+    /// Optional: mapping from Ink topics to workflow types
+    #[serde(default)]
+    pub topic_workflow_mapping: HashMap<String, String>,
+
+    /// Optional: mapping from Ink topics to input templates
+    #[serde(default)]
+    pub topic_input_mapping: HashMap<String, String>,
+
+    /// Namespace
+    #[serde(default = "default_namespace")]
+    pub namespace: String,
+
+    /// API key for authentication (optional)
     #[serde(default)]
     pub api_key: Option<String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
+    /// Whether to verify TLS certificates
+    #[serde(default = "default_verify_ssl")]
+    pub verify_ssl: bool,
 
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
-
-    /// Optional: mapping from Ink topics to API http://localhost:7233s
-    #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
-
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
-
-    /// Custom headers
-    #[serde(default)]
-    pub headers: HashMap<String, String>,
+    /// Timeout in seconds
+    #[serde(default = "default_timeout")]
+    pub timeout: u64,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_task_queue() -> String {
+    "default".to_string()
+}
+fn default_input_template() -> String {
+    r#"{"topic": "{{topic}}", "body": "{{body}}"}"#.to_string()
+}
+fn default_namespace() -> String {
+    "default".to_string()
+}
+fn default_verify_ssl() -> bool {
+    true
+}
+fn default_timeout() -> u64 {
+    30
+}
 
 pub struct TemporalReflex {
     name: String,
@@ -50,14 +76,41 @@ pub struct TemporalReflex {
 
 impl TemporalReflex {
     pub fn new(name: String, config: TemporalReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        let verify_ssl = config.verify_ssl;
+        Self {
+            name,
+            config,
+            client: reqwest::Client::builder()
+                .danger_accept_invalid_certs(!verify_ssl)
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
+        }
     }
 
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+    /// Resolve workflow type for a given Ink
+    fn resolve_workflow_type(&self, ink: &Ink) -> String {
+        if let Some(workflow) = self
+            .config
+            .topic_workflow_mapping
+            .get(&ink.topic)
+            .filter(|w| !w.is_empty())
+        {
+            return workflow.clone();
         }
-        self.config.api_url.clone()
+        self.config.workflow_type.clone()
+    }
+
+    /// Resolve input template for a given Ink
+    fn resolve_input_template(&self, ink: &Ink) -> String {
+        if let Some(template) = self
+            .config
+            .topic_input_mapping
+            .get(&ink.topic)
+            .filter(|t| !t.is_empty())
+        {
+            return template.clone();
+        }
+        self.config.input_template.clone()
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,35 +131,174 @@ impl TemporalReflex {
         }
         rendered
     }
+
+    /// Build Temporal API URL
+    fn temporal_url(&self, path: &str) -> String {
+        let host = self.config.host.trim_end_matches('/');
+        let scheme = if self.config.verify_ssl { "https" } else { "http" };
+        format!("{}/{}{}", scheme, host, path)
+    }
+
+    /// Start a workflow
+    async fn start_workflow(
+        &self,
+        workflow_type: &str,
+        input: &serde_json::Value,
+    ) -> Result<serde_json::Value> {
+        let url = self.temporal_url(&format!(
+            "/api/v1/namespaces/{}/workflows",
+            self.config.namespace
+        ));
+
+        let payload = serde_json::json!({
+            "workflowType": workflow_type,
+            "taskQueue": self.config.task_queue,
+            "input": input,
+            "workflowId": format!("kraken-{}", uuid::Uuid::new_v4())
+        });
+
+        let mut request = self.client.post(&url).json(&payload);
+
+        if let Some(ref api_key) = self.config.api_key {
+            request = request.header("Authorization", format!("Bearer {}", api_key));
+        }
+
+        let response = request
+            .send()
+            .await
+            .with_context(|| format!("Failed to start Temporal workflow {}", workflow_type))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Temporal workflow error ({}): {}",
+                status,
+                error_body
+            ));
+        }
+
+        response.json().await.context("Failed to parse Temporal response")
+    }
+
+    /// Signal a workflow
+    async fn signal_workflow(
+        &self,
+        workflow_id: &str,
+        signal_name: &str,
+        input: &serde_json::Value,
+    ) -> Result<()> {
+        let url = self.temporal_url(&format!(
+            "/api/v1/namespaces/{}/workflows/{}/signal/{}",
+            self.config.namespace, workflow_id, signal_name
+        ));
+
+        let payload = serde_json::json!({
+            "input": input
+        });
+
+        let mut request = self.client.post(&url).json(&payload);
+
+        if let Some(ref api_key) = self.config.api_key {
+            request = request.header("Authorization", format!("Bearer {}", api_key));
+        }
+
+        let response = request
+            .send()
+            .await
+            .with_context(|| format!("Failed to signal Temporal workflow {}", workflow_id))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Temporal signal error ({}): {}",
+                status,
+                error_body
+            ));
+        }
+
+        Ok(())
+    }
+
+    /// Query a workflow
+    async fn query_workflow(
+        &self,
+        workflow_id: &str,
+        query_type: &str,
+    ) -> Result<serde_json::Value> {
+        let url = self.temporal_url(&format!(
+            "/api/v1/namespaces/{}/workflows/{}/query/{}",
+            self.config.namespace, workflow_id, query_type
+        ));
+
+        let mut request = self.client.get(&url);
+
+        if let Some(ref api_key) = self.config.api_key {
+            request = request.header("Authorization", format!("Bearer {}", api_key));
+        }
+
+        let response = request
+            .send()
+            .await
+            .with_context(|| format!("Failed to query Temporal workflow {}", workflow_id))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_body = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Temporal query error ({}): {}",
+                status,
+                error_body
+            ));
+        }
+
+        response.json().await.context("Failed to parse Temporal query response")
+    }
 }
 
 #[async_trait]
 impl Reflex for TemporalReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "temporal" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn r#type(&self) -> &str {
+        "temporal"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Temporal reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("Temporal reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
+        info!(
+            "Temporal reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
-        }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
-        }
-        let response = request.send().await.with_context(|| format!("Failed to send Temporal request"))?;
-        if !response.status().is_success() {
-            let status = response.status();
-            let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Temporal API error ({}): {}", status, error_body));
-        }
-        info!("Temporal reflex '{}' sent message for topic: {}", self.name, ink.topic);
+        let workflow_type = self.resolve_workflow_type(ink);
+        debug!(
+            "Temporal reflex '{}' resolved workflow type: {}",
+            self.name, workflow_type
+        );
+
+        // Render input
+        let input_template = self.resolve_input_template(ink);
+        let input_rendered = self.render_template(&input_template, ink);
+        let input: serde_json::Value = serde_json::from_str(&input_rendered)
+            .context("input_template must render to valid JSON")?;
+
+        debug!(
+            "Temporal reflex '{}' input: {}",
+            self.name, input
+        );
+
+        // Start workflow
+        let result = self.start_workflow(&workflow_type, &input).await?;
+        let workflow_id = result["workflowId"].as_str().unwrap_or("unknown");
+
+        info!(
+            "Temporal reflex '{}' started workflow {} (ID: {})",
+            self.name, workflow_type, workflow_id
+        );
+
         Ok(())
     }
 }
@@ -117,13 +309,16 @@ mod tests {
 
     fn create_test_config() -> TemporalReflexConfig {
         TemporalReflexConfig {
-            api_url: "http://localhost:7233".to_string(),
+            host: "localhost:7233".to_string(),
+            workflow_type: "my-workflow".to_string(),
+            task_queue: "default".to_string(),
+            input_template: default_input_template(),
+            topic_workflow_mapping: HashMap::new(),
+            topic_input_mapping: HashMap::new(),
+            namespace: "default".to_string(),
             api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            verify_ssl: true,
+            timeout: 30,
         }
     }
 
@@ -134,19 +329,25 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = TemporalReflex::new("test".to_string(), config);
+        let reflex = TemporalReflex::new("test".to_string(), config.clone());
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        let rendered = reflex.render_template(&config.input_template, &ink);
+        let input: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+        assert_eq!(input["topic"], "/test/topic");
+        assert_eq!(input["body"], "test body");
     }
 
     #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "http://localhost:7233"
-            message_template: "[{{topic}}] {{body}}"
+            host: "temporal:7233"
+            workflow_type: "deploy-workflow"
+            task_queue: "deploy"
+            namespace: "production"
         "#;
         let config: TemporalReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "http://localhost:7233");
+        assert_eq!(config.workflow_type, "deploy-workflow");
+        assert_eq!(config.namespace, "production");
     }
 
     #[test]
@@ -154,5 +355,17 @@ mod tests {
         let config = create_test_config();
         let reflex = TemporalReflex::new("test".to_string(), config);
         assert_eq!(reflex.r#type(), "temporal");
+    }
+
+    #[test]
+    fn test_resolve_workflow_from_mapping() {
+        let mut config = create_test_config();
+        let mut mapping = HashMap::new();
+        mapping.insert("/temporal/deploy".to_string(), "deploy-workflow".to_string());
+        config.topic_workflow_mapping = mapping;
+
+        let reflex = TemporalReflex::new("test".to_string(), config);
+        let ink = Ink::new("/temporal/deploy", "test", "test_source", "body");
+        assert_eq!(reflex.resolve_workflow_type(&ink), "deploy-workflow");
     }
 }

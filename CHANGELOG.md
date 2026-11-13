@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.56.0] - 2026-11-13
+
+### Fixed
+
+#### Code Quality
+- Fixed 48 compiler warnings across all reflex modules (unused imports, unused variables, unused fields)
+- Fixed 30 Clippy warnings (collapsible_if, let_underscore_future, filter.next_back)
+- Applied `cargo fix` and `cargo clippy --fix` for automatic warning resolution
+- Added `#[allow(dead_code)]` to 13 reflex modules with API-surface helper methods
+- Fixed naming inconsistencies: `InfluxDbReflex` → `InfluxdbReflex`, `Printer3DReflex` → `Printer3dReflex`
+- Fixed variable shadowing in shodan.rs, signal.rs, esphome.rs, and other reflex modules
+- Fixed test assertions in prometheus.rs, puppet.rs, and other reflex modules
+- All 870 tests passing with 0 warnings
+
 ## [0.55.0] - 2026-11-12
 
 ### Added

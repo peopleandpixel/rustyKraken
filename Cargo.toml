@@ -1,6 +1,6 @@
 [package]
 name = "rustyKraken"
-version = "0.55.0"
+version = "0.56.0"
 edition = "2024"
 
 [dependencies]
@@ -37,6 +37,7 @@ serial2-tokio = "0.1"
 snmp2 = "0.5"
 sha2 = "0.10"
 hmac = "0.12"
+hex = "0.4"
 urlencoding = "2.1"
 time = { version = "0.3", features = ["formatting"] }
 hostname = "0.4"

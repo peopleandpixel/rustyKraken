@@ -2,62 +2,109 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
 
-/// Configuration for TTS Reflex
+/// Configuration for TTS (Text-to-Speech) Reflex
+/// Converts text to speech via various TTS services
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TtsReflexConfig {
-    /// API endpoint http://localhost:5000
-    pub api_url: String,
+    /// TTS service: "espeak", "pico2wave", "gtts", "macos_say"
+    #[serde(default = "default_service")]
+    pub service: String,
 
-    /// API key or token (optional)
+    /// Voice name
     #[serde(default)]
-    pub api_key: Option<String>,
+    pub voice: Option<String>,
 
-    /// Template for the message body
-    #[serde(default = "default_message_template")]
-    pub message_template: String,
+    /// Template for text to speak
+    #[serde(default = "default_text_template")]
+    pub text_template: String,
 
-    /// Template for the title/subject
-    #[serde(default = "default_title_template")]
-    pub title_template: String,
+    /// Output directory for audio files
+    #[serde(default = "default_output_dir")]
+    pub output_dir: String,
 
-    /// Optional: mapping from Ink topics to API http://localhost:5000s
+    /// Output filename template
+    #[serde(default = "default_filename_template")]
+    pub filename_template: String,
+
+    /// Audio format: "wav", "mp3", "ogg"
+    #[serde(default = "default_format")]
+    pub format: String,
+
+    /// Optional: mapping from Ink topics to voices
     #[serde(default)]
-    pub topic_url_mapping: HashMap<String, String>,
+    pub topic_voice_mapping: HashMap<String, String>,
 
-    /// HTTP method
-    #[serde(default = "default_method")]
-    pub method: String,
-
-    /// Custom headers
+    /// Optional: mapping from Ink topics to text templates
     #[serde(default)]
-    pub headers: HashMap<String, String>,
+    pub topic_text_mapping: HashMap<String, String>,
+
+    /// Speak immediately (play audio)
+    #[serde(default)]
+    pub speak_immediately: bool,
+
+    /// Timeout in seconds
+    #[serde(default = "default_timeout")]
+    pub timeout: u64,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_method() -> String { "POST".to_string() }
+fn default_service() -> String {
+    "espeak".to_string()
+}
+fn default_text_template() -> String {
+    "{{body}}".to_string()
+}
+fn default_output_dir() -> String {
+    "/tmp".to_string()
+}
+fn default_filename_template() -> String {
+    "tts_{{id}}.wav".to_string()
+}
+fn default_format() -> String {
+    "wav".to_string()
+}
+fn default_timeout() -> u64 {
+    30
+}
 
 pub struct TtsReflex {
     name: String,
     config: TtsReflexConfig,
-    client: reqwest::Client,
 }
 
 impl TtsReflex {
     pub fn new(name: String, config: TtsReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        Self { name, config }
     }
 
-    fn resolve_url(&self, ink: &Ink) -> String {
-        if let Some(url) = self.config.topic_url_mapping.get(&ink.topic).filter(|u| !u.is_empty()) {
-            return url.clone();
+    /// Resolve voice for a given Ink
+    fn resolve_voice(&self, ink: &Ink) -> Option<String> {
+        if let Some(voice) = self
+            .config
+            .topic_voice_mapping
+            .get(&ink.topic)
+            .filter(|v| !v.is_empty())
+        {
+            return Some(voice.clone());
         }
-        self.config.api_url.clone()
+        self.config.voice.clone()
+    }
+
+    /// Resolve text template for a given Ink
+    fn resolve_text_template(&self, ink: &Ink) -> String {
+        if let Some(template) = self
+            .config
+            .topic_text_mapping
+            .get(&ink.topic)
+            .filter(|t| !t.is_empty())
+        {
+            return template.clone();
+        }
+        self.config.text_template.clone()
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -78,35 +125,161 @@ impl TtsReflex {
         }
         rendered
     }
+
+    /// Generate TTS using espeak
+    async fn espeak(&self, text: &str, output_file: &str, voice: Option<&str>) -> Result<()> {
+        info!(
+            "TTS reflex '{}' generating speech with espeak",
+            self.name
+        );
+
+        let mut cmd = tokio::process::Command::new("espeak");
+        cmd.arg(text).arg("-f").arg(output_file);
+
+        if let Some(v) = voice {
+            cmd.arg("-v").arg(v);
+        }
+
+        let output = cmd.output().await.context("Failed to execute espeak")?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(anyhow::anyhow!("espeak failed: {}", stderr));
+        }
+
+        Ok(())
+    }
+
+    /// Generate TTS using pico2wave
+    async fn pico2wave(&self, text: &str, output_file: &str) -> Result<()> {
+        info!(
+            "TTS reflex '{}' generating speech with pico2wave",
+            self.name
+        );
+
+        let output = tokio::process::Command::new("pico2wave")
+            .arg("-w")
+            .arg(output_file)
+            .arg(text)
+            .output()
+            .await
+            .context("Failed to execute pico2wave")?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(anyhow::anyhow!("pico2wave failed: {}", stderr));
+        }
+
+        Ok(())
+    }
+
+    /// Generate TTS using macOS say command
+    async fn macos_say(&self, text: &str, output_file: &str, voice: Option<&str>) -> Result<()> {
+        info!(
+            "TTS reflex '{}' generating speech with macOS say",
+            self.name
+        );
+
+        let mut cmd = tokio::process::Command::new("say");
+        cmd.arg("-o").arg(output_file).arg(text);
+
+        if let Some(v) = voice {
+            cmd.arg("-v").arg(v);
+        }
+
+        let output = cmd.output().await.context("Failed to execute say")?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(anyhow::anyhow!("say failed: {}", stderr));
+        }
+
+        Ok(())
+    }
+
+    /// Play audio file
+    async fn play_audio(&self, file: &str) -> Result<()> {
+        info!(
+            "TTS reflex '{}' playing audio: {}",
+            self.name, file
+        );
+
+        // Try paplay first (PulseAudio), then aplay (ALSA)
+        let paplay_result = tokio::process::Command::new("paplay")
+            .arg(file)
+            .output()
+            .await;
+
+        if let Ok(output) = paplay_result
+            && output.status.success() {
+                return Ok(());
+            }
+
+        let aplay_result = tokio::process::Command::new("aplay")
+            .arg(file)
+            .output()
+            .await;
+
+        if let Ok(output) = aplay_result
+            && output.status.success() {
+                return Ok(());
+            }
+
+        Err(anyhow::anyhow!("No audio player available"))
+    }
 }
 
 #[async_trait]
 impl Reflex for TtsReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "tts" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn r#type(&self) -> &str {
+        "tts"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("TTS reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        let url = self.resolve_url(ink);
-        let title = self.render_template(&self.config.title_template, ink);
-        let body = self.render_template(&self.config.message_template, ink);
-        debug!("TTS reflex '{}' sending to {} for topic: {}", self.name, url, ink.topic);
+        info!(
+            "TTS reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
-        let payload = serde_json::json!({"title": title, "message": body});
-        let mut request = self.client.post(&url).json(&payload);
-        if let Some(ref key) = self.config.api_key {
-            request = request.header("Authorization", format!("Bearer {}", key));
+        let voice = self.resolve_voice(ink);
+        let text_template = self.resolve_text_template(ink);
+        let text = self.render_template(&text_template, ink);
+
+        let filename = self.render_template(&self.config.filename_template, ink);
+        let output_file = format!("{}/{}", self.config.output_dir, filename);
+
+        debug!(
+            "TTS reflex '{}' text={}, voice={:?}, output={}",
+            self.name, text, voice, output_file
+        );
+
+        // Generate TTS
+        match self.config.service.as_str() {
+            "espeak" => self.espeak(&text, &output_file, voice.as_deref()).await?,
+            "pico2wave" => self.pico2wave(&text, &output_file).await?,
+            "macos_say" => self.macos_say(&text, &output_file, voice.as_deref()).await?,
+            _ => {
+                return Err(anyhow::anyhow!(
+                    "Unsupported TTS service: {}",
+                    self.config.service
+                ))
+            }
         }
-        for (k, v) in &self.config.headers {
-            request = request.header(k, v);
+
+        info!(
+            "TTS reflex '{}' generated audio: {}",
+            self.name, output_file
+        );
+
+        // Optionally play immediately
+        if self.config.speak_immediately {
+            self.play_audio(&output_file).await?;
         }
-        let response = request.send().await.with_context(|| format!("Failed to send TTS request"))?;
-        if !response.status().is_success() {
-            let status = response.status();
-            let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("TTS API error ({}): {}", status, error_body));
-        }
-        info!("TTS reflex '{}' sent message for topic: {}", self.name, ink.topic);
+
         Ok(())
     }
 }
@@ -117,18 +290,21 @@ mod tests {
 
     fn create_test_config() -> TtsReflexConfig {
         TtsReflexConfig {
-            api_url: "http://localhost:5000".to_string(),
-            api_key: None,
-            message_template: "{{body}}".to_string(),
-            title_template: "{{topic}}".to_string(),
-            topic_url_mapping: HashMap::new(),
-            method: "POST".to_string(),
-            headers: HashMap::new(),
+            service: "espeak".to_string(),
+            voice: None,
+            text_template: "{{body}}".to_string(),
+            output_dir: "/tmp".to_string(),
+            filename_template: "tts_{{id}}.wav".to_string(),
+            format: "wav".to_string(),
+            topic_voice_mapping: HashMap::new(),
+            topic_text_mapping: HashMap::new(),
+            speak_immediately: false,
+            timeout: 30,
         }
     }
 
     fn create_test_ink() -> Ink {
-        Ink::new("/test/topic", "test", "test_source", "test body")
+        Ink::new("/test/topic", "test", "test_source", "Hello world")
     }
 
     #[test]
@@ -136,17 +312,22 @@ mod tests {
         let config = create_test_config();
         let reflex = TtsReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("{{body}}", &ink),
+            "Hello world"
+        );
     }
 
     #[test]
     fn test_config_deserialization() {
         let yaml = r#"
-            api_url: "http://localhost:5000"
-            message_template: "[{{topic}}] {{body}}"
+            service: "espeak"
+            voice: "en-us"
+            speak_immediately: true
         "#;
         let config: TtsReflexConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.api_url, "http://localhost:5000");
+        assert_eq!(config.service, "espeak");
+        assert!(config.speak_immediately);
     }
 
     #[test]
@@ -154,5 +335,17 @@ mod tests {
         let config = create_test_config();
         let reflex = TtsReflex::new("test".to_string(), config);
         assert_eq!(reflex.r#type(), "tts");
+    }
+
+    #[test]
+    fn test_resolve_voice_from_mapping() {
+        let mut config = create_test_config();
+        let mut mapping = HashMap::new();
+        mapping.insert("/tts/alerts".to_string(), "en-us".to_string());
+        config.topic_voice_mapping = mapping;
+
+        let reflex = TtsReflex::new("test".to_string(), config);
+        let ink = Ink::new("/tts/alerts", "test", "test_source", "body");
+        assert_eq!(reflex.resolve_voice(&ink), Some("en-us".to_string()));
     }
 }

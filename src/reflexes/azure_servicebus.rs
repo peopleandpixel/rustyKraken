@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use super::Reflex;
 use crate::model::Ink;
@@ -92,7 +92,7 @@ impl Reflex for AzureServiceBusReflex {
             .map_err(|e| anyhow::anyhow!("HMAC error: {}", e))?;
         mac.update(string_to_sign.as_bytes());
         let signature = mac.finalize().into_bytes();
-        let encoded_sig = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &signature);
+        let encoded_sig = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, signature);
 
         let sas_token = format!(
             "SharedAccessSignature sr={}&sig={}&se={}&skn={}",
@@ -108,7 +108,7 @@ impl Reflex for AzureServiceBusReflex {
             .body(body)
             .send()
             .await
-            .with_context(|| format!("Failed to send message to Azure Service Bus"))?;
+            .with_context(|| "Failed to send message to Azure Service Bus".to_string())?;
 
         if !response.status().is_success() {
             let status = response.status();
