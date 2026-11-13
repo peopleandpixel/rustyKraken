@@ -775,13 +775,43 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 - [ ] **Dead Letter Queue** – Fehlgeschlagene Nachrichten separat speichern
 - [ ] **Throttling** – Maximal N Aktionen pro Zeitfenster
 
-### 3.5 Allgemein
+### 3.6 HTTP Client Pooling (CRITICAL)
+
+- [ ] **reqwest::Client wiederverwenden** – Aktuell werden an 51 Stellen `reqwest::Client::new()` aufgerufen (jeder Reflex und viele Tentacles erstellen einen eigenen Client pro Instanz)
+  - [ ] Globalen `reqwest::Client` in `Arc` wrappen und an Reflexes/Tentacles injizieren
+  - [ ] Connection Pooling aktivieren mit konfigurierbarer Max-Connections
+  - [ ] HTTP/2 Multiplexing nutzen für bessere Performance
+  - [ ] Affected files: alle Reflex-Module (~45 Dateien) und Tentacle-Module (~10 Dateien)
+
+### 3.7 Regex Caching
+
+- [ ] **Regex::new() pro Nachricht vermeiden** – In `reflexes/tentacle.rs` wird bei jeder eingehenden Nachricht `regex::Regex::new()` aufgerufen, was teuer ist
+  - [ ] `std::sync::LazyLock` oder `once_cell::sync::Lazy` für Regex-Caching verwenden
+  - [ ] Topic-Filter und Body-Filter einmalig beim Reflex-Start kompilieren
+  - [ ] Affected files: `src/reflexes/tentacle.rs`
+
+### 3.8 Graceful Shutdown
+
+- [ ] **Sauberer Shutdown aller Tasks** – Bei Ctrl+C werden `tokio::spawn` Tasks abrupt beendet
+  - [ ] `tokio::signal` mit `CancelHandle` für sauberes Beenden
+  - [ ] Alle Tentacles und Reflexes benachrichtigen bevor Shutdown
+  - [ ] Ausstehende Nachrichten verarbeiten bevor Exit
+  - [ ] Mantle-Verbindung sauber schließen
+  - [ ] Affected files: `src/main.rs`
+
+### 3.9 String Allokationen reduzieren
+
+- [ ] **Unnötige `.clone()` und `.to_string()` reduzieren** – 577 `.clone()` Aufrufe im Code, viele davon könnten durch `&str` ersetzt werden
+  - [ ] `Cow<str>` dort verwenden, wo sowohl `&str` als auch `String` möglich sind
+  - [ ] Template-Rendering mit `String::with_capacity()` statt `format!()` in Loops
+  - [ ] Ink-Struktur: `topic`, `body`, `source` als `Cow<str>` evaluieren
+
+### 3.10 Allgemein
 
 - [ ] **Memory Profiling** – Speicherverbrauch mit `dhat` oder `heaptrack` analysieren
 - [ ] **CPU Profiling** – Hotspots mit `perf` oder `flamegraph` identifizieren
 - [ ] **Tokio Console** – Integration für Runtime-Metriken und Debugging
 - [ ] **Prometheus Metriken** – Exponiere Metriken via `/metrics` Endpoint
-- [ ] **Graceful Shutdown** – Sauberes Beenden aller Tentacles und Reflexes mit Signal-Handling
 
 ---
 

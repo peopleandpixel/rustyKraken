@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.57.0] - 2026-11-13
+
+### Added
+
+#### Mantle (Storage) Performance Optimizations
+- **WAL Mode** – Enabled SQLite Write-Ahead Logging for better write performance
+- **Batch Storage** – New `with_batching()` constructor with configurable batch size and interval
+- **Batch Transaction** – `store_batch()` writes multiple inks in a single transaction
+- **FTS5 Full-Text Search** – Virtual table with automatic triggers for topic, body, and metadata search
+- **Search Methods** – `search()` and `search_with_limit()` for full-text queries
+- **Archive/Partitioning** – `archive_older_than()` moves old inks to `ink_archive` table
+- **VACUUM & ANALYZE** – `vacuum()` and `analyze()` for database maintenance
+- **Compression** – `compress_large_bodies()` with zlib; `get_body_decompressed()` for reading
+- **Count Methods** – `count()` and `count_archived()` for statistics
+- **SQLite PRAGMAs** – Optimized synchronous, cache_size, and mmap_size settings
+- Added `flate2` dependency for zlib compression
+- 13 new unit tests for all Mantle features
+
+### Changed
+
+- Updated tasks.md with new performance sections (3.6–3.9): HTTP Client Pooling, Regex Caching, Graceful Shutdown, String Allocations
+- All 883 tests passing with 0 warnings
+
 ## [0.56.0] - 2026-11-13
 
 ### Fixed
