@@ -4,9 +4,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Printer Reflex
@@ -80,15 +82,15 @@ fn default_timeout() -> u64 {
 pub struct PrinterReflex {
     name: String,
     config: PrinterReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl PrinterReflex {
-    pub fn new(name: String, config: PrinterReflexConfig) -> Self {
+    pub fn new(name: String, config: PrinterReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -287,7 +289,11 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = PrinterReflex::new("test".to_string(), config);
+        let reflex = PrinterReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
         assert_eq!(reflex.render_template("{{body}}", &ink), "Hello world");
     }
@@ -306,7 +312,11 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = PrinterReflex::new("test".to_string(), config);
+        let reflex = PrinterReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         assert_eq!(reflex.r#type(), "printer");
     }
 
@@ -317,7 +327,11 @@ mod tests {
         mapping.insert("/print/office".to_string(), "Office_Printer".to_string());
         config.topic_printer_mapping = mapping;
 
-        let reflex = PrinterReflex::new("test".to_string(), config);
+        let reflex = PrinterReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = Ink::new("/print/office", "test", "test_source", "body");
         assert_eq!(reflex.resolve_printer(&ink), "Office_Printer");
     }

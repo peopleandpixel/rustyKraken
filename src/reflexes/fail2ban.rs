@@ -279,6 +279,7 @@ impl Reflex for Fail2BanReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> Fail2BanReflexConfig {
         Fail2BanReflexConfig {

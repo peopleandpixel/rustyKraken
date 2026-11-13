@@ -289,6 +289,7 @@ fn create_signal_ink(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_config_defaults() {

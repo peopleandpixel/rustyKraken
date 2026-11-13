@@ -483,6 +483,7 @@ fn mqtt_topic_matches_pattern(topic: &str, pattern: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_mqtt_topic_matches_pattern_exact() {

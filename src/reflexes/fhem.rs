@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for FHEM Reflex
@@ -58,15 +59,16 @@ pub struct FhemReflex {
 }
 
 impl FhemReflex {
-    pub fn new(name: String, config: FhemReflexConfig) -> Self {
-        let verify_ssl = config.verify_ssl;
+    pub fn new(name: String, config: FhemReflexConfig, app_ctx: &AppContext) -> Self {
+        let client = if config.verify_ssl {
+            app_ctx.http_client().as_ref().clone()
+        } else {
+            app_ctx.http_client_danger_accept_invalid_certs()
+        };
         Self {
             name,
             config,
-            client: reqwest::Client::builder()
-                .danger_accept_invalid_certs(!verify_ssl)
-                .build()
-                .unwrap_or_else(|_| reqwest::Client::new()),
+            client,
         }
     }
 
@@ -206,7 +208,8 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = FhemReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = FhemReflex::new("test".to_string(), config, &app_ctx);
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("{{topic}}-{{body}}", &ink),
@@ -217,7 +220,8 @@ mod tests {
     #[test]
     fn test_resolve_device() {
         let config = create_test_config();
-        let reflex = FhemReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = FhemReflex::new("test".to_string(), config, &app_ctx);
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_device(&ink).unwrap(), "Light_LivingRoom");
     }
@@ -225,7 +229,8 @@ mod tests {
     #[test]
     fn test_resolve_command() {
         let config = create_test_config();
-        let reflex = FhemReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = FhemReflex::new("test".to_string(), config, &app_ctx);
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_command(&ink), "on");
     }
@@ -244,7 +249,8 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = FhemReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = FhemReflex::new("test".to_string(), config, &app_ctx);
         assert_eq!(reflex.r#type(), "fhem");
     }
 }

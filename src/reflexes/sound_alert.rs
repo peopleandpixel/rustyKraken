@@ -115,6 +115,7 @@ impl Reflex for SoundAlertReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> SoundAlertReflexConfig {
         SoundAlertReflexConfig {

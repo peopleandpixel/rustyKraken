@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Custom Webhook Reflex
@@ -118,21 +119,12 @@ pub struct CustomWebhookReflex {
 }
 
 impl CustomWebhookReflex {
-    pub fn new(name: String, config: CustomWebhookReflexConfig) -> Self {
-        let verify_ssl = config.verify_ssl;
-        let follow_redirects = config.follow_redirects;
+    pub fn new(name: String, config: CustomWebhookReflexConfig, app_ctx: &AppContext) -> Self {
+        let client = app_ctx.http_client_custom(config.verify_ssl, config.follow_redirects);
         Self {
             name,
             config,
-            client: reqwest::Client::builder()
-                .danger_accept_invalid_certs(!verify_ssl)
-                .redirect(if follow_redirects {
-                    reqwest::redirect::Policy::default()
-                } else {
-                    reqwest::redirect::Policy::none()
-                })
-                .build()
-                .unwrap_or_else(|_| reqwest::Client::new()),
+            client,
         }
     }
 
@@ -303,6 +295,7 @@ impl Reflex for CustomWebhookReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> CustomWebhookReflexConfig {
         CustomWebhookReflexConfig {
@@ -334,7 +327,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = CustomWebhookReflex::new("test".to_string(), config);
+        let reflex = CustomWebhookReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         let rendered = reflex.render_template(&reflex.config.body_template, &ink);
         assert!(rendered.contains("/test/topic"));
@@ -344,7 +337,7 @@ mod tests {
     #[test]
     fn test_resolve_url() {
         let config = create_test_config();
-        let reflex = CustomWebhookReflex::new("test".to_string(), config);
+        let reflex = CustomWebhookReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_url(&ink), "https://webhook.example.com/hook");
     }
@@ -352,7 +345,7 @@ mod tests {
     #[test]
     fn test_resolve_method() {
         let config = create_test_config();
-        let reflex = CustomWebhookReflex::new("test".to_string(), config);
+        let reflex = CustomWebhookReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_method(&ink), "POST");
     }
@@ -374,7 +367,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = CustomWebhookReflex::new("test".to_string(), config);
+        let reflex = CustomWebhookReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "custom_webhook");
     }
 }

@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use tracing::{debug, error, info, warn};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Message type for Matrix messages
@@ -154,11 +155,11 @@ pub struct MatrixReflex {
 }
 
 impl MatrixReflex {
-    pub fn new(name: String, config: MatrixReflexConfig) -> Result<Self> {
+    pub fn new(name: String, config: MatrixReflexConfig, app_ctx: &AppContext) -> Result<Self> {
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(config.timeout_secs))
             .build()
-            .context("Failed to build HTTP client")?;
+            .unwrap_or_else(|_| app_ctx.http_client().as_ref().clone());
 
         Ok(Self {
             name,
@@ -369,6 +370,7 @@ impl Reflex for MatrixReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
     use serde_json::json;
 
     fn create_test_config() -> MatrixReflexConfig {
@@ -449,7 +451,8 @@ mod tests {
             "!critical:matrix.org".to_string(),
         );
 
-        let reflex = MatrixReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = MatrixReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = Ink::new("/alerts/critical", "test", "test", "Critical alert");
 
@@ -459,7 +462,8 @@ mod tests {
     #[test]
     fn test_resolve_room_id_default() {
         let config = create_test_config();
-        let reflex = MatrixReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = MatrixReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_room_id(&ink), "!test:matrix.org");
@@ -472,7 +476,8 @@ mod tests {
             .topic_msg_type_mapping
             .insert("/alerts/critical".to_string(), MatrixMsgType::Text);
 
-        let reflex = MatrixReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = MatrixReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = Ink::new("/alerts/critical", "test", "test", "Critical");
 
@@ -482,7 +487,8 @@ mod tests {
     #[test]
     fn test_resolve_msg_type_default() {
         let config = create_test_config();
-        let reflex = MatrixReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = MatrixReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_msg_type(&ink), MatrixMsgType::Notice);
@@ -491,7 +497,8 @@ mod tests {
     #[test]
     fn test_render_template() {
         let config = create_test_config();
-        let reflex = MatrixReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = MatrixReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let result = reflex.render_template("[{{topic}}] {{body}} - {{id}}", &ink);
@@ -505,7 +512,8 @@ mod tests {
     #[test]
     fn test_render_template_with_metadata() {
         let config = create_test_config();
-        let reflex = MatrixReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = MatrixReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let result = reflex.render_template("{{metadata.key1}}: {{metadata.key2}}", &ink);
@@ -517,7 +525,8 @@ mod tests {
     #[test]
     fn test_build_payload_basic() {
         let config = create_test_config();
-        let reflex = MatrixReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = MatrixReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let payload = reflex.build_payload(&ink);
@@ -532,7 +541,8 @@ mod tests {
         config.formatted_body_template = Some("<b>{{body}}</b>".to_string());
         config.format = Some(MatrixFormat::Html);
 
-        let reflex = MatrixReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = MatrixReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let payload = reflex.build_payload(&ink);
@@ -550,7 +560,8 @@ mod tests {
             .topic_body_mapping
             .insert("/test/topic".to_string(), "Custom: {{body}}".to_string());
 
-        let reflex = MatrixReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = MatrixReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let payload = reflex.build_payload(&ink);
@@ -574,7 +585,8 @@ mod tests {
     #[test]
     fn test_new_reflex() {
         let config = create_test_config();
-        let reflex = MatrixReflex::new("test_reflex".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = MatrixReflex::new("test_reflex".to_string(), config, &app_ctx).unwrap();
         assert_eq!(reflex.name(), "test_reflex");
     }
 

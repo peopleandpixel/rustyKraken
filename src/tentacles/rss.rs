@@ -8,6 +8,7 @@ use std::time::Duration;
 use tracing::{debug, error, info, warn};
 
 use super::Tentacle;
+use crate::appcontext::AppContext;
 use crate::eventbus::EventBus;
 use crate::model::Ink;
 
@@ -96,32 +97,27 @@ pub struct RssTentacle {
     config: RssTentacleConfig,
     /// Bereits gesehene Einträge (URL + Titel), um Duplikate zu vermeiden
     seen_entries: Arc<parking_lot::Mutex<HashSet<String>>>,
+    client: reqwest::Client,
 }
 
 impl RssTentacle {
-    pub fn new(name: String, config: RssTentacleConfig) -> Self {
+    pub fn new(name: String, config: RssTentacleConfig, app_ctx: &AppContext) -> Self {
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(config.timeout_seconds))
+            .user_agent("rustyKraken RSS/Atom Feed Reader/0.1")
+            .build()
+            .unwrap_or_else(|_| app_ctx.http_client().as_ref().clone());
         Self {
             name,
             config,
             seen_entries: Arc::new(parking_lot::Mutex::new(HashSet::new())),
+            client,
         }
-    }
-
-    /// Erstellt einen reqwest-Client mit konfigurierter Timeout
-    fn build_client(&self) -> reqwest::Client {
-        reqwest::Client::builder()
-            .timeout(Duration::from_secs(self.config.timeout_seconds))
-            .user_agent("rustyKraken RSS/Atom Feed Reader/0.1")
-            .build()
-            .unwrap_or_else(|_| {
-                warn!("Failed to build reqwest client with custom settings, using default");
-                reqwest::Client::new()
-            })
     }
 
     /// Lädt den Feed-Inhalt von einer URL
     async fn fetch_feed(&self, url: &str) -> Result<String> {
-        let client = self.build_client();
+        let client = &self.client;
 
         let mut request = client.get(url);
 
@@ -413,6 +409,7 @@ mod tests {
     use super::*;
 
     fn create_tentacle() -> RssTentacle {
+        let app_ctx = crate::appcontext::AppContext::new();
         RssTentacle::new(
             "test_rss".to_string(),
             RssTentacleConfig {
@@ -429,6 +426,7 @@ mod tests {
                 retry_delay_seconds: 10,
                 headers: vec![],
             },
+            &app_ctx,
         )
     }
 

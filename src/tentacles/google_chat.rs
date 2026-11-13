@@ -339,6 +339,7 @@ async fn webhook_handler(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn default_config() -> GoogleChatTentacleConfig {
         GoogleChatTentacleConfig {

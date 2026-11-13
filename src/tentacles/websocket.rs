@@ -309,6 +309,7 @@ impl Tentacle for WebSocketTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_tentacle_field_mode() -> WebSocketTentacle {
         WebSocketTentacle::new(

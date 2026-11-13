@@ -336,6 +336,7 @@ impl Tentacle for DbPollerTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn make_config() -> DbPollerTentacleConfig {
         DbPollerTentacleConfig {

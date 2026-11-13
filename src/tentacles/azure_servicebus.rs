@@ -12,6 +12,7 @@ use tracing::{debug, info, warn};
 type HmacSha256 = Hmac<Sha256>;
 
 use super::Tentacle;
+use crate::appcontext::AppContext;
 use crate::eventbus::EventBus;
 use crate::model::Ink;
 
@@ -102,6 +103,7 @@ fn default_reconnect_delay() -> u64 {
 pub struct AsbTentacle {
     name: String,
     config: AsbTentacleConfig,
+    client: Arc<reqwest::Client>,
 }
 
 /// Freistehende Funktion: Bestimmt das Topic basierend auf der ASB-Nachricht
@@ -144,8 +146,12 @@ fn extract_body(payload: &[u8]) -> String {
 }
 
 impl AsbTentacle {
-    pub fn new(name: String, config: AsbTentacleConfig) -> Self {
-        Self { name, config }
+    pub fn new(name: String, config: AsbTentacleConfig, app_ctx: &AppContext) -> Self {
+        Self {
+            name,
+            config,
+            client: Arc::clone(app_ctx.http_client()),
+        }
     }
 }
 
@@ -168,12 +174,13 @@ impl Tentacle for AsbTentacle {
         let config = self.config.clone();
         let tentacle_name = self.name.clone();
         let event_bus_clone = Arc::clone(&event_bus);
+        let client = self.client.as_ref().clone();
 
         tokio::spawn(async move {
             loop {
                 // Von Queues empfangen
                 for queue_name in &config.queues {
-                    match receive_from_queue_impl(&config, queue_name).await {
+                    match receive_from_queue_impl(&client, &config, queue_name).await {
                         Ok(messages) => {
                             for msg in messages {
                                 let payload_bytes = match &msg {
@@ -223,6 +230,7 @@ impl Tentacle for AsbTentacle {
                 for sub in &config.topics {
                     let entity_name = format!("{}/{}", sub.topic, sub.subscription);
                     match receive_from_queue_impl(
+                        &client,
                         &config,
                         &format!("{}/subscriptions/{}", sub.topic, sub.subscription),
                     )
@@ -290,6 +298,7 @@ impl Tentacle for AsbTentacle {
 
 /// Freistehende Funktion für Queue-Empfang (für spawn)
 async fn receive_from_queue_impl(
+    client: &reqwest::Client,
     config: &AsbTentacleConfig,
     path: &str,
 ) -> Result<Vec<serde_json::Value>> {
@@ -326,7 +335,6 @@ async fn receive_from_queue_impl(
         config.namespace, path, config.max_messages_per_poll
     );
 
-    let client = reqwest::Client::new();
     let resp = client
         .get(&url)
         .header("Authorization", &auth)
@@ -384,6 +392,7 @@ fn generate_sas_token_impl(resource_uri: &str, policy_name: &str, key: &str) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_asb_topic_mode_entity() {
@@ -569,7 +578,7 @@ mod tests {
             max_messages_per_poll: 10,
             reconnect_delay_seconds: 10,
         };
-        let tentacle = AsbTentacle::new("test_asb".to_string(), config);
+        let tentacle = AsbTentacle::new("test_asb".to_string(), config, &AppContext::new());
         assert_eq!(tentacle.name(), "test_asb");
         assert_eq!(tentacle.r#type(), "azure_servicebus");
     }

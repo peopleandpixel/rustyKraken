@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, error, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Microsoft Teams Reflex
@@ -49,15 +51,15 @@ fn default_theme_color() -> String {
 pub struct TeamsReflex {
     name: String,
     config: TeamsReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl TeamsReflex {
-    pub fn new(name: String, config: TeamsReflexConfig) -> Self {
+    pub fn new(name: String, config: TeamsReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -188,6 +190,7 @@ impl Reflex for TeamsReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> TeamsReflexConfig {
         TeamsReflexConfig {
@@ -207,7 +210,7 @@ mod tests {
     #[test]
     fn test_default_webhook() {
         let config = create_test_config();
-        let reflex = TeamsReflex::new("test".to_string(), config);
+        let reflex = TeamsReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.resolve_webhook_url(&ink),
@@ -224,7 +227,7 @@ mod tests {
             "https://outlook.office.com/webhook/other".to_string(),
         );
         config.topic_webhook_mapping = mapping;
-        let reflex = TeamsReflex::new("test".to_string(), config);
+        let reflex = TeamsReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.resolve_webhook_url(&ink),
@@ -235,7 +238,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = TeamsReflex::new("test".to_string(), config);
+        let reflex = TeamsReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("[{{topic}}] Alert", &ink),
@@ -246,7 +249,7 @@ mod tests {
     #[test]
     fn test_metadata_in_template() {
         let config = create_test_config();
-        let reflex = TeamsReflex::new("test".to_string(), config);
+        let reflex = TeamsReflex::new("test".to_string(), config, &AppContext::new());
         let ink = Ink::new("/test", "test", "test_source", "data")
             .with_metadata(serde_json::json!({ "temp": "42" }));
         assert_eq!(
@@ -270,7 +273,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = TeamsReflex::new("test".to_string(), config);
+        let reflex = TeamsReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "teams");
     }
 }

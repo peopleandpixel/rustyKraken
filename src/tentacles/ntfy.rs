@@ -6,6 +6,7 @@ use std::sync::Arc;
 use tracing::{debug, info, warn};
 
 use super::Tentacle;
+use crate::appcontext::AppContext;
 use crate::eventbus::EventBus;
 use crate::model::Ink;
 
@@ -102,11 +103,17 @@ struct NtfyMessage {
 pub struct NtfyTentacle {
     name: String,
     config: NtfyTentacleConfig,
+    #[allow(dead_code)]
+    client: Arc<reqwest::Client>,
 }
 
 impl NtfyTentacle {
-    pub fn new(name: String, config: NtfyTentacleConfig) -> Self {
-        Self { name, config }
+    pub fn new(name: String, config: NtfyTentacleConfig, app_ctx: &AppContext) -> Self {
+        Self {
+            name,
+            config,
+            client: Arc::clone(app_ctx.http_client()),
+        }
     }
 
     /// Bestimmt den rustyKraken-Topic aus einem ntfy-Topic
@@ -475,7 +482,8 @@ mod tests {
             reconnect_delay: 5,
             max_reconnect_attempts: 0,
         };
-        let tentacle = NtfyTentacle::new("test".to_string(), config);
+        let app_ctx = crate::appcontext::AppContext::new();
+        let tentacle = NtfyTentacle::new("test".to_string(), config, &app_ctx);
 
         assert_eq!(tentacle.resolve_topic("alerts"), "/kraken/alerts");
         assert_eq!(tentacle.resolve_topic("status"), "/kraken/status");
@@ -497,7 +505,11 @@ mod tests {
             reconnect_delay: 5,
             max_reconnect_attempts: 0,
         };
-        let tentacle = NtfyTentacle::new("test".to_string(), config);
+        let tentacle = NtfyTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         // Ohne Mapping: Topic mit führendem /
         assert_eq!(tentacle.resolve_topic("test"), "/test");
@@ -521,7 +533,11 @@ mod tests {
             reconnect_delay: 5,
             max_reconnect_attempts: 0,
         };
-        let tentacle = NtfyTentacle::new("test".to_string(), config);
+        let tentacle = NtfyTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = NtfyMessage {
             id: Some("msg123".to_string()),

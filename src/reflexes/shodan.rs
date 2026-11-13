@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, error, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Shodan Reflex
@@ -49,15 +51,15 @@ fn default_timeout() -> u64 {
 pub struct ShodanReflex {
     name: String,
     config: ShodanReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl ShodanReflex {
-    pub fn new(name: String, config: ShodanReflexConfig) -> Self {
+    pub fn new(name: String, config: ShodanReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -307,6 +309,7 @@ impl Reflex for ShodanReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> ShodanReflexConfig {
         ShodanReflexConfig {
@@ -327,7 +330,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = ShodanReflex::new("test".to_string(), config);
+        let reflex = ShodanReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("port:80 {{body}}", &ink),
@@ -350,7 +353,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = ShodanReflex::new("test".to_string(), config);
+        let reflex = ShodanReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "shodan");
     }
 
@@ -361,7 +364,7 @@ mod tests {
         mapping.insert("/shodan/search".to_string(), "search".to_string());
         config.topic_action_mapping = mapping;
 
-        let reflex = ShodanReflex::new("test".to_string(), config);
+        let reflex = ShodanReflex::new("test".to_string(), config, &AppContext::new());
         let ink = Ink::new("/shodan/search", "test", "test_source", "body");
         assert_eq!(reflex.resolve_action(&ink), "search");
     }

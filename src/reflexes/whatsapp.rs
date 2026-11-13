@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for WhatsApp Business API Reflex
@@ -68,15 +70,15 @@ fn default_api_version() -> String {
 pub struct WhatsAppReflex {
     name: String,
     config: WhatsAppReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl WhatsAppReflex {
-    pub fn new(name: String, config: WhatsAppReflexConfig) -> Self {
+    pub fn new(name: String, config: WhatsAppReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -447,7 +449,11 @@ mod tests {
     fn test_resolve_message_type_auto_with_template() {
         let mut config = create_test_config();
         config.template_name = Some("welcome_template".to_string());
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         assert_eq!(reflex.resolve_message_type(), "template");
     }
@@ -455,7 +461,11 @@ mod tests {
     #[test]
     fn test_resolve_message_type_auto_without_template() {
         let config = create_test_config();
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         assert_eq!(reflex.resolve_message_type(), "text");
     }
@@ -464,7 +474,11 @@ mod tests {
     fn test_resolve_message_type_explicit() {
         let mut config = create_test_config();
         config.message_type = "text".to_string();
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         assert_eq!(reflex.resolve_message_type(), "text");
     }
@@ -472,7 +486,11 @@ mod tests {
     #[test]
     fn test_resolve_recipients_default() {
         let config = create_test_config();
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
 
         let recipients = reflex.resolve_recipients(&ink);
@@ -485,7 +503,11 @@ mod tests {
         let mut mapping = HashMap::new();
         mapping.insert("/test/topic".to_string(), vec!["+9999999999".to_string()]);
         config.topic_recipient_mapping = mapping;
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
 
         let recipients = reflex.resolve_recipients(&ink);
@@ -498,7 +520,11 @@ mod tests {
         let mut mapping = HashMap::new();
         mapping.insert("/other/topic".to_string(), vec!["+9999999999".to_string()]);
         config.topic_recipient_mapping = mapping;
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
 
         // Topic doesn't match mapping, should fall back to default
@@ -510,7 +536,11 @@ mod tests {
     fn test_resolve_template_name_default() {
         let mut config = create_test_config();
         config.template_name = Some("default_template".to_string());
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
 
         assert_eq!(
@@ -529,7 +559,11 @@ mod tests {
             "topic_specific_template".to_string(),
         );
         config.topic_template_mapping = mapping;
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
 
         assert_eq!(
@@ -541,7 +575,11 @@ mod tests {
     #[test]
     fn test_render_body_simple() {
         let config = create_test_config();
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
 
         let body = reflex.render_body(&ink);
@@ -552,7 +590,11 @@ mod tests {
     fn test_render_body_with_placeholders() {
         let mut config = create_test_config();
         config.body_template = "Topic: {{topic}}\nMessage: {{body}}\nID: {{id}}".to_string();
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
 
         let body = reflex.render_body(&ink);
@@ -565,7 +607,11 @@ mod tests {
     fn test_render_body_with_metadata() {
         let mut config = create_test_config();
         config.body_template = "{{body}} - {{metadata.sender}}".to_string();
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let mut ink = create_test_ink();
         let mut metadata = serde_json::Map::new();
@@ -583,7 +629,11 @@ mod tests {
     fn test_build_message_with_metadata_included() {
         let mut config = create_test_config();
         config.include_metadata = true;
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let mut ink = create_test_ink();
         let mut metadata = serde_json::Map::new();
@@ -602,7 +652,11 @@ mod tests {
     #[test]
     fn test_build_message_without_metadata() {
         let config = create_test_config();
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
 
         let message = reflex.build_message(&ink);
@@ -635,7 +689,11 @@ mod tests {
     fn test_empty_recipients() {
         let mut config = create_test_config();
         config.recipients = vec![];
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
 
         let recipients = reflex.resolve_recipients(&ink);
@@ -646,7 +704,11 @@ mod tests {
     fn test_timestamp_placeholder() {
         let mut config = create_test_config();
         config.body_template = "Sent at: {{timestamp}}".to_string();
-        let reflex = WhatsAppReflex::new("test".to_string(), config);
+        let reflex = WhatsAppReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
 
         let body = reflex.render_body(&ink);

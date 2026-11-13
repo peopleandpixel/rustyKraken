@@ -777,11 +777,11 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 ### 3.6 HTTP Client Pooling (CRITICAL)
 
-- [ ] **reqwest::Client wiederverwenden** – Aktuell werden an 51 Stellen `reqwest::Client::new()` aufgerufen (jeder Reflex und viele Tentacles erstellen einen eigenen Client pro Instanz)
-  - [ ] Globalen `reqwest::Client` in `Arc` wrappen und an Reflexes/Tentacles injizieren
-  - [ ] Connection Pooling aktivieren mit konfigurierbarer Max-Connections
-  - [ ] HTTP/2 Multiplexing nutzen für bessere Performance
-  - [ ] Affected files: alle Reflex-Module (~45 Dateien) und Tentacle-Module (~10 Dateien)
+- [x] **reqwest::Client wiederverwenden** – Aktuell werden an 51 Stellen `reqwest::Client::new()` aufgerufen (jeder Reflex und viele Tentacles erstellen einen eigenen Client pro Instanz)
+  - [x] Globalen `reqwest::Client` in `Arc` wrappen und an Reflexes/Tentacles injizieren
+  - [x] Connection Pooling aktivieren mit konfigurierbarer Max-Connections
+  - [x] HTTP/2 Multiplexing nutzen für bessere Performance
+  - [x] Affected files: alle Reflex-Module (~45 Dateien) und Tentacle-Module (~10 Dateien)
 
 ### 3.7 Regex Caching
 

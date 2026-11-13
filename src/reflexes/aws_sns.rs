@@ -4,9 +4,11 @@ use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for AWS SNS Reflex
@@ -64,15 +66,15 @@ fn default_use_https() -> bool {
 pub struct AwsSnsReflex {
     name: String,
     config: AwsSnsReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl AwsSnsReflex {
-    pub fn new(name: String, config: AwsSnsReflexConfig) -> Self {
+    pub fn new(name: String, config: AwsSnsReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -309,6 +311,7 @@ impl Reflex for AwsSnsReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> AwsSnsReflexConfig {
         AwsSnsReflexConfig {
@@ -332,7 +335,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = AwsSnsReflex::new("test".to_string(), config);
+        let reflex = AwsSnsReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("[{{topic}}] {{body}}", &ink),
@@ -343,7 +346,7 @@ mod tests {
     #[test]
     fn test_resolve_topic_arn() {
         let config = create_test_config();
-        let reflex = AwsSnsReflex::new("test".to_string(), config);
+        let reflex = AwsSnsReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.resolve_topic_arn(&ink).unwrap(),
@@ -358,7 +361,7 @@ mod tests {
             "/test/topic".to_string(),
             "arn:aws:sns:us-east-1:123456789:mapped-topic".to_string(),
         );
-        let reflex = AwsSnsReflex::new("test".to_string(), config);
+        let reflex = AwsSnsReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.resolve_topic_arn(&ink).unwrap(),
@@ -369,7 +372,7 @@ mod tests {
     #[test]
     fn test_sns_endpoint() {
         let config = create_test_config();
-        let reflex = AwsSnsReflex::new("test".to_string(), config);
+        let reflex = AwsSnsReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.sns_endpoint(), "https://sns.us-east-1.amazonaws.com");
     }
 
@@ -389,7 +392,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = AwsSnsReflex::new("test".to_string(), config);
+        let reflex = AwsSnsReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "aws_sns");
     }
 }

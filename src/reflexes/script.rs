@@ -256,6 +256,7 @@ impl Reflex for ScriptReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
     use crate::model::{InkStatus, SourceInfo};
     use chrono::Utc;
     use uuid::Uuid;

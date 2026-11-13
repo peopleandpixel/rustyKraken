@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Telegram Bot API Reflex
@@ -61,15 +63,15 @@ fn default_max_length() -> usize {
 pub struct TelegramReflex {
     name: String,
     config: TelegramReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl TelegramReflex {
-    pub fn new(name: String, config: TelegramReflexConfig) -> Self {
+    pub fn new(name: String, config: TelegramReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -312,7 +314,11 @@ mod tests {
     #[test]
     fn test_default_chat_ids() {
         let config = create_test_config();
-        let reflex = TelegramReflex::new("test".to_string(), config);
+        let reflex = TelegramReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         let chat_ids = reflex.resolve_chat_ids(&ink);
@@ -329,7 +335,11 @@ mod tests {
         );
         config.topic_chat_mapping = mapping;
 
-        let reflex = TelegramReflex::new("test".to_string(), config);
+        let reflex = TelegramReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         let chat_ids = reflex.resolve_chat_ids(&ink);
@@ -341,7 +351,11 @@ mod tests {
     #[test]
     fn test_default_parse_mode() {
         let config = create_test_config();
-        let reflex = TelegramReflex::new("test".to_string(), config);
+        let reflex = TelegramReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_parse_mode(&ink), "Markdown");
@@ -354,7 +368,11 @@ mod tests {
         mapping.insert("/test/topic".to_string(), "HTML".to_string());
         config.topic_parse_mode_mapping = mapping;
 
-        let reflex = TelegramReflex::new("test".to_string(), config);
+        let reflex = TelegramReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_parse_mode(&ink), "HTML");
@@ -365,7 +383,11 @@ mod tests {
         let mut config = create_test_config();
         config.body_template = "Topic: {{topic}}, Body: {{body}}".to_string();
 
-        let reflex = TelegramReflex::new("test".to_string(), config);
+        let reflex = TelegramReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         assert_eq!(
@@ -379,7 +401,11 @@ mod tests {
         let mut config = create_test_config();
         config.body_template = "Value: {{metadata.temp}}".to_string();
 
-        let reflex = TelegramReflex::new("test".to_string(), config);
+        let reflex = TelegramReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = Ink::new("/test", "test", "test_source", "data")
             .with_metadata(serde_json::json!({ "temp": "42", "humidity": "60" }));
@@ -392,7 +418,11 @@ mod tests {
         config.max_length = 50;
         config.body_template = "{{body}}".to_string();
 
-        let reflex = TelegramReflex::new("test".to_string(), config);
+        let reflex = TelegramReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = Ink::new(
             "/test",
@@ -411,7 +441,11 @@ mod tests {
         config.include_metadata = true;
         config.body_template = "{{body}}".to_string();
 
-        let reflex = TelegramReflex::new("test".to_string(), config);
+        let reflex = TelegramReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = Ink::new("/test", "test", "test_source", "data")
             .with_metadata(serde_json::json!({ "key": "value" }));
@@ -450,7 +484,11 @@ mod tests {
         let mut config = create_test_config();
         config.body_template = "ID: {{id}}, Time: {{timestamp}}".to_string();
 
-        let reflex = TelegramReflex::new("test".to_string(), config);
+        let reflex = TelegramReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         let body = reflex.render_body(&ink);

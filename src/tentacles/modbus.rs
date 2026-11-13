@@ -614,6 +614,7 @@ impl Tentacle for ModbusTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn make_config() -> ModbusTentacleConfig {
         ModbusTentacleConfig {

@@ -140,6 +140,7 @@ impl Reflex for NatsReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> NatsReflexConfig {
         NatsReflexConfig {

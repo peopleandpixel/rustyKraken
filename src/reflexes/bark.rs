@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Bark Reflex
@@ -71,15 +73,15 @@ fn default_priority() -> u32 {
 pub struct BarkReflex {
     name: String,
     config: BarkReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl BarkReflex {
-    pub fn new(name: String, config: BarkReflexConfig) -> Self {
+    pub fn new(name: String, config: BarkReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -213,6 +215,7 @@ impl Reflex for BarkReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> BarkReflexConfig {
         BarkReflexConfig {
@@ -238,7 +241,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = BarkReflex::new("test".to_string(), config);
+        let reflex = BarkReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("[{{topic}}] {{body}}", &ink),
@@ -249,7 +252,7 @@ mod tests {
     #[test]
     fn test_resolve_device_key() {
         let config = create_test_config();
-        let reflex = BarkReflex::new("test".to_string(), config);
+        let reflex = BarkReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_device_key(&ink), "test-device-key");
     }
@@ -260,7 +263,7 @@ mod tests {
         config
             .topic_priority_mapping
             .insert("/test/topic".to_string(), 10);
-        let reflex = BarkReflex::new("test".to_string(), config);
+        let reflex = BarkReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_priority(&ink), 10);
     }
@@ -281,7 +284,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = BarkReflex::new("test".to_string(), config);
+        let reflex = BarkReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "bark");
     }
 }

@@ -332,6 +332,7 @@ fn next_occurrence(schedule: &CronSchedule, from: DateTime<Utc>) -> DateTime<Utc
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_parse_cron_field_wildcard() {

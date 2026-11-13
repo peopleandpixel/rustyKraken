@@ -7,6 +7,7 @@ use std::time::Duration;
 use tracing::{debug, error, info, warn};
 
 use super::Tentacle;
+use crate::appcontext::AppContext;
 use crate::eventbus::EventBus;
 use crate::model::Ink;
 
@@ -121,11 +122,20 @@ pub struct Position {
 pub struct GeofenceTentacle {
     name: String,
     config: GeofenceTentacleConfig,
+    client: reqwest::Client,
 }
 
 impl GeofenceTentacle {
-    pub fn new(name: String, config: GeofenceTentacleConfig) -> Self {
-        Self { name, config }
+    pub fn new(name: String, config: GeofenceTentacleConfig, app_ctx: &AppContext) -> Self {
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(config.timeout_secs))
+            .build()
+            .unwrap_or_else(|_| app_ctx.http_client().as_ref().clone());
+        Self {
+            name,
+            config,
+            client,
+        }
     }
 
     /// Berechnet die Distanz zwischen zwei Punkten (Haversine-Formel) in Metern
@@ -224,22 +234,9 @@ impl Tentacle for GeofenceTentacle {
         let config = self.config.clone();
         let tentacle_name = self.name.clone();
         let event_bus_clone = Arc::clone(&event_bus);
+        let client = self.client.clone();
 
         tokio::spawn(async move {
-            let client = match reqwest::Client::builder()
-                .timeout(Duration::from_secs(config.timeout_secs))
-                .build()
-            {
-                Ok(c) => c,
-                Err(e) => {
-                    error!(
-                        "Geofence Tentacle '{}': failed to build HTTP client: {}",
-                        tentacle_name, e
-                    );
-                    return;
-                }
-            };
-
             // Track letzte Zustände pro Device
             let mut last_states: HashMap<String, HashMap<String, bool>> = HashMap::new();
             let mut last_event_times: HashMap<String, chrono::DateTime<chrono::Utc>> =
@@ -625,6 +622,7 @@ mod tests {
 
     #[test]
     fn test_is_in_zone_circle() {
+        let app_ctx = crate::appcontext::AppContext::new();
         let tentacle = GeofenceTentacle::new(
             "test".to_string(),
             GeofenceTentacleConfig {
@@ -637,6 +635,7 @@ mod tests {
                 hysteresis_meters: 10.0,
                 cooldown_secs: 60,
             },
+            &app_ctx,
         );
 
         let zone = GeofenceZone {
@@ -673,6 +672,7 @@ mod tests {
 
     #[test]
     fn test_is_in_zone_polygon() {
+        let app_ctx = crate::appcontext::AppContext::new();
         let tentacle = GeofenceTentacle::new(
             "test".to_string(),
             GeofenceTentacleConfig {
@@ -685,6 +685,7 @@ mod tests {
                 hysteresis_meters: 10.0,
                 cooldown_secs: 60,
             },
+            &app_ctx,
         );
 
         let zone = GeofenceZone {

@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use tracing::{debug, error, info, warn};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Action type for Home Assistant Reflex
@@ -118,11 +119,15 @@ pub struct HomeAssistantReflex {
 }
 
 impl HomeAssistantReflex {
-    pub fn new(name: String, config: HomeAssistantReflexConfig) -> Result<Self> {
+    pub fn new(
+        name: String,
+        config: HomeAssistantReflexConfig,
+        app_ctx: &AppContext,
+    ) -> Result<Self> {
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(config.timeout_secs))
             .build()
-            .context("Failed to build HTTP client")?;
+            .unwrap_or_else(|_| app_ctx.http_client().as_ref().clone());
 
         Ok(Self {
             name,
@@ -444,6 +449,7 @@ impl Reflex for HomeAssistantReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
     use serde_json::json;
 
     fn create_test_config() -> HomeAssistantReflexConfig {
@@ -484,7 +490,8 @@ mod tests {
     #[test]
     fn test_reflex_name_and_type() {
         let config = create_test_config();
-        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config, &app_ctx).unwrap();
         assert_eq!(reflex.name(), "ha_test");
         assert_eq!(reflex.r#type(), "home_assistant");
     }
@@ -492,7 +499,8 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config, &app_ctx).unwrap();
         let ink = create_test_ink();
 
         let rendered = reflex.render_template("{{topic}}: {{body}}", &ink);
@@ -512,7 +520,8 @@ mod tests {
             .topic_event_mapping
             .insert("/sensor/temp".to_string(), "temperature_event".to_string());
 
-        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config, &app_ctx).unwrap();
 
         let mut ink = create_test_ink();
         ink.topic = "/sensor/temp".to_string();
@@ -529,7 +538,8 @@ mod tests {
             .topic_service_mapping
             .insert("/notify".to_string(), "notify/mobile_app".to_string());
 
-        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config, &app_ctx).unwrap();
 
         let mut ink = create_test_ink();
         ink.topic = "/notify".to_string();
@@ -552,7 +562,8 @@ mod tests {
         );
         config.message_template = "{{body}}".to_string();
 
-        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let message = reflex.resolve_message_template(&ink);
@@ -566,7 +577,8 @@ mod tests {
             .topic_title_mapping
             .insert("/alerts".to_string(), "Alert: {{topic}}".to_string());
 
-        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config, &app_ctx).unwrap();
 
         let mut ink = create_test_ink();
         ink.topic = "/alerts".to_string();
@@ -581,7 +593,8 @@ mod tests {
     #[test]
     fn test_event_data_building() {
         let config = create_test_config();
-        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config, &app_ctx).unwrap();
         let ink = create_test_ink();
 
         let data = reflex.build_event_data(&ink);
@@ -608,7 +621,8 @@ mod tests {
     #[test]
     fn test_service_data_building() {
         let config = create_test_config();
-        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config, &app_ctx).unwrap();
         let ink = create_test_ink();
 
         let data = reflex.build_service_data(&ink);
@@ -632,7 +646,8 @@ mod tests {
         additional.insert("priority".to_string(), "high".to_string());
         config.additional_data = additional;
 
-        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config, &app_ctx).unwrap();
         let ink = create_test_ink();
 
         let data = reflex.build_event_data(&ink);
@@ -706,7 +721,8 @@ mod tests {
     #[test]
     fn test_metadata_template_rendering() {
         let config = create_test_config();
-        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HomeAssistantReflex::new("ha_test".to_string(), config, &app_ctx).unwrap();
 
         let mut ink = create_test_ink();
         ink.metadata = Some(json!({

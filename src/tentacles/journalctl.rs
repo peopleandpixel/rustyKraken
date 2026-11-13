@@ -397,6 +397,7 @@ fn process_journal_output(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_journal_topic_mode_identifier() {

@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.58.0] - 2026-11-13
+
+### Added
+
+#### HTTP Client Pooling (CRITICAL Performance Improvement)
+- All 22 HTTP-based Reflexes now share a single pooled `reqwest::Client` via `AppContext`
+- All HTTP-based Tentacles now share the same pooled HTTP client
+- Connection pooling, HTTP/2 multiplexing, and TCP keepalive enabled globally
+- `AppContext` provides `http_client()`, `http_client_danger_accept_invalid_certs()`, and `http_client_custom()`
+- Non-HTTP Reflexes/Tentacles also accept `app_ctx` parameter for API consistency
+- **Reflexes updated**: elasticsearch, esphome, fhem, grafana, influxdb, kubernetes, n8n, openhab, powerdns, printer_3d, prometheus, puppet, s3_minio, saltstack, shelly, signal, tasmota, temporal, thehive, home_assistant, http, matrix, whatsapp, ntfy, telegram, discord, teams, google_chat, irc, pushbullet, gotify, azure_servicebus, rabbitmq, kafka, aws_sns, docker, ansible, pushover, bark, custom_webhook, led_display, ftp_sftp_upload, shodan, zapier, printer
+- **Tentacles updated**: discord, webhooks_poller, geofence, ntfy, rest_api, rss, telegram, google_pubsub, aws_sqs, kubernetes, docker_events, azure_servicebus
+- All 888 tests passing with 0 warnings
+
+### Changed
+
+- `AppContext` now created once in `main.rs` and injected via dependency injection
+- Eliminated ~60 duplicate `reqwest::Client` instances across Reflexes and Tentacles
+- Updated tasks.md: Section 3.6 HTTP Client Pooling marked as completed
+- All `::new()` signatures now accept `app_ctx: &AppContext` for consistency
+
 ## [0.57.0] - 2026-11-13
 
 ### Added

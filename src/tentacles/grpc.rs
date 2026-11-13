@@ -558,6 +558,7 @@ fn create_grpc_ink(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn make_config() -> GrpcTentacleConfig {
         GrpcTentacleConfig {

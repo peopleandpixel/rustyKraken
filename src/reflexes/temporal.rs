@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Temporal Reflex
@@ -75,15 +76,16 @@ pub struct TemporalReflex {
 }
 
 impl TemporalReflex {
-    pub fn new(name: String, config: TemporalReflexConfig) -> Self {
-        let verify_ssl = config.verify_ssl;
+    pub fn new(name: String, config: TemporalReflexConfig, app_ctx: &AppContext) -> Self {
+        let client = if config.verify_ssl {
+            app_ctx.http_client().as_ref().clone()
+        } else {
+            app_ctx.http_client_danger_accept_invalid_certs()
+        };
         Self {
             name,
             config,
-            client: reqwest::Client::builder()
-                .danger_accept_invalid_certs(!verify_ssl)
-                .build()
-                .unwrap_or_else(|_| reqwest::Client::new()),
+            client,
         }
     }
 
@@ -336,7 +338,8 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = TemporalReflex::new("test".to_string(), config.clone());
+        let app_ctx = AppContext::new();
+        let reflex = TemporalReflex::new("test".to_string(), config.clone(), &app_ctx);
         let ink = create_test_ink();
         let rendered = reflex.render_template(&config.input_template, &ink);
         let input: serde_json::Value = serde_json::from_str(&rendered).unwrap();
@@ -360,7 +363,8 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = TemporalReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = TemporalReflex::new("test".to_string(), config, &app_ctx);
         assert_eq!(reflex.r#type(), "temporal");
     }
 
@@ -374,7 +378,8 @@ mod tests {
         );
         config.topic_workflow_mapping = mapping;
 
-        let reflex = TemporalReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = TemporalReflex::new("test".to_string(), config, &app_ctx);
         let ink = Ink::new("/temporal/deploy", "test", "test_source", "body");
         assert_eq!(reflex.resolve_workflow_type(&ink), "deploy-workflow");
     }

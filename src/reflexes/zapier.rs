@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Zapier Reflex
@@ -60,19 +62,15 @@ fn default_timeout() -> u64 {
 pub struct ZapierReflex {
     name: String,
     config: ZapierReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl ZapierReflex {
-    pub fn new(name: String, config: ZapierReflexConfig) -> Self {
-        let verify_ssl = config.verify_ssl;
+    pub fn new(name: String, config: ZapierReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::builder()
-                .danger_accept_invalid_certs(!verify_ssl)
-                .build()
-                .unwrap_or_else(|_| reqwest::Client::new()),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -217,7 +215,11 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = ZapierReflex::new("test".to_string(), config.clone());
+        let reflex = ZapierReflex::new(
+            "test".to_string(),
+            config.clone(),
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
         let rendered = reflex.render_template(&config.payload_template, &ink);
         let payload: serde_json::Value = serde_json::from_str(&rendered).unwrap();
@@ -238,7 +240,11 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = ZapierReflex::new("test".to_string(), config);
+        let reflex = ZapierReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         assert_eq!(reflex.r#type(), "zapier");
     }
 
@@ -252,7 +258,11 @@ mod tests {
         );
         config.topic_webhook_mapping = mapping;
 
-        let reflex = ZapierReflex::new("test".to_string(), config);
+        let reflex = ZapierReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = Ink::new("/zapier/alerts", "test", "test_source", "body");
         assert!(reflex.resolve_webhook_url(&ink).contains("alerts"));
     }

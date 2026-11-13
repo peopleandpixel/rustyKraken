@@ -4,9 +4,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, error, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Ansible Reflex using AWX/Tower API
@@ -98,19 +100,15 @@ fn default_verify_ssl() -> bool {
 pub struct AnsibleReflex {
     name: String,
     config: AnsibleReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl AnsibleReflex {
-    pub fn new(name: String, config: AnsibleReflexConfig) -> Self {
-        let verify_ssl = config.verify_ssl;
+    pub fn new(name: String, config: AnsibleReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::builder()
-                .danger_accept_invalid_certs(!verify_ssl)
-                .build()
-                .unwrap_or_else(|_| reqwest::Client::new()),
+            client: Arc::new(app_ctx.http_client_danger_accept_invalid_certs()),
         }
     }
 
@@ -477,6 +475,7 @@ impl Reflex for AnsibleReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> AnsibleReflexConfig {
         AnsibleReflexConfig {
@@ -507,7 +506,8 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = AnsibleReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = AnsibleReflex::new("test".to_string(), config, &app_ctx);
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("[{{topic}}] {{body}}", &ink),
@@ -533,7 +533,8 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = AnsibleReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = AnsibleReflex::new("test".to_string(), config, &app_ctx);
         assert_eq!(reflex.r#type(), "ansible");
     }
 
@@ -545,7 +546,8 @@ mod tests {
         config.topic_template_mapping = mapping;
         config.job_template = None;
 
-        let reflex = AnsibleReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = AnsibleReflex::new("test".to_string(), config, &app_ctx);
         let ink = Ink::new("/deploy/web", "test", "test_source", "body");
         assert_eq!(
             reflex.resolve_job_template(&ink),
@@ -559,7 +561,8 @@ mod tests {
         config.extra_vars_template =
             Some(r#"{"env": "{{topic}}", "message": "{{body}}"}"#.to_string());
 
-        let reflex = AnsibleReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = AnsibleReflex::new("test".to_string(), config, &app_ctx);
         let ink = create_test_ink();
         let vars = reflex.resolve_extra_vars(&ink);
         assert_eq!(vars["env"], "/test/topic");

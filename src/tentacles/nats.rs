@@ -342,6 +342,7 @@ impl Tentacle for NatsTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_match_subject_pattern_exact() {

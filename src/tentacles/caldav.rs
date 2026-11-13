@@ -634,6 +634,7 @@ async fn poll_dav(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn default_config() -> CalDavTentacleConfig {
         CalDavTentacleConfig {

@@ -257,6 +257,7 @@ impl Tentacle for SnmpTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_tentacle() -> SnmpTentacle {
         SnmpTentacle::new(

@@ -7,6 +7,7 @@ use std::sync::Arc;
 use tracing::{debug, error, info};
 
 use super::Tentacle;
+use crate::appcontext::AppContext;
 use crate::eventbus::EventBus;
 use crate::model::Ink;
 
@@ -77,6 +78,7 @@ fn default_fallback_topic() -> String {
 pub struct DockerTentacle {
     name: String,
     config: DockerTentacleConfig,
+    client: reqwest::Client,
 }
 
 /// Docker Event-Struktur (vereinfacht)
@@ -151,8 +153,17 @@ fn resolve_topic(
 }
 
 impl DockerTentacle {
-    pub fn new(name: String, config: DockerTentacleConfig) -> Self {
-        Self { name, config }
+    pub fn new(name: String, config: DockerTentacleConfig, app_ctx: &AppContext) -> Self {
+        let client = if config.tls_verify {
+            app_ctx.http_client().as_ref().clone()
+        } else {
+            app_ctx.http_client_danger_accept_invalid_certs()
+        };
+        Self {
+            name,
+            config,
+            client,
+        }
     }
 }
 
@@ -175,6 +186,7 @@ impl Tentacle for DockerTentacle {
         let config = self.config.clone();
         let tentacle_name = self.name.clone();
         let event_bus_clone = Arc::clone(&event_bus);
+        let client = self.client.clone();
 
         tokio::spawn(async move {
             loop {
@@ -234,11 +246,6 @@ impl Tentacle for DockerTentacle {
                 }
 
                 // Verbinde mit Docker Events API
-                let client = reqwest::Client::builder()
-                    .danger_accept_invalid_certs(!config.tls_verify)
-                    .build()
-                    .unwrap_or_default();
-
                 match client.get(&url).send().await {
                     Ok(resp) => {
                         info!(
@@ -372,6 +379,7 @@ impl Tentacle for DockerTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_docker_topic_mode_type() {
@@ -558,7 +566,7 @@ mod tests {
             tls_cert: None,
             tls_key: None,
         };
-        let tentacle = DockerTentacle::new("test_docker".to_string(), config);
+        let tentacle = DockerTentacle::new("test_docker".to_string(), config, &AppContext::new());
         assert_eq!(tentacle.name(), "test_docker");
         assert_eq!(tentacle.r#type(), "docker");
     }

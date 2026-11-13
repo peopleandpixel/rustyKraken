@@ -7,6 +7,7 @@ use std::time::Duration;
 use tracing::{debug, error, info, warn};
 
 use super::Tentacle;
+use crate::appcontext::AppContext;
 use crate::eventbus::EventBus;
 use crate::model::Ink;
 
@@ -76,7 +77,7 @@ fn default_topic_mode() -> String {
 pub struct AwsSqsTentacle {
     name: String,
     config: AwsSqsTentacleConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 /// SQS Message Struktur
@@ -100,11 +101,11 @@ struct SqsMessageAttribute {
 }
 
 impl AwsSqsTentacle {
-    pub fn new(name: String, config: AwsSqsTentacleConfig) -> Self {
+    pub fn new(name: String, config: AwsSqsTentacleConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -540,6 +541,7 @@ mod tests {
     use super::*;
 
     fn create_tentacle() -> AwsSqsTentacle {
+        let app_ctx = crate::appcontext::AppContext::new();
         AwsSqsTentacle::new(
             "test_sqs".to_string(),
             AwsSqsTentacleConfig {
@@ -556,6 +558,7 @@ mod tests {
                 queue_topic_mapping: HashMap::new(),
                 endpoint_url: None,
             },
+            &app_ctx,
         )
     }
 
@@ -599,7 +602,11 @@ mod tests {
             message_attributes: attrs,
         };
 
-        let tentacle = AwsSqsTentacle::new("test".to_string(), config.clone());
+        let tentacle = AwsSqsTentacle::new(
+            "test".to_string(),
+            config.clone(),
+            &crate::appcontext::AppContext::new(),
+        );
         assert_eq!(tentacle.resolve_topic(&message), "/sqs/alerts");
 
         // Subject Fallback
@@ -640,7 +647,11 @@ mod tests {
             endpoint_url: None,
         };
 
-        let tentacle = AwsSqsTentacle::new("test".to_string(), config);
+        let tentacle = AwsSqsTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         // JSON Body mit topic Feld
         let message = SqsMessage {
@@ -686,7 +697,11 @@ mod tests {
             endpoint_url: None,
         };
 
-        let tentacle = AwsSqsTentacle::new("test".to_string(), config.clone());
+        let tentacle = AwsSqsTentacle::new(
+            "test".to_string(),
+            config.clone(),
+            &crate::appcontext::AppContext::new(),
+        );
 
         // Kein Attribut, kein Body Topic -> Queue Mapping
         let message = SqsMessage {
@@ -701,7 +716,8 @@ mod tests {
         // Fallback wenn kein Mapping
         let mut config2 = config.clone();
         config2.queue_topic_mapping = HashMap::new();
-        let tentacle2 = AwsSqsTentacle::new("test2".to_string(), config2);
+        let app_ctx2 = crate::appcontext::AppContext::new();
+        let tentacle2 = AwsSqsTentacle::new("test2".to_string(), config2, &app_ctx2);
         assert_eq!(tentacle2.resolve_topic(&message), "/sqs/default");
     }
 

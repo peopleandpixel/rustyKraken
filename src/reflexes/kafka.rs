@@ -4,9 +4,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Kafka Reflex
@@ -87,15 +89,15 @@ fn default_timeout_ms() -> i32 {
 pub struct KafkaReflex {
     name: String,
     config: KafkaReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl KafkaReflex {
-    pub fn new(name: String, config: KafkaReflexConfig) -> Self {
+    pub fn new(name: String, config: KafkaReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -374,6 +376,7 @@ impl Reflex for KafkaReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> KafkaReflexConfig {
         KafkaReflexConfig {
@@ -403,7 +406,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = KafkaReflex::new("test".to_string(), config);
+        let reflex = KafkaReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("[{{topic}}] {{body}}", &ink),
@@ -426,7 +429,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = KafkaReflex::new("test".to_string(), config);
+        let reflex = KafkaReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "kafka");
     }
 
@@ -441,7 +444,7 @@ mod tests {
         config.topic_mapping = mapping;
         config.topic = None;
 
-        let reflex = KafkaReflex::new("test".to_string(), config);
+        let reflex = KafkaReflex::new("test".to_string(), config, &AppContext::new());
         let ink = Ink::new("/alerts/critical", "test", "test_source", "body");
         assert_eq!(reflex.resolve_topic(&ink).unwrap(), "critical-alerts");
     }
@@ -451,7 +454,7 @@ mod tests {
         let mut config = create_test_config();
         config.key_template = Some("{{id}}".to_string());
 
-        let reflex = KafkaReflex::new("test".to_string(), config);
+        let reflex = KafkaReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         let key = reflex.resolve_key(&ink);
         assert!(key.is_some());

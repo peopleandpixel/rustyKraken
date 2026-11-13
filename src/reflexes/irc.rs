@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for IRC Reflex (HTTP webhook mode)
@@ -35,15 +37,15 @@ fn default_nickname() -> String {
 pub struct IrcReflex {
     name: String,
     config: IrcReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl IrcReflex {
-    pub fn new(name: String, config: IrcReflexConfig) -> Self {
+    pub fn new(name: String, config: IrcReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -134,6 +136,7 @@ impl Reflex for IrcReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> IrcReflexConfig {
         IrcReflexConfig {
@@ -152,7 +155,7 @@ mod tests {
     #[test]
     fn test_default_channels() {
         let config = create_test_config();
-        let reflex = IrcReflex::new("test".to_string(), config);
+        let reflex = IrcReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_channels(&ink), vec!["general"]);
     }
@@ -160,7 +163,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = IrcReflex::new("test".to_string(), config);
+        let reflex = IrcReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("[{{topic}}] {{body}}", &ink),
@@ -182,7 +185,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = IrcReflex::new("test".to_string(), config);
+        let reflex = IrcReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "irc");
     }
 }

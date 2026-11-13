@@ -293,6 +293,7 @@ fn create_xmpp_ink(config: &XmppTentacleConfig, tentacle_name: &str, message: &X
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_config_defaults() {

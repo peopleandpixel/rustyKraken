@@ -6,6 +6,7 @@ use std::sync::Arc;
 use tracing::{debug, error, info};
 
 use super::Tentacle;
+use crate::appcontext::AppContext;
 use crate::eventbus::EventBus;
 use crate::model::Ink;
 
@@ -74,6 +75,7 @@ fn default_watch_timeout() -> u64 {
 pub struct K8sTentacle {
     name: String,
     config: K8sTentacleConfig,
+    client: reqwest::Client,
 }
 
 /// Kubernetes Event-Struktur (vereinfacht)
@@ -173,8 +175,17 @@ fn resolve_topic(
 }
 
 impl K8sTentacle {
-    pub fn new(name: String, config: K8sTentacleConfig) -> Self {
-        Self { name, config }
+    pub fn new(name: String, config: K8sTentacleConfig, app_ctx: &AppContext) -> Self {
+        let client = if config.tls_verify {
+            app_ctx.http_client().as_ref().clone()
+        } else {
+            app_ctx.http_client_danger_accept_invalid_certs()
+        };
+        Self {
+            name,
+            config,
+            client,
+        }
     }
 }
 
@@ -197,6 +208,7 @@ impl Tentacle for K8sTentacle {
         let config = self.config.clone();
         let tentacle_name = self.name.clone();
         let event_bus_clone = Arc::clone(&event_bus);
+        let client = self.client.clone();
 
         tokio::spawn(async move {
             loop {
@@ -210,12 +222,6 @@ impl Tentacle for K8sTentacle {
                 }
 
                 url.push_str(&format!("&timeoutSeconds={}", config.watch_timeout_seconds));
-
-                // Erstelle HTTP-Client
-                let client = reqwest::Client::builder()
-                    .danger_accept_invalid_certs(!config.tls_verify)
-                    .build()
-                    .unwrap_or_default();
 
                 let mut req = client.get(&url);
 
@@ -425,6 +431,7 @@ impl Tentacle for K8sTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_k8s_topic_mode_type() {
@@ -597,7 +604,7 @@ mod tests {
             ca_cert: None,
             watch_timeout_seconds: 300,
         };
-        let tentacle = K8sTentacle::new("test_k8s".to_string(), config);
+        let tentacle = K8sTentacle::new("test_k8s".to_string(), config, &AppContext::new());
         assert_eq!(tentacle.name(), "test_k8s");
         assert_eq!(tentacle.r#type(), "kubernetes");
     }

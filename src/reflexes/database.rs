@@ -427,6 +427,7 @@ impl Reflex for DatabaseReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
     use crate::model::{Ink, InkStatus};
 
     #[test]

@@ -1,3 +1,4 @@
+mod appcontext;
 mod config;
 mod eventbus;
 mod mantle;
@@ -82,6 +83,10 @@ async fn main() -> Result<()> {
     let tentacles_dir = config_dir.join("incoming");
     let reflexes_dir = config_dir.join("listener");
 
+    // App Context mit geteiltem HTTP-Client erstellen
+    let app_ctx = appcontext::AppContext::new();
+    info!("HTTP client pool initialized");
+
     // Event Bus erstellen
     let event_bus = Arc::new(EventBus::new(1000));
 
@@ -109,7 +114,7 @@ async fn main() -> Result<()> {
     }
 
     for tentacle_config in tentacle_configs {
-        match create_tentacle(&tentacle_config) {
+        match create_tentacle(&tentacle_config, &app_ctx) {
             Ok(tentacle) => {
                 let event_bus_clone = Arc::clone(&event_bus);
                 tokio::spawn(async move {
@@ -134,7 +139,7 @@ async fn main() -> Result<()> {
 
     // Für jeden Reflex einen eigenen Listener starten
     for reflex_config in reflex_configs {
-        let reflex = create_reflex_handler(&reflex_config, &event_bus)?;
+        let reflex = create_reflex_handler(&reflex_config, &event_bus, &app_ctx)?;
         let reflex_name = reflex_config.name.clone();
         let topics = reflex_config.trigger.topics.clone();
 
@@ -178,7 +183,10 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
+fn create_tentacle(
+    config: &TentacleConfig,
+    app_ctx: &appcontext::AppContext,
+) -> Result<Box<dyn Tentacle>> {
     match config.r#type.as_str() {
         "mqtt" => {
             let mqtt_config: MqttTentacleConfig = serde_yaml::from_value(config.config.clone())?;
@@ -220,6 +228,7 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(NtfyTentacle::new(
                 config.name.clone(),
                 ntfy_config,
+                app_ctx,
             )))
         }
         "telegram" => {
@@ -228,6 +237,7 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(TelegramTentacle::new(
                 config.name.clone(),
                 telegram_config,
+                app_ctx,
             )))
         }
         "discord" => {
@@ -236,6 +246,7 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(DiscordTentacle::new(
                 config.name.clone(),
                 discord_config,
+                app_ctx,
             )))
         }
         "file_watcher" => {
@@ -259,6 +270,7 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(RestApiTentacle::new(
                 config.name.clone(),
                 rest_api_config,
+                app_ctx,
             )))
         }
         "websocket" => {
@@ -271,7 +283,11 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
         }
         "rss" => {
             let rss_config: RssTentacleConfig = serde_yaml::from_value(config.config.clone())?;
-            Ok(Box::new(RssTentacle::new(config.name.clone(), rss_config)))
+            Ok(Box::new(RssTentacle::new(
+                config.name.clone(),
+                rss_config,
+                app_ctx,
+            )))
         }
         "serial" => {
             let serial_config: SerialTentacleConfig =
@@ -294,6 +310,7 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(AwsSqsTentacle::new(
                 config.name.clone(),
                 aws_sqs_config,
+                app_ctx,
             )))
         }
         "google_chat" => {
@@ -310,6 +327,7 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(GooglePubSubTentacle::new(
                 config.name.clone(),
                 google_pubsub_config,
+                app_ctx,
             )))
         }
         "slack" => {
@@ -373,7 +391,11 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
         }
         "azure_servicebus" => {
             let asb_config: AsbTentacleConfig = serde_yaml::from_value(config.config.clone())?;
-            Ok(Box::new(AsbTentacle::new(config.name.clone(), asb_config)))
+            Ok(Box::new(AsbTentacle::new(
+                config.name.clone(),
+                asb_config,
+                app_ctx,
+            )))
         }
         "journalctl" => {
             let journal_config: JournalTentacleConfig =
@@ -389,11 +411,16 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(DockerTentacle::new(
                 config.name.clone(),
                 docker_config,
+                app_ctx,
             )))
         }
         "kubernetes" => {
             let k8s_config: K8sTentacleConfig = serde_yaml::from_value(config.config.clone())?;
-            Ok(Box::new(K8sTentacle::new(config.name.clone(), k8s_config)))
+            Ok(Box::new(K8sTentacle::new(
+                config.name.clone(),
+                k8s_config,
+                app_ctx,
+            )))
         }
         "packet_capture" => {
             let packet_config: PacketCaptureConfig = serde_yaml::from_value(config.config.clone())?;
@@ -442,6 +469,7 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
             Ok(Box::new(GeofenceTentacle::new(
                 config.name.clone(),
                 geofence_config,
+                app_ctx,
             )))
         }
         "matrix" => {
@@ -520,6 +548,7 @@ fn create_tentacle(config: &TentacleConfig) -> Result<Box<dyn Tentacle>> {
 fn create_reflex_handler(
     config: &ReflexConfig,
     event_bus: &Arc<EventBus>,
+    app_ctx: &appcontext::AppContext,
 ) -> Result<Box<dyn Reflex>> {
     match config.action.r#type.as_str() {
         "file" => {
@@ -541,6 +570,7 @@ fn create_reflex_handler(
             Ok(Box::new(WhatsAppReflex::new(
                 config.name.clone(),
                 whatsapp_config,
+                app_ctx,
             )))
         }
         "tentacle" => {
@@ -558,6 +588,7 @@ fn create_reflex_handler(
             Ok(Box::new(TelegramReflex::new(
                 config.name.clone(),
                 telegram_config,
+                app_ctx,
             )))
         }
         "discord" => {
@@ -566,12 +597,17 @@ fn create_reflex_handler(
             Ok(Box::new(DiscordReflex::new(
                 config.name.clone(),
                 discord_config,
+                app_ctx,
             )))
         }
         "ntfy" => {
             let ntfy_config: NtfyReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(NtfyReflex::new(config.name.clone(), ntfy_config)))
+            Ok(Box::new(NtfyReflex::new(
+                config.name.clone(),
+                ntfy_config,
+                app_ctx,
+            )))
         }
         "email" => {
             let email_config: EmailReflexConfig =
@@ -584,7 +620,11 @@ fn create_reflex_handler(
         "http" => {
             let http_config: HttpReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(HttpReflex::new(config.name.clone(), http_config)?))
+            Ok(Box::new(HttpReflex::new(
+                config.name.clone(),
+                http_config,
+                app_ctx,
+            )?))
         }
         "matrix" => {
             let matrix_config: MatrixReflexConfig =
@@ -592,6 +632,7 @@ fn create_reflex_handler(
             Ok(Box::new(MatrixReflex::new(
                 config.name.clone(),
                 matrix_config,
+                app_ctx,
             )?))
         }
         "syslog" => {
@@ -608,6 +649,7 @@ fn create_reflex_handler(
             Ok(Box::new(HomeAssistantReflex::new(
                 config.name.clone(),
                 ha_config,
+                app_ctx,
             )?))
         }
         "database" => {
@@ -641,6 +683,7 @@ fn create_reflex_handler(
             Ok(Box::new(SignalReflex::new(
                 config.name.clone(),
                 signal_config,
+                app_ctx,
             )))
         }
         "teams" => {
@@ -649,6 +692,7 @@ fn create_reflex_handler(
             Ok(Box::new(TeamsReflex::new(
                 config.name.clone(),
                 teams_config,
+                app_ctx,
             )))
         }
         "google_chat" => {
@@ -657,11 +701,16 @@ fn create_reflex_handler(
             Ok(Box::new(GoogleChatReflex::new(
                 config.name.clone(),
                 gc_config,
+                app_ctx,
             )))
         }
         "irc" => {
             let irc_config: IrcReflexConfig = serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(IrcReflex::new(config.name.clone(), irc_config)))
+            Ok(Box::new(IrcReflex::new(
+                config.name.clone(),
+                irc_config,
+                app_ctx,
+            )))
         }
         "pushbullet" => {
             let pb_config: PushbulletReflexConfig =
@@ -669,6 +718,7 @@ fn create_reflex_handler(
             Ok(Box::new(PushbulletReflex::new(
                 config.name.clone(),
                 pb_config,
+                app_ctx,
             )))
         }
         "gotify" => {
@@ -677,6 +727,7 @@ fn create_reflex_handler(
             Ok(Box::new(GotifyReflex::new(
                 config.name.clone(),
                 gotify_config,
+                app_ctx,
             )))
         }
         "azure_servicebus" => {
@@ -685,6 +736,7 @@ fn create_reflex_handler(
             Ok(Box::new(AzureServiceBusReflex::new(
                 config.name.clone(),
                 asb_config,
+                app_ctx,
             )))
         }
         "rabbitmq" => {
@@ -693,6 +745,7 @@ fn create_reflex_handler(
             Ok(Box::new(RabbitMqReflex::new(
                 config.name.clone(),
                 rmq_config,
+                app_ctx,
             )))
         }
         "kafka" => {
@@ -701,6 +754,7 @@ fn create_reflex_handler(
             Ok(Box::new(KafkaReflex::new(
                 config.name.clone(),
                 kafka_config,
+                app_ctx,
             )))
         }
         "nats" => {
@@ -711,7 +765,11 @@ fn create_reflex_handler(
         "aws_sns" => {
             let sns_config: AwsSnsReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(AwsSnsReflex::new(config.name.clone(), sns_config)))
+            Ok(Box::new(AwsSnsReflex::new(
+                config.name.clone(),
+                sns_config,
+                app_ctx,
+            )))
         }
         "docker" => {
             let docker_config: DockerReflexConfig =
@@ -719,6 +777,7 @@ fn create_reflex_handler(
             Ok(Box::new(DockerReflex::new(
                 config.name.clone(),
                 docker_config,
+                app_ctx,
             )))
         }
         "kubernetes" => {
@@ -727,6 +786,7 @@ fn create_reflex_handler(
             Ok(Box::new(KubernetesReflex::new(
                 config.name.clone(),
                 k8s_config,
+                app_ctx,
             )))
         }
         "ansible" => {
@@ -735,6 +795,7 @@ fn create_reflex_handler(
             Ok(Box::new(AnsibleReflex::new(
                 config.name.clone(),
                 ansible_config,
+                app_ctx,
             )))
         }
         "saltstack" => {
@@ -743,6 +804,7 @@ fn create_reflex_handler(
             Ok(Box::new(SaltStackReflex::new(
                 config.name.clone(),
                 salt_config,
+                app_ctx,
             )))
         }
         "puppet" => {
@@ -751,6 +813,7 @@ fn create_reflex_handler(
             Ok(Box::new(PuppetReflex::new(
                 config.name.clone(),
                 puppet_config,
+                app_ctx,
             )))
         }
         "powerdns" => {
@@ -759,6 +822,7 @@ fn create_reflex_handler(
             Ok(Box::new(PowerDnsReflex::new(
                 config.name.clone(),
                 pdns_config,
+                app_ctx,
             )))
         }
         "mqtt_publish" => {
@@ -783,6 +847,7 @@ fn create_reflex_handler(
             Ok(Box::new(ShellyReflex::new(
                 config.name.clone(),
                 shelly_config,
+                app_ctx,
             )))
         }
         "tasmota" => {
@@ -791,6 +856,7 @@ fn create_reflex_handler(
             Ok(Box::new(TasmotaReflex::new(
                 config.name.clone(),
                 tasmota_config,
+                app_ctx,
             )))
         }
         "esphome" => {
@@ -799,17 +865,26 @@ fn create_reflex_handler(
             Ok(Box::new(EsphomeReflex::new(
                 config.name.clone(),
                 esphome_config,
+                app_ctx,
             )))
         }
         "fhem" => {
             let fhem_config: FhemReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(FhemReflex::new(config.name.clone(), fhem_config)))
+            Ok(Box::new(FhemReflex::new(
+                config.name.clone(),
+                fhem_config,
+                app_ctx,
+            )))
         }
         "openhab" => {
             let oh_config: OpenhabReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(OpenhabReflex::new(config.name.clone(), oh_config)))
+            Ok(Box::new(OpenhabReflex::new(
+                config.name.clone(),
+                oh_config,
+                app_ctx,
+            )))
         }
         "pushover" => {
             let pushover_config: PushoverReflexConfig =
@@ -817,12 +892,17 @@ fn create_reflex_handler(
             Ok(Box::new(PushoverReflex::new(
                 config.name.clone(),
                 pushover_config,
+                app_ctx,
             )))
         }
         "bark" => {
             let bark_config: BarkReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(BarkReflex::new(config.name.clone(), bark_config)))
+            Ok(Box::new(BarkReflex::new(
+                config.name.clone(),
+                bark_config,
+                app_ctx,
+            )))
         }
         "custom_webhook" => {
             let cw_config: CustomWebhookReflexConfig =
@@ -830,6 +910,7 @@ fn create_reflex_handler(
             Ok(Box::new(CustomWebhookReflex::new(
                 config.name.clone(),
                 cw_config,
+                app_ctx,
             )))
         }
         "sound_alert" => {
@@ -846,6 +927,7 @@ fn create_reflex_handler(
             Ok(Box::new(LedDisplayReflex::new(
                 config.name.clone(),
                 led_config,
+                app_ctx,
             )))
         }
         "elasticsearch" => {
@@ -854,6 +936,7 @@ fn create_reflex_handler(
             Ok(Box::new(ElasticsearchReflex::new(
                 config.name.clone(),
                 es_config,
+                app_ctx,
             )))
         }
         "influxdb" => {
@@ -862,6 +945,7 @@ fn create_reflex_handler(
             Ok(Box::new(InfluxdbReflex::new(
                 config.name.clone(),
                 influx_config,
+                app_ctx,
             )))
         }
         "prometheus" => {
@@ -870,12 +954,17 @@ fn create_reflex_handler(
             Ok(Box::new(PrometheusReflex::new(
                 config.name.clone(),
                 prom_config,
+                app_ctx,
             )))
         }
         "s3_minio" => {
             let s3_config: S3MinioReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(S3MinioReflex::new(config.name.clone(), s3_config)))
+            Ok(Box::new(S3MinioReflex::new(
+                config.name.clone(),
+                s3_config,
+                app_ctx,
+            )))
         }
         "ftp_sftp_upload" => {
             let ftp_config: FtpSftpUploadReflexConfig =
@@ -883,6 +972,7 @@ fn create_reflex_handler(
             Ok(Box::new(FtpSftpUploadReflex::new(
                 config.name.clone(),
                 ftp_config,
+                app_ctx,
             )))
         }
         "fail2ban" => {
@@ -899,6 +989,7 @@ fn create_reflex_handler(
             Ok(Box::new(GrafanaReflex::new(
                 config.name.clone(),
                 grafana_config,
+                app_ctx,
             )))
         }
         "thehive" => {
@@ -907,6 +998,7 @@ fn create_reflex_handler(
             Ok(Box::new(TheHiveReflex::new(
                 config.name.clone(),
                 hive_config,
+                app_ctx,
             )))
         }
         "shodan" => {
@@ -915,11 +1007,16 @@ fn create_reflex_handler(
             Ok(Box::new(ShodanReflex::new(
                 config.name.clone(),
                 shodan_config,
+                app_ctx,
             )))
         }
         "n8n" => {
             let n8n_config: N8nReflexConfig = serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(N8nReflex::new(config.name.clone(), n8n_config)))
+            Ok(Box::new(N8nReflex::new(
+                config.name.clone(),
+                n8n_config,
+                app_ctx,
+            )))
         }
         "make" => {
             let make_config: MakeReflexConfig =
@@ -932,6 +1029,7 @@ fn create_reflex_handler(
             Ok(Box::new(ZapierReflex::new(
                 config.name.clone(),
                 zapier_config,
+                app_ctx,
             )))
         }
         "temporal" => {
@@ -940,6 +1038,7 @@ fn create_reflex_handler(
             Ok(Box::new(TemporalReflex::new(
                 config.name.clone(),
                 temporal_config,
+                app_ctx,
             )))
         }
         "tts" => {
@@ -952,6 +1051,7 @@ fn create_reflex_handler(
             Ok(Box::new(PrinterReflex::new(
                 config.name.clone(),
                 printer_config,
+                app_ctx,
             )))
         }
         "printer_3d" => {
@@ -960,6 +1060,7 @@ fn create_reflex_handler(
             Ok(Box::new(Printer3dReflex::new(
                 config.name.clone(),
                 p3d_config,
+                app_ctx,
             )))
         }
         _ => anyhow::bail!("Unknown reflex type: {}", config.action.r#type),

@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use tracing::{debug, error, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for PuppetDB Reflex
@@ -87,15 +88,16 @@ pub struct PuppetReflex {
 }
 
 impl PuppetReflex {
-    pub fn new(name: String, config: PuppetReflexConfig) -> Self {
-        let verify_ssl = config.verify_ssl;
+    pub fn new(name: String, config: PuppetReflexConfig, app_ctx: &AppContext) -> Self {
+        let client = if config.verify_ssl {
+            app_ctx.http_client().as_ref().clone()
+        } else {
+            app_ctx.http_client_danger_accept_invalid_certs()
+        };
         Self {
             name,
             config,
-            client: reqwest::Client::builder()
-                .danger_accept_invalid_certs(!verify_ssl)
-                .build()
-                .unwrap_or_else(|_| reqwest::Client::new()),
+            client,
         }
     }
 
@@ -500,7 +502,8 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = PuppetReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = PuppetReflex::new("test".to_string(), config, &app_ctx);
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("nodes { certname = '{{topic}}' }", &ink),
@@ -523,7 +526,8 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = PuppetReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = PuppetReflex::new("test".to_string(), config, &app_ctx);
         assert_eq!(reflex.r#type(), "puppet");
     }
 

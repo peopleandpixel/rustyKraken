@@ -347,6 +347,7 @@ fn process_line_inner(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_tentacle() -> SerialTentacle {
         SerialTentacle::new(

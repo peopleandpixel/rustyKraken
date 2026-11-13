@@ -431,6 +431,7 @@ fn format_value(val: f64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
     use serde_json::json;
     use std::time::Duration;
 

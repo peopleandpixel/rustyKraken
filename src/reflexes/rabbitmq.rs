@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for RabbitMQ Reflex (HTTP management API)
@@ -45,15 +47,15 @@ fn default_message_template() -> String {
 pub struct RabbitMqReflex {
     name: String,
     config: RabbitMqReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl RabbitMqReflex {
-    pub fn new(name: String, config: RabbitMqReflexConfig) -> Self {
+    pub fn new(name: String, config: RabbitMqReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -154,6 +156,7 @@ impl Reflex for RabbitMqReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> RabbitMqReflexConfig {
         RabbitMqReflexConfig {
@@ -175,7 +178,7 @@ mod tests {
     #[test]
     fn test_default_routing_key() {
         let config = create_test_config();
-        let reflex = RabbitMqReflex::new("test".to_string(), config);
+        let reflex = RabbitMqReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_routing_key(&ink), "kraken");
     }
@@ -183,7 +186,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = RabbitMqReflex::new("test".to_string(), config);
+        let reflex = RabbitMqReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("[{{topic}}] {{body}}", &ink),
@@ -206,7 +209,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = RabbitMqReflex::new("test".to_string(), config);
+        let reflex = RabbitMqReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "rabbitmq");
     }
 }

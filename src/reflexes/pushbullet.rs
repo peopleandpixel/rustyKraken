@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, error, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Pushbullet Reflex
@@ -49,15 +51,15 @@ fn default_push_type() -> String {
 pub struct PushbulletReflex {
     name: String,
     config: PushbulletReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl PushbulletReflex {
-    pub fn new(name: String, config: PushbulletReflexConfig) -> Self {
+    pub fn new(name: String, config: PushbulletReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -151,6 +153,7 @@ impl Reflex for PushbulletReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> PushbulletReflexConfig {
         PushbulletReflexConfig {
@@ -170,7 +173,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = PushbulletReflex::new("test".to_string(), config);
+        let reflex = PushbulletReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("[{{topic}}] {{body}}", &ink),
@@ -192,7 +195,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = PushbulletReflex::new("test".to_string(), config);
+        let reflex = PushbulletReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "pushbullet");
     }
 }

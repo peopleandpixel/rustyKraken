@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Tasmota Reflex
@@ -50,15 +51,16 @@ pub struct TasmotaReflex {
 }
 
 impl TasmotaReflex {
-    pub fn new(name: String, config: TasmotaReflexConfig) -> Self {
-        let verify_ssl = config.verify_ssl;
+    pub fn new(name: String, config: TasmotaReflexConfig, app_ctx: &AppContext) -> Self {
+        let client = if config.verify_ssl {
+            app_ctx.http_client().as_ref().clone()
+        } else {
+            app_ctx.http_client_danger_accept_invalid_certs()
+        };
         Self {
             name,
             config,
-            client: reqwest::Client::builder()
-                .danger_accept_invalid_certs(!verify_ssl)
-                .build()
-                .unwrap_or_else(|_| reqwest::Client::new()),
+            client,
         }
     }
 
@@ -180,7 +182,8 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = TasmotaReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = TasmotaReflex::new("test".to_string(), config, &app_ctx);
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("{{topic}}-{{body}}", &ink),
@@ -191,7 +194,8 @@ mod tests {
     #[test]
     fn test_resolve_command() {
         let config = create_test_config();
-        let reflex = TasmotaReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = TasmotaReflex::new("test".to_string(), config, &app_ctx);
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_command(&ink), "Power1");
     }
@@ -209,7 +213,8 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = TasmotaReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = TasmotaReflex::new("test".to_string(), config, &app_ctx);
         assert_eq!(reflex.r#type(), "tasmota");
     }
 }

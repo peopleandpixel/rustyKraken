@@ -437,6 +437,7 @@ impl Tentacle for SlackTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_tentacle() -> SlackTentacle {
         SlackTentacle::new(

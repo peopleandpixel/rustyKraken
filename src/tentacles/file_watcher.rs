@@ -528,6 +528,7 @@ impl Tentacle for FileWatcherTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_match_filename_pattern_exact() {

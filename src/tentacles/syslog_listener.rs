@@ -610,6 +610,7 @@ impl Tentacle for SyslogTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_parse_bsd_syslog() {

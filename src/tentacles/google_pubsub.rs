@@ -7,6 +7,7 @@ use std::time::Duration;
 use tracing::{debug, error, info, warn};
 
 use super::Tentacle;
+use crate::appcontext::AppContext;
 use crate::eventbus::EventBus;
 use crate::model::Ink;
 
@@ -66,7 +67,7 @@ fn default_topic_mode() -> String {
 pub struct GooglePubSubTentacle {
     name: String,
     config: GooglePubSubTentacleConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 /// Pub/Sub Message Struktur
@@ -89,11 +90,11 @@ struct ReceivedMessage {
 }
 
 impl GooglePubSubTentacle {
-    pub fn new(name: String, config: GooglePubSubTentacleConfig) -> Self {
+    pub fn new(name: String, config: GooglePubSubTentacleConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -470,6 +471,7 @@ mod tests {
     use super::*;
 
     fn create_tentacle() -> GooglePubSubTentacle {
+        let app_ctx = crate::appcontext::AppContext::new();
         GooglePubSubTentacle::new(
             "test_pubsub".to_string(),
             GooglePubSubTentacleConfig {
@@ -484,6 +486,7 @@ mod tests {
                 topic_mapping: HashMap::new(),
                 endpoint_url: None,
             },
+            &app_ctx,
         )
     }
 
@@ -518,7 +521,11 @@ mod tests {
             attributes: attrs,
         };
 
-        let tentacle = GooglePubSubTentacle::new("test".to_string(), config);
+        let tentacle = GooglePubSubTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         assert_eq!(tentacle.resolve_topic(&message), "/pubsub/alerts");
 
         // Subject Fallback
@@ -549,7 +556,11 @@ mod tests {
             endpoint_url: None,
         };
 
-        let tentacle = GooglePubSubTentacle::new("test".to_string(), config);
+        let tentacle = GooglePubSubTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         // JSON Daten mit topic Feld
         let json_data = r#"{"topic": "/pubsub/json-topic", "data": "value"}"#;
@@ -600,7 +611,11 @@ mod tests {
             endpoint_url: None,
         };
 
-        let tentacle = GooglePubSubTentacle::new("test".to_string(), config.clone());
+        let tentacle = GooglePubSubTentacle::new(
+            "test".to_string(),
+            config.clone(),
+            &crate::appcontext::AppContext::new(),
+        );
 
         // Kein Attribut, keine Daten -> Subscription Mapping
         let message = PubSubMessage {
@@ -614,7 +629,8 @@ mod tests {
         // Fallback wenn kein Mapping
         let mut config2 = config.clone();
         config2.topic_mapping = HashMap::new();
-        let tentacle2 = GooglePubSubTentacle::new("test2".to_string(), config2);
+        let app_ctx2 = crate::appcontext::AppContext::new();
+        let tentacle2 = GooglePubSubTentacle::new("test2".to_string(), config2, &app_ctx2);
         assert_eq!(tentacle2.resolve_topic(&message), "/pubsub/default");
     }
 
@@ -661,7 +677,11 @@ mod tests {
             endpoint_url: None,
         };
 
-        let tentacle = GooglePubSubTentacle::new("test".to_string(), config);
+        let tentacle = GooglePubSubTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let mut attrs = HashMap::new();
         attrs.insert("source".to_string(), "test-source".to_string());

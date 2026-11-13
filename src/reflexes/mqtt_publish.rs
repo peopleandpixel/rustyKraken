@@ -180,6 +180,7 @@ impl Reflex for MqttPublishReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> MqttPublishReflexConfig {
         MqttPublishReflexConfig {

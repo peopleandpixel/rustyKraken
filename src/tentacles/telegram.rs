@@ -7,6 +7,7 @@ use std::sync::Arc;
 use tracing::{debug, info, warn};
 
 use super::Tentacle;
+use crate::appcontext::AppContext;
 use crate::eventbus::EventBus;
 use crate::model::Ink;
 
@@ -308,11 +309,17 @@ impl<'de, T: serde::de::DeserializeOwned> serde::de::Deserialize<'de> for Telegr
 pub struct TelegramTentacle {
     name: String,
     config: TelegramTentacleConfig,
+    #[allow(dead_code)]
+    client: Arc<reqwest::Client>,
 }
 
 impl TelegramTentacle {
-    pub fn new(name: String, config: TelegramTentacleConfig) -> Self {
-        Self { name, config }
+    pub fn new(name: String, config: TelegramTentacleConfig, app_ctx: &AppContext) -> Self {
+        Self {
+            name,
+            config,
+            client: Arc::clone(app_ctx.http_client()),
+        }
     }
 
     /// Bestimmt den rustyKraken-Topic aus einer Telegram-Nachricht
@@ -1091,7 +1098,11 @@ mod tests {
             max_retries: 5,
             reconnect_delay: 5,
         };
-        let tentacle = TelegramTentacle::new("test".to_string(), config);
+        let tentacle = TelegramTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         assert_eq!(
             tentacle.extract_command_topic("/kraken/warning"),
@@ -1126,7 +1137,11 @@ mod tests {
             max_retries: 5,
             reconnect_delay: 5,
         };
-        let tentacle = TelegramTentacle::new("test".to_string(), config);
+        let tentacle = TelegramTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("/kraken/warning Temperatur zu hoch", make_private_chat(100));
         assert_eq!(tentacle.resolve_topic(&msg), "/kraken/warning");
@@ -1160,7 +1175,11 @@ mod tests {
             max_retries: 5,
             reconnect_delay: 5,
         };
-        let tentacle = TelegramTentacle::new("test".to_string(), config);
+        let tentacle = TelegramTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("Nachricht", make_group_chat(100));
         assert_eq!(tentacle.resolve_topic(&msg), "/kraken/alerts");
@@ -1194,7 +1213,11 @@ mod tests {
             max_retries: 5,
             reconnect_delay: 5,
         };
-        let tentacle = TelegramTentacle::new("test".to_string(), config);
+        let tentacle = TelegramTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         // Command hat Vorrang
         let msg = make_message("/alert Wichtig!", make_private_chat(100));
@@ -1230,7 +1253,11 @@ mod tests {
             max_retries: 5,
             reconnect_delay: 5,
         };
-        let tentacle = TelegramTentacle::new("test".to_string(), config);
+        let tentacle = TelegramTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("/kraken/test Testnachricht", make_private_chat(42));
         let ink = tentacle.create_ink(&msg).unwrap();
@@ -1264,7 +1291,11 @@ mod tests {
             max_retries: 5,
             reconnect_delay: 5,
         };
-        let tentacle = TelegramTentacle::new("test".to_string(), config);
+        let tentacle = TelegramTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("Hallo", make_private_chat(100));
         assert!(tentacle.is_allowed(&msg));
@@ -1296,7 +1327,11 @@ mod tests {
                 reconnect_delay: 5,
             }
         };
-        let tentacle = TelegramTentacle::new("test".to_string(), config);
+        let tentacle = TelegramTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("Hallo", make_private_chat(999));
         assert!(tentacle.is_allowed(&msg));
@@ -1323,7 +1358,11 @@ mod tests {
             max_retries: 5,
             reconnect_delay: 5,
         };
-        let tentacle = TelegramTentacle::new("test".to_string(), config);
+        let tentacle = TelegramTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         // Text message
         let msg = make_message("Hallo", make_private_chat(100));

@@ -10,6 +10,7 @@ use tokio_tungstenite::tungstenite::protocol::{CloseFrame, Message as WsMessage}
 use tracing::{debug, info, warn};
 
 use super::Tentacle;
+use crate::appcontext::AppContext;
 use crate::eventbus::EventBus;
 use crate::model::Ink;
 
@@ -289,14 +290,17 @@ pub struct DiscordTentacle {
     name: String,
     config: DiscordTentacleConfig,
     sequence: Arc<Mutex<Option<u64>>>,
+    #[allow(dead_code)]
+    client: Arc<reqwest::Client>,
 }
 
 impl DiscordTentacle {
-    pub fn new(name: String, config: DiscordTentacleConfig) -> Self {
+    pub fn new(name: String, config: DiscordTentacleConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
             sequence: Arc::new(Mutex::new(None)),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -1099,7 +1103,8 @@ async fn webhook_handler(
         reconnect_delay: 5,
     };
 
-    let tentacle = DiscordTentacle::new(tentacle_name.clone(), config);
+    let app_ctx = crate::appcontext::AppContext::new();
+    let tentacle = DiscordTentacle::new(tentacle_name.clone(), config, &app_ctx);
     tentacle.process_message(&msg, &event_bus).await;
 
     StatusCode::OK
@@ -1172,7 +1177,11 @@ mod tests {
     #[test]
     fn test_resolve_topic_from_content() {
         let config = make_config();
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("ch1", "/alerts Hello world");
         assert_eq!(tentacle.resolve_topic(&msg), "/alerts");
@@ -1186,7 +1195,11 @@ mod tests {
         mapping.insert("ch1".to_string(), "/mapped/topic".to_string());
         config.channel_topic_mapping = Some(mapping);
 
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("ch1", "Hello");
         assert_eq!(tentacle.resolve_topic(&msg), "/mapped/topic");
@@ -1200,7 +1213,11 @@ mod tests {
         mapping.insert("987654321".to_string(), "/guild/topic".to_string());
         config.guild_topic_mapping = Some(mapping);
 
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("ch1", "Hello");
         assert_eq!(tentacle.resolve_topic(&msg), "/guild/topic");
@@ -1211,7 +1228,11 @@ mod tests {
         let mut config = make_config();
         config.topic_mode = "channel".to_string();
 
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("ch1", "Hello");
         assert_eq!(
@@ -1225,7 +1246,11 @@ mod tests {
         let mut config = make_config();
         config.topic_mode = "channel".to_string();
 
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let mut msg = make_message("ch1", "Hello");
         msg.guild_id = None;
@@ -1237,7 +1262,11 @@ mod tests {
         let mut config = make_config();
         config.allowed_channels = Some(vec!["ch1".to_string()]);
 
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg_allowed = make_message("ch1", "Hello");
         let msg_not_allowed = make_message("ch2", "Hello");
@@ -1251,7 +1280,11 @@ mod tests {
         let mut config = make_config();
         config.allowed_guilds = Some(vec!["987654321".to_string()]);
 
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("ch1", "Hello");
         assert!(tentacle.is_allowed(&msg));
@@ -1262,7 +1295,11 @@ mod tests {
         let mut config = make_config();
         config.allowed_users = Some(vec!["user123".to_string()]);
 
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("ch1", "Hello");
         assert!(tentacle.is_allowed(&msg));
@@ -1271,7 +1308,11 @@ mod tests {
     #[test]
     fn test_create_ink() {
         let config = make_config();
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("ch1", "/test Hello world");
         let ink = tentacle.create_ink(&msg).unwrap();
@@ -1286,7 +1327,11 @@ mod tests {
     #[test]
     fn test_get_message_type_text() {
         let config = make_config();
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let msg = make_message("ch1", "Hello");
         assert_eq!(tentacle.get_message_type(&msg), "text");
@@ -1295,7 +1340,11 @@ mod tests {
     #[test]
     fn test_get_message_type_attachment() {
         let config = make_config();
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let mut msg = make_message("ch1", "");
         msg.attachments = vec![DiscordAttachment {
@@ -1315,7 +1364,11 @@ mod tests {
     #[test]
     fn test_get_message_type_embed() {
         let config = make_config();
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let mut msg = make_message("ch1", "");
         msg.embeds = vec![DiscordEmbed {
@@ -1335,7 +1388,11 @@ mod tests {
         mapping.insert("ch1".to_string(), "/channel/topic".to_string());
         config.channel_topic_mapping = Some(mapping);
 
-        let tentacle = DiscordTentacle::new("test".to_string(), config);
+        let tentacle = DiscordTentacle::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         // Content prefix should take priority in "all" mode
         let msg = make_message("ch1", "/content Hello");

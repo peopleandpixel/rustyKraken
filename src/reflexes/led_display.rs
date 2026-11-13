@@ -1,9 +1,11 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,15 +39,15 @@ fn default_color() -> String {
 pub struct LedDisplayReflex {
     name: String,
     config: LedDisplayReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl LedDisplayReflex {
-    pub fn new(name: String, config: LedDisplayReflexConfig) -> Self {
+    pub fn new(name: String, config: LedDisplayReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -129,6 +131,7 @@ impl Reflex for LedDisplayReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> LedDisplayReflexConfig {
         LedDisplayReflexConfig {
@@ -143,7 +146,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = LedDisplayReflex::new("test".to_string(), config);
+        let reflex = LedDisplayReflex::new("test".to_string(), config, &AppContext::new());
         let ink = Ink::new("/test/topic", "test", "test_source", "test body");
         assert_eq!(
             reflex.render_template("[{{topic}}] {{body}}", &ink),
@@ -165,7 +168,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = LedDisplayReflex::new("test".to_string(), config);
+        let reflex = LedDisplayReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "led_display");
     }
 }

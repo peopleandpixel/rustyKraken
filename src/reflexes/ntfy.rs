@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, error, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for ntfy Push Notification Reflex
@@ -82,15 +84,15 @@ fn default_priority() -> u8 {
 pub struct NtfyReflex {
     name: String,
     config: NtfyReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl NtfyReflex {
-    pub fn new(name: String, config: NtfyReflexConfig) -> Self {
+    pub fn new(name: String, config: NtfyReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -317,7 +319,11 @@ mod tests {
     #[test]
     fn test_default_topic() {
         let config = create_test_config();
-        let reflex = NtfyReflex::new("test".to_string(), config);
+        let reflex = NtfyReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_topic(&ink), "default-topic");
@@ -330,7 +336,11 @@ mod tests {
         mapping.insert("/test/topic".to_string(), "alerts".to_string());
         config.topic_mapping = mapping;
 
-        let reflex = NtfyReflex::new("test".to_string(), config);
+        let reflex = NtfyReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_topic(&ink), "alerts");
@@ -339,7 +349,11 @@ mod tests {
     #[test]
     fn test_default_priority() {
         let config = create_test_config();
-        let reflex = NtfyReflex::new("test".to_string(), config);
+        let reflex = NtfyReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_priority(&ink), 3);
@@ -352,7 +366,11 @@ mod tests {
         mapping.insert("/test/topic".to_string(), 5);
         config.topic_priority_mapping = mapping;
 
-        let reflex = NtfyReflex::new("test".to_string(), config);
+        let reflex = NtfyReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_priority(&ink), 5);
@@ -363,7 +381,11 @@ mod tests {
         let mut config = create_test_config();
         config.tags = vec!["fire".to_string(), "warning".to_string()];
 
-        let reflex = NtfyReflex::new("test".to_string(), config);
+        let reflex = NtfyReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         let tags = reflex.resolve_tags(&ink);
@@ -382,7 +404,11 @@ mod tests {
         );
         config.topic_tags_mapping = mapping;
 
-        let reflex = NtfyReflex::new("test".to_string(), config);
+        let reflex = NtfyReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         let tags = reflex.resolve_tags(&ink);
@@ -397,7 +423,11 @@ mod tests {
         let title_template = "[{{topic}}] Alert".to_string();
         config.title_template = title_template.clone();
 
-        let reflex = NtfyReflex::new("test".to_string(), config);
+        let reflex = NtfyReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         assert_eq!(
@@ -412,7 +442,11 @@ mod tests {
         let message_template = "Topic: {{topic}}, Body: {{body}}".to_string();
         config.message_template = message_template.clone();
 
-        let reflex = NtfyReflex::new("test".to_string(), config);
+        let reflex = NtfyReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         assert_eq!(
@@ -427,7 +461,11 @@ mod tests {
         let message_template = "Temp: {{metadata.temp}}°C".to_string();
         config.message_template = message_template.clone();
 
-        let reflex = NtfyReflex::new("test".to_string(), config);
+        let reflex = NtfyReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = Ink::new("/test", "test", "test_source", "data")
             .with_metadata(serde_json::json!({ "temp": "42", "humidity": "60" }));
@@ -443,7 +481,11 @@ mod tests {
         let title_template = "{{id}} at {{timestamp}}".to_string();
         config.title_template = title_template.clone();
 
-        let reflex = NtfyReflex::new("test".to_string(), config);
+        let reflex = NtfyReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
 
         let ink = create_test_ink();
         let rendered = reflex.render_template(&title_template, &ink);
@@ -474,7 +516,11 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = NtfyReflex::new("test".to_string(), config);
+        let reflex = NtfyReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         assert_eq!(reflex.r#type(), "ntfy");
     }
 }

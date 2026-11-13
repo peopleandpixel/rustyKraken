@@ -498,6 +498,7 @@ async fn download_file_via_rest(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_ftp_config_defaults() {

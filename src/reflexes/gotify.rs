@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, error, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Gotify Reflex
@@ -52,15 +54,15 @@ fn default_priority() -> u8 {
 pub struct GotifyReflex {
     name: String,
     config: GotifyReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl GotifyReflex {
-    pub fn new(name: String, config: GotifyReflexConfig) -> Self {
+    pub fn new(name: String, config: GotifyReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -172,6 +174,7 @@ impl Reflex for GotifyReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> GotifyReflexConfig {
         GotifyReflexConfig {
@@ -192,7 +195,7 @@ mod tests {
     #[test]
     fn test_default_priority() {
         let config = create_test_config();
-        let reflex = GotifyReflex::new("test".to_string(), config);
+        let reflex = GotifyReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_priority(&ink), 3);
     }
@@ -203,7 +206,7 @@ mod tests {
         let mut mapping = HashMap::new();
         mapping.insert("/test/topic".to_string(), 5);
         config.topic_priority_mapping = mapping;
-        let reflex = GotifyReflex::new("test".to_string(), config);
+        let reflex = GotifyReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_priority(&ink), 5);
     }
@@ -211,7 +214,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = GotifyReflex::new("test".to_string(), config);
+        let reflex = GotifyReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("[{{topic}}] {{body}}", &ink),
@@ -233,7 +236,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = GotifyReflex::new("test".to_string(), config);
+        let reflex = GotifyReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "gotify");
     }
 }

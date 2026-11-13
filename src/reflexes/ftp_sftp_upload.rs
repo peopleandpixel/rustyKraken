@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for FTP/SFTP Upload Reflex
@@ -79,15 +81,15 @@ fn default_timeout() -> u64 {
 pub struct FtpSftpUploadReflex {
     name: String,
     config: FtpSftpUploadReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl FtpSftpUploadReflex {
-    pub fn new(name: String, config: FtpSftpUploadReflexConfig) -> Self {
+    pub fn new(name: String, config: FtpSftpUploadReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -364,7 +366,11 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = FtpSftpUploadReflex::new("test".to_string(), config);
+        let reflex = FtpSftpUploadReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = create_test_ink();
         let filename = reflex.resolve_filename(&ink);
         assert!(filename.contains("/test/topic"));
@@ -389,7 +395,11 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = FtpSftpUploadReflex::new("test".to_string(), config);
+        let reflex = FtpSftpUploadReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         assert_eq!(reflex.r#type(), "ftp_sftp_upload");
     }
 
@@ -400,7 +410,11 @@ mod tests {
         mapping.insert("/logs/app".to_string(), "/logs/app".to_string());
         config.topic_dir_mapping = mapping;
 
-        let reflex = FtpSftpUploadReflex::new("test".to_string(), config);
+        let reflex = FtpSftpUploadReflex::new(
+            "test".to_string(),
+            config,
+            &crate::appcontext::AppContext::new(),
+        );
         let ink = Ink::new("/logs/app", "test", "test_source", "body");
         assert_eq!(reflex.resolve_remote_dir(&ink), "/logs/app");
     }

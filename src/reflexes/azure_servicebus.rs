@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Azure Service Bus Reflex (HTTP API)
@@ -33,15 +35,15 @@ fn default_message_template() -> String {
 pub struct AzureServiceBusReflex {
     name: String,
     config: AzureServiceBusReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl AzureServiceBusReflex {
-    pub fn new(name: String, config: AzureServiceBusReflexConfig) -> Self {
+    pub fn new(name: String, config: AzureServiceBusReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -154,6 +156,7 @@ impl Reflex for AzureServiceBusReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> AzureServiceBusReflexConfig {
         AzureServiceBusReflexConfig {
@@ -173,7 +176,7 @@ mod tests {
     #[test]
     fn test_default_destination() {
         let config = create_test_config();
-        let reflex = AzureServiceBusReflex::new("test".to_string(), config);
+        let reflex = AzureServiceBusReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_destination(&ink), "mytopic");
     }
@@ -181,7 +184,7 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = AzureServiceBusReflex::new("test".to_string(), config);
+        let reflex = AzureServiceBusReflex::new("test".to_string(), config, &AppContext::new());
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("[{{topic}}] {{body}}", &ink),
@@ -204,7 +207,7 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = AzureServiceBusReflex::new("test".to_string(), config);
+        let reflex = AzureServiceBusReflex::new("test".to_string(), config, &AppContext::new());
         assert_eq!(reflex.r#type(), "azure_servicebus");
     }
 }

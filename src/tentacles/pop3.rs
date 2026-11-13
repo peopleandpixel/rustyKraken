@@ -853,6 +853,7 @@ impl Tentacle for Pop3Tentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_matches_pattern_exact() {

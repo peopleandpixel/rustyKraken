@@ -342,6 +342,7 @@ impl Tentacle for KafkaTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_kafka_topic_mode_topic() {

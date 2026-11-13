@@ -9,6 +9,7 @@ use std::time::Duration;
 use tracing::{debug, error, info, warn};
 
 use super::Tentacle;
+use crate::appcontext::AppContext;
 use crate::eventbus::EventBus;
 use crate::model::Ink;
 
@@ -107,14 +108,24 @@ fn default_retry_delay() -> u64 {
 pub struct RestApiTentacle {
     name: String,
     config: RestApiTentacleConfig,
+    client: reqwest::Client,
 }
 
 impl RestApiTentacle {
-    pub fn new(name: String, config: RestApiTentacleConfig) -> Self {
-        Self { name, config }
+    pub fn new(name: String, config: RestApiTentacleConfig, app_ctx: &AppContext) -> Self {
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(config.timeout_seconds))
+            .build()
+            .unwrap_or_else(|_| app_ctx.http_client().as_ref().clone());
+        Self {
+            name,
+            config,
+            client,
+        }
     }
 
     /// Erstellt einen reqwest-Client mit konfigurierter Authentifizierung
+    #[allow(dead_code)]
     fn build_client(&self, _auth: &AuthConfig) -> reqwest::Client {
         reqwest::Client::builder()
             .timeout(Duration::from_secs(self.config.timeout_seconds))
@@ -187,7 +198,7 @@ impl RestApiTentacle {
         endpoint: &RestApiEndpoint,
         event_bus: &Arc<EventBus>,
     ) -> Result<()> {
-        let client = self.build_client(&endpoint.auth);
+        let client = &self.client;
 
         let mut request_builder = match endpoint.method.to_uppercase().as_str() {
             "GET" => client.get(&endpoint.url),
@@ -377,6 +388,7 @@ mod tests {
     use super::*;
 
     fn create_tentacle() -> RestApiTentacle {
+        let app_ctx = crate::appcontext::AppContext::new();
         RestApiTentacle::new(
             "test_rest".to_string(),
             RestApiTentacleConfig {
@@ -397,6 +409,7 @@ mod tests {
                 retry_delay_seconds: 5,
                 rate_limit_per_minute: 0,
             },
+            &app_ctx,
         )
     }
 

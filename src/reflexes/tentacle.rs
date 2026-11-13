@@ -298,6 +298,7 @@ impl Reflex for TentacleReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> TentacleReflexConfig {
         TentacleReflexConfig {

@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for n8n Reflex
@@ -71,15 +72,16 @@ pub struct N8nReflex {
 }
 
 impl N8nReflex {
-    pub fn new(name: String, config: N8nReflexConfig) -> Self {
-        let verify_ssl = config.verify_ssl;
+    pub fn new(name: String, config: N8nReflexConfig, app_ctx: &AppContext) -> Self {
+        let client = if config.verify_ssl {
+            app_ctx.http_client().as_ref().clone()
+        } else {
+            app_ctx.http_client_danger_accept_invalid_certs()
+        };
         Self {
             name,
             config,
-            client: reqwest::Client::builder()
-                .danger_accept_invalid_certs(!verify_ssl)
-                .build()
-                .unwrap_or_else(|_| reqwest::Client::new()),
+            client,
         }
     }
 
@@ -244,7 +246,8 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = N8nReflex::new("test".to_string(), config.clone());
+        let app_ctx = AppContext::new();
+        let reflex = N8nReflex::new("test".to_string(), config.clone(), &app_ctx);
         let ink = create_test_ink();
         let rendered = reflex.render_template(&config.payload_template, &ink);
         let payload: serde_json::Value = serde_json::from_str(&rendered).unwrap();
@@ -267,7 +270,8 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = N8nReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = N8nReflex::new("test".to_string(), config, &app_ctx);
         assert_eq!(reflex.r#type(), "n8n");
     }
 
@@ -278,7 +282,8 @@ mod tests {
         mapping.insert("/n8n/alerts".to_string(), "alert-workflow".to_string());
         config.topic_webhook_mapping = mapping;
 
-        let reflex = N8nReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = N8nReflex::new("test".to_string(), config, &app_ctx);
         let ink = Ink::new("/n8n/alerts", "test", "test_source", "body");
         assert_eq!(reflex.resolve_webhook(&ink), "alert-workflow");
     }

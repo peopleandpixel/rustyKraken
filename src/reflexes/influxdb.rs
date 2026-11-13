@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use tracing::{debug, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for InfluxDB Reflex
@@ -81,15 +82,16 @@ pub struct InfluxdbReflex {
 }
 
 impl InfluxdbReflex {
-    pub fn new(name: String, config: InfluxdbReflexConfig) -> Self {
-        let verify_ssl = config.verify_ssl;
+    pub fn new(name: String, config: InfluxdbReflexConfig, app_ctx: &AppContext) -> Self {
+        let client = if config.verify_ssl {
+            app_ctx.http_client().as_ref().clone()
+        } else {
+            app_ctx.http_client_danger_accept_invalid_certs()
+        };
         Self {
             name,
             config,
-            client: reqwest::Client::builder()
-                .danger_accept_invalid_certs(!verify_ssl)
-                .build()
-                .unwrap_or_else(|_| reqwest::Client::new()),
+            client,
         }
     }
 
@@ -385,7 +387,8 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = InfluxdbReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = InfluxdbReflex::new("test".to_string(), config, &app_ctx);
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("{{topic}}-{{body}}", &ink),
@@ -409,14 +412,16 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = InfluxdbReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = InfluxdbReflex::new("test".to_string(), config, &app_ctx);
         assert_eq!(reflex.r#type(), "influxdb");
     }
 
     #[test]
     fn test_line_protocol() {
         let config = create_test_config();
-        let reflex = InfluxdbReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = InfluxdbReflex::new("test".to_string(), config, &app_ctx);
         let tags = serde_json::json!({"host": "web01"});
         let fields = serde_json::json!({"value": 42, "name": "test"});
         let line = reflex.build_line_protocol("cpu", &tags, &fields, 1234567890);

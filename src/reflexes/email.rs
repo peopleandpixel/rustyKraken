@@ -338,6 +338,7 @@ impl Reflex for EmailReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> EmailReflexConfig {
         EmailReflexConfig {

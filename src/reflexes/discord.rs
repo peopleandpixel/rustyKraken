@@ -2,9 +2,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{debug, error, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for Discord Webhook Reflex
@@ -82,15 +84,15 @@ fn default_max_fields() -> usize {
 pub struct DiscordReflex {
     name: String,
     config: DiscordReflexConfig,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
 }
 
 impl DiscordReflex {
-    pub fn new(name: String, config: DiscordReflexConfig) -> Self {
+    pub fn new(name: String, config: DiscordReflexConfig, app_ctx: &AppContext) -> Self {
         Self {
             name,
             config,
-            client: reqwest::Client::new(),
+            client: Arc::clone(app_ctx.http_client()),
         }
     }
 
@@ -344,6 +346,7 @@ impl Reflex for DiscordReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> DiscordReflexConfig {
         DiscordReflexConfig {
@@ -371,7 +374,7 @@ mod tests {
     #[test]
     fn test_default_webhook_url() {
         let config = create_test_config();
-        let reflex = DiscordReflex::new("test".to_string(), config);
+        let reflex = DiscordReflex::new("test".to_string(), config, &AppContext::new());
 
         let ink = create_test_ink();
         assert_eq!(
@@ -390,7 +393,7 @@ mod tests {
         );
         config.topic_webhook_mapping = mapping;
 
-        let reflex = DiscordReflex::new("test".to_string(), config);
+        let reflex = DiscordReflex::new("test".to_string(), config, &AppContext::new());
 
         let ink = create_test_ink();
         assert_eq!(
@@ -402,7 +405,7 @@ mod tests {
     #[test]
     fn test_default_color() {
         let config = create_test_config();
-        let reflex = DiscordReflex::new("test".to_string(), config);
+        let reflex = DiscordReflex::new("test".to_string(), config, &AppContext::new());
 
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_color(&ink), Some(65280));
@@ -415,7 +418,7 @@ mod tests {
         mapping.insert("/test/topic".to_string(), 16711680);
         config.topic_color_mapping = mapping;
 
-        let reflex = DiscordReflex::new("test".to_string(), config);
+        let reflex = DiscordReflex::new("test".to_string(), config, &AppContext::new());
 
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_color(&ink), Some(16711680));
@@ -426,7 +429,7 @@ mod tests {
         let mut config = create_test_config();
         config.content_template = "Topic: {{topic}}, Body: {{body}}".to_string();
 
-        let reflex = DiscordReflex::new("test".to_string(), config.clone());
+        let reflex = DiscordReflex::new("test".to_string(), config.clone(), &AppContext::new());
 
         let ink = create_test_ink();
         assert_eq!(
@@ -440,7 +443,7 @@ mod tests {
         let mut config = create_test_config();
         config.content_template = "Value: {{metadata.temp}}".to_string();
 
-        let reflex = DiscordReflex::new("test".to_string(), config.clone());
+        let reflex = DiscordReflex::new("test".to_string(), config.clone(), &AppContext::new());
 
         let ink = Ink::new("/test", "test", "test_source", "data")
             .with_metadata(serde_json::json!({ "temp": "42", "humidity": "60" }));
@@ -456,7 +459,7 @@ mod tests {
         config.embed_title = Some("{{topic}}".to_string());
         config.embed_color = Some(65280);
 
-        let reflex = DiscordReflex::new("test".to_string(), config);
+        let reflex = DiscordReflex::new("test".to_string(), config, &AppContext::new());
 
         let ink = create_test_ink();
         let payload = reflex.build_payload(&ink);
@@ -481,7 +484,7 @@ mod tests {
         let mut config = create_test_config();
         config.include_metadata = true;
 
-        let reflex = DiscordReflex::new("test".to_string(), config);
+        let reflex = DiscordReflex::new("test".to_string(), config, &AppContext::new());
 
         let ink = Ink::new("/test", "test", "test_source", "data")
             .with_metadata(serde_json::json!({ "key1": "value1", "key2": "value2" }));
@@ -501,7 +504,7 @@ mod tests {
         config.username = Some("Kraken Bot".to_string());
         config.avatar_url = Some("https://example.com/avatar.png".to_string());
 
-        let reflex = DiscordReflex::new("test".to_string(), config);
+        let reflex = DiscordReflex::new("test".to_string(), config, &AppContext::new());
 
         let ink = create_test_ink();
         let payload = reflex.build_payload(&ink);
@@ -519,7 +522,7 @@ mod tests {
         let mut config = create_test_config();
         config.content_template = "{{body}}".to_string();
 
-        let reflex = DiscordReflex::new("test".to_string(), config);
+        let reflex = DiscordReflex::new("test".to_string(), config, &AppContext::new());
 
         let long_body = "a".repeat(3000);
         let ink = Ink::new("/test", "test", "test_source", &long_body);
@@ -535,7 +538,7 @@ mod tests {
         let mut config = create_test_config();
         config.embed_footer = Some("Sent at {{timestamp}}".to_string());
 
-        let reflex = DiscordReflex::new("test".to_string(), config);
+        let reflex = DiscordReflex::new("test".to_string(), config, &AppContext::new());
 
         let ink = create_test_ink();
         let payload = reflex.build_payload(&ink);
@@ -587,7 +590,7 @@ mod tests {
         let mut config = create_test_config();
         config.use_embeds = false;
 
-        let reflex = DiscordReflex::new("test".to_string(), config);
+        let reflex = DiscordReflex::new("test".to_string(), config, &AppContext::new());
 
         let ink = create_test_ink();
         let payload = reflex.build_payload(&ink);
@@ -602,7 +605,7 @@ mod tests {
         let mut config = create_test_config();
         config.content_template = "ID: {{id}}, Time: {{timestamp}}".to_string();
 
-        let reflex = DiscordReflex::new("test".to_string(), config.clone());
+        let reflex = DiscordReflex::new("test".to_string(), config.clone(), &AppContext::new());
 
         let ink = create_test_ink();
         let rendered = reflex.render_template(&config.content_template, &ink);
@@ -616,7 +619,7 @@ mod tests {
         config.include_metadata = true;
         config.max_embed_fields = 2;
 
-        let reflex = DiscordReflex::new("test".to_string(), config);
+        let reflex = DiscordReflex::new("test".to_string(), config, &AppContext::new());
 
         let ink = Ink::new("/test", "test", "test_source", "data")
             .with_metadata(serde_json::json!({ "a": "1", "b": "2", "c": "3", "d": "4" }));

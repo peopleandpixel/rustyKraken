@@ -242,6 +242,7 @@ impl Tentacle for StdinTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_tentacle_plain() -> StdinTentacle {
         StdinTentacle::new(

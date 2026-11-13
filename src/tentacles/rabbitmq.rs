@@ -377,6 +377,7 @@ impl Tentacle for RabbitMqTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_resolve_topic_routing_key_mode() {

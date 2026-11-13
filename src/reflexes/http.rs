@@ -6,6 +6,7 @@ use std::time::Duration;
 use tracing::{debug, error, info, warn};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// HTTP method for the request
@@ -161,21 +162,17 @@ pub struct HttpReflex {
 }
 
 impl HttpReflex {
-    pub fn new(name: String, config: HttpReflexConfig) -> Result<Self> {
-        let mut client_builder = reqwest::Client::builder()
+    pub fn new(name: String, config: HttpReflexConfig, app_ctx: &AppContext) -> Result<Self> {
+        let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(config.timeout_secs))
             .redirect(if config.follow_redirects {
                 reqwest::redirect::Policy::default()
             } else {
                 reqwest::redirect::Policy::none()
-            });
-
-        // Set default User-Agent
-        client_builder = client_builder.user_agent("rustyKraken/0.17.0");
-
-        let client = client_builder
+            })
+            .user_agent("rustyKraken/0.17.0")
             .build()
-            .context("Failed to build HTTP client")?;
+            .unwrap_or_else(|_| app_ctx.http_client().as_ref().clone());
 
         Ok(Self {
             name,
@@ -443,6 +440,7 @@ impl Reflex for HttpReflex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     fn create_test_config() -> HttpReflexConfig {
         HttpReflexConfig {
@@ -470,7 +468,8 @@ mod tests {
     #[test]
     fn test_default_url() {
         let config = create_test_config();
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let url = reflex.resolve_url(&ink);
@@ -482,7 +481,8 @@ mod tests {
         let mut config = create_test_config();
         config.url_template = Some("http://example.com/{{topic}}".to_string());
 
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let url = reflex.resolve_url(&ink);
@@ -499,7 +499,8 @@ mod tests {
         );
         config.topic_url_mapping = mapping;
 
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let url = reflex.resolve_url(&ink);
@@ -509,7 +510,8 @@ mod tests {
     #[test]
     fn test_default_method() {
         let config = create_test_config();
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let method = reflex.resolve_method(&ink);
@@ -523,7 +525,8 @@ mod tests {
         mapping.insert("/test/topic".to_string(), HttpMethod::Get);
         config.topic_method_mapping = mapping;
 
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let method = reflex.resolve_method(&ink);
@@ -533,7 +536,8 @@ mod tests {
     #[test]
     fn test_body_template_rendering() {
         let config = create_test_config();
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let body = reflex.resolve_body_template(&ink);
@@ -551,7 +555,8 @@ mod tests {
         );
         config.topic_body_mapping = mapping;
 
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let body = reflex.resolve_body_template(&ink);
@@ -563,7 +568,8 @@ mod tests {
         let mut config = create_test_config();
         config.body_template = r#"{"temp":"{{metadata.temp}}"}"#.to_string();
 
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = Ink::new("/test", "test", "test_source", "data")
             .with_metadata(serde_json::json!({ "temp": "42", "humidity": "60" }));
@@ -587,7 +593,8 @@ mod tests {
             token: "my-secret-token".to_string(),
         });
 
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
         assert_eq!(reflex.name(), "test");
         assert_eq!(reflex.r#type(), "http");
     }
@@ -600,7 +607,8 @@ mod tests {
             password: "pass".to_string(),
         });
 
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
         assert_eq!(reflex.name(), "test");
     }
 
@@ -612,7 +620,8 @@ mod tests {
             value: "my-api-key".to_string(),
         });
 
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
         assert_eq!(reflex.name(), "test");
     }
 
@@ -643,7 +652,8 @@ mod tests {
         let mut config = create_test_config();
         config.body_template = "{{id}}:{{timestamp}}".to_string();
 
-        let reflex = HttpReflex::new("test".to_string(), config).unwrap();
+        let app_ctx = AppContext::new();
+        let reflex = HttpReflex::new("test".to_string(), config, &app_ctx).unwrap();
 
         let ink = create_test_ink();
         let body = reflex.resolve_body_template(&ink);

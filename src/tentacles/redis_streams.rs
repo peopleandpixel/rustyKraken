@@ -399,6 +399,7 @@ impl Tentacle for RedisTentacle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::appcontext::AppContext;
 
     #[test]
     fn test_resolve_topic_name_mode() {

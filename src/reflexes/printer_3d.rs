@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use tracing::{debug, error, info};
 
 use super::Reflex;
+use crate::appcontext::AppContext;
 use crate::model::Ink;
 
 /// Configuration for 3D Printer Reflex
@@ -59,15 +60,16 @@ pub struct Printer3dReflex {
 }
 
 impl Printer3dReflex {
-    pub fn new(name: String, config: Printer3dReflexConfig) -> Self {
-        let verify_ssl = config.verify_ssl;
+    pub fn new(name: String, config: Printer3dReflexConfig, app_ctx: &AppContext) -> Self {
+        let client = if config.verify_ssl {
+            app_ctx.http_client().as_ref().clone()
+        } else {
+            app_ctx.http_client_danger_accept_invalid_certs()
+        };
         Self {
             name,
             config,
-            client: reqwest::Client::builder()
-                .danger_accept_invalid_certs(!verify_ssl)
-                .build()
-                .unwrap_or_else(|_| reqwest::Client::new()),
+            client,
         }
     }
 
@@ -404,7 +406,8 @@ mod tests {
     #[test]
     fn test_template_rendering() {
         let config = create_test_config();
-        let reflex = Printer3dReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = Printer3dReflex::new("test".to_string(), config, &app_ctx);
         let ink = create_test_ink();
         assert_eq!(
             reflex.render_template("{{topic}}.gcode", &ink),
@@ -427,7 +430,8 @@ mod tests {
     #[test]
     fn test_reflex_type() {
         let config = create_test_config();
-        let reflex = Printer3dReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = Printer3dReflex::new("test".to_string(), config, &app_ctx);
         assert_eq!(reflex.r#type(), "printer_3d");
     }
 
@@ -438,7 +442,8 @@ mod tests {
         mapping.insert("/3dprint/start".to_string(), "print".to_string());
         config.topic_action_mapping = mapping;
 
-        let reflex = Printer3dReflex::new("test".to_string(), config);
+        let app_ctx = AppContext::new();
+        let reflex = Printer3dReflex::new("test".to_string(), config, &app_ctx);
         let ink = Ink::new("/3dprint/start", "test", "test_source", "body");
         assert_eq!(reflex.resolve_action(&ink), "print");
     }
