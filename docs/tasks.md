@@ -752,13 +752,13 @@ Abhakbare Aufgabenliste für eine vollständige rustyKraken-Software, gruppiert 
 
 ### 3.2 Mantle (Speicherung)
 
-- [ ] **Batch-Speicherung** – Mehrere Ink-Nachrichten in einem Transaction speichern
-- [ ] **WAL-Modus** – SQLite Write-Ahead Logging aktivieren für bessere Schreibperformance
-- [ ] **Vakuum und Optimierung** – Regelmäßige Datenbankwartung planen
-- [ ] **Partitionierung** – Alte Nachrichten in Archiv-Tabellen verschieben
-- [ ] **Full-Text-Suche** – FTS5-Index für Volltextsuche in Nachrichteninhalt
+- [x] **Batch-Speicherung** – Mehrere Ink-Nachrichten in einem Transaction speichern
+- [x] **WAL-Modus** – SQLite Write-Ahead Logging aktivieren für bessere Schreibperformance
+- [x] **Vakuum und Optimierung** – Regelmäßige Datenbankwartung planen
+- [x] **Partitionierung** – Alte Nachrichten in Archiv-Tabellen verschieben
+- [x] **Full-Text-Suche** – FTS5-Index für Volltextsuche in Nachrichteninhalt
 - [ ] **Alternative Datenbanken** – PostgreSQL/MySQL-Support als Option neben SQLite
-- [ ] **Komprimierung** – Große Nachrichten komprimiert speichern (zlib/zstd)
+- [x] **Komprimierung** – Große Nachrichten komprimiert speichern (zlib/zstd)
 
 ### 3.3 Tentacles
 
