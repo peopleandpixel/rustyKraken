@@ -55,9 +55,15 @@ pub struct EsphomeReflexConfig {
     pub verify_ssl: bool,
 }
 
-fn default_port() -> u16 { 80 }
-fn default_action() -> String { "command".to_string() }
-fn default_verify_ssl() -> bool { true }
+fn default_port() -> u16 {
+    80
+}
+fn default_action() -> String {
+    "command".to_string()
+}
+fn default_verify_ssl() -> bool {
+    true
+}
 
 pub struct EsphomeReflex {
     name: String,
@@ -124,17 +130,27 @@ impl EsphomeReflex {
         {
             return cmd.clone();
         }
-        self.config.command.clone().unwrap_or("light.toggle".to_string())
+        self.config
+            .command
+            .clone()
+            .unwrap_or("light.toggle".to_string())
     }
 }
 
 #[async_trait]
 impl Reflex for EsphomeReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "esphome" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "esphome"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("ESPHome reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "ESPHome reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
         let entity_id = self.resolve_entity_id(ink)?;
         let command = self.resolve_command(ink);
@@ -175,7 +191,11 @@ impl Reflex for EsphomeReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("ESPHome API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "ESPHome API error ({}): {}",
+                status,
+                error_body
+            ));
         }
 
         info!(
@@ -215,7 +235,10 @@ mod tests {
         let config = create_test_config();
         let reflex = EsphomeReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("{{topic}}-{{body}}", &ink), "/test/topic-test body");
+        assert_eq!(
+            reflex.render_template("{{topic}}-{{body}}", &ink),
+            "/test/topic-test body"
+        );
     }
 
     #[test]

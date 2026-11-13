@@ -190,10 +190,7 @@ impl InfluxdbReflex {
 
     /// Write data to InfluxDB
     async fn write_data(&self, line_protocol: &str) -> Result<()> {
-        let url = format!(
-            "{}/api/v2/write",
-            self.config.host.trim_end_matches('/')
-        );
+        let url = format!("{}/api/v2/write", self.config.host.trim_end_matches('/'));
 
         let query = format!(
             "?org={}&bucket={}&precision={}",
@@ -225,10 +222,7 @@ impl InfluxdbReflex {
 
     /// Query data from InfluxDB
     async fn query_data(&self, query: &str) -> Result<serde_json::Value> {
-        let url = format!(
-            "{}/api/v2/query",
-            self.config.host.trim_end_matches('/')
-        );
+        let url = format!("{}/api/v2/query", self.config.host.trim_end_matches('/'));
 
         let payload = serde_json::json!({
             "query": query,
@@ -255,7 +249,10 @@ impl InfluxdbReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse InfluxDB query response")
+        response
+            .json()
+            .await
+            .context("Failed to parse InfluxDB query response")
     }
 
     /// List buckets
@@ -279,8 +276,10 @@ impl InfluxdbReflex {
             return Err(anyhow::anyhow!("InfluxDB list buckets error: {}", status));
         }
 
-        let result: serde_json::Value =
-            response.json().await.context("Failed to parse buckets response")?;
+        let result: serde_json::Value = response
+            .json()
+            .await
+            .context("Failed to parse buckets response")?;
 
         Ok(result["buckets"]
             .as_array()
@@ -339,8 +338,7 @@ impl Reflex for InfluxdbReflex {
 
         // Build Line Protocol
         let timestamp = ink.timestamp.timestamp_nanos_opt().unwrap_or(0);
-        let line_protocol =
-            self.build_line_protocol(&measurement, &tags, &fields, timestamp);
+        let line_protocol = self.build_line_protocol(&measurement, &tags, &fields, timestamp);
 
         debug!(
             "InfluxDB reflex '{}' line protocol: {}",

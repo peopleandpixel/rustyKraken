@@ -55,8 +55,12 @@ pub struct Zigbee2MqttReflexConfig {
     pub client_id: String,
 }
 
-fn default_port() -> u16 { 1883 }
-fn default_client_id() -> String { "rustyKraken-z2m".to_string() }
+fn default_port() -> u16 {
+    1883
+}
+fn default_client_id() -> String {
+    "rustyKraken-z2m".to_string()
+}
 
 pub struct Zigbee2MqttReflex {
     name: String,
@@ -99,27 +103,36 @@ impl Zigbee2MqttReflex {
         if let Some(ref template) = self.config.device_template {
             return Ok(self.render_template(template, ink));
         }
-        self.config
-            .device
-            .clone()
-            .context("Zigbee2MQTT device is required - set device, device_template, or topic_device_mapping")
+        self.config.device.clone().context(
+            "Zigbee2MQTT device is required - set device, device_template, or topic_device_mapping",
+        )
     }
 
     fn resolve_state(&self, ink: &Ink) -> String {
         if let Some(ref template) = self.config.state_template {
             return self.render_template(template, ink);
         }
-        self.config.state.clone().unwrap_or_else(|| ink.body.clone())
+        self.config
+            .state
+            .clone()
+            .unwrap_or_else(|| ink.body.clone())
     }
 }
 
 #[async_trait]
 impl Reflex for Zigbee2MqttReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "zigbee2mqtt" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "zigbee2mqtt"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Zigbee2MQTT reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "Zigbee2MQTT reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
         let device = self.resolve_device(ink)?;
         let state = self.resolve_state(ink);
@@ -153,7 +166,10 @@ impl Reflex for Zigbee2MqttReflex {
         let (client, _eventloop) = rumqttc::AsyncClient::new(mqtt_options, 100);
 
         std::mem::drop(client.publish(
-            &publish_topic, rumqttc::QoS::AtLeastOnce, false, payload_str.as_bytes()
+            &publish_topic,
+            rumqttc::QoS::AtLeastOnce,
+            false,
+            payload_str.as_bytes(),
         ));
 
         tokio::time::sleep(std::time::Duration::from_millis(200)).await;
@@ -195,7 +211,10 @@ mod tests {
         let config = create_test_config();
         let reflex = Zigbee2MqttReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("{{topic}}-{{body}}", &ink), "/test/topic-test body");
+        assert_eq!(
+            reflex.render_template("{{topic}}-{{body}}", &ink),
+            "/test/topic-test body"
+        );
     }
 
     #[test]

@@ -135,7 +135,10 @@ impl ShodanReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse Shodan host response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Shodan host response")
     }
 
     /// Search for services
@@ -163,7 +166,10 @@ impl ShodanReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse Shodan search response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Shodan search response")
     }
 
     /// Get list of ports
@@ -182,7 +188,10 @@ impl ShodanReflex {
             return Err(anyhow::anyhow!("Shodan ports error: {}", status));
         }
 
-        response.json().await.context("Failed to parse Shodan ports response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Shodan ports response")
     }
 
     /// Get CPE list
@@ -201,7 +210,10 @@ impl ShodanReflex {
             return Err(anyhow::anyhow!("Shodan CPE error: {}", status));
         }
 
-        response.json().await.context("Failed to parse Shodan CPE response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Shodan CPE response")
     }
 
     /// Get API plan info
@@ -220,7 +232,10 @@ impl ShodanReflex {
             return Err(anyhow::anyhow!("Shodan API info error: {}", status));
         }
 
-        response.json().await.context("Failed to parse Shodan API info response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Shodan API info response")
     }
 }
 
@@ -241,20 +256,14 @@ impl Reflex for ShodanReflex {
         );
 
         let action = self.resolve_action(ink);
-        debug!(
-            "Shodan reflex '{}' resolved action: {}",
-            self.name, action
-        );
+        debug!("Shodan reflex '{}' resolved action: {}", self.name, action);
 
         match action.as_str() {
             "host" | "query-host" => {
                 let ip = ink.body.trim().to_string();
                 let result = self.query_host(&ip).await?;
                 let hostname = result["hostname"].as_str().unwrap_or("unknown");
-                let ports = result["ports"]
-                    .as_array()
-                    .map(|p| p.len())
-                    .unwrap_or(0);
+                let ports = result["ports"].as_array().map(|p| p.len()).unwrap_or(0);
                 info!(
                     "Shodan reflex '{}' host {} has {} ports, hostname: {}",
                     self.name, ip, ports, hostname
@@ -271,17 +280,11 @@ impl Reflex for ShodanReflex {
             }
             "ports" => {
                 let ports = self.get_ports().await?;
-                debug!(
-                    "Shodan reflex '{}' ports: {}",
-                    self.name, ports
-                );
+                debug!("Shodan reflex '{}' ports: {}", self.name, ports);
             }
             "cpe" => {
                 let cpe = self.get_cpe().await?;
-                debug!(
-                    "Shodan reflex '{}' CPE: {}",
-                    self.name, cpe
-                );
+                debug!("Shodan reflex '{}' CPE: {}", self.name, cpe);
             }
             "plan" | "api-info" => {
                 let plan = self.plan_info().await?;
@@ -292,10 +295,7 @@ impl Reflex for ShodanReflex {
                 );
             }
             _ => {
-                error!(
-                    "Shodan reflex '{}' unknown action: {}",
-                    self.name, action
-                );
+                error!("Shodan reflex '{}' unknown action: {}", self.name, action);
                 return Err(anyhow::anyhow!("Unknown Shodan action: {}", action));
             }
         }

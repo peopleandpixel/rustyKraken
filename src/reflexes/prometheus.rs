@@ -176,7 +176,13 @@ impl PrometheusReflex {
                 // Sanitize label name: replace non-alphanumeric with underscore
                 let sanitized_key: String = key
                     .chars()
-                    .map(|c| if c.is_alphanumeric() || c == '_' { c } else { '_' })
+                    .map(|c| {
+                        if c.is_alphanumeric() || c == '_' {
+                            c
+                        } else {
+                            '_'
+                        }
+                    })
                     .collect();
                 label_parts.push(format!("{}=\"{}\"", sanitized_key, value_str));
             }
@@ -269,10 +275,7 @@ impl Reflex for PrometheusReflex {
 
         // Resolve job
         let job = self.resolve_job(ink);
-        debug!(
-            "Prometheus reflex '{}' resolved job: {}",
-            self.name, job
-        );
+        debug!("Prometheus reflex '{}' resolved job: {}", self.name, job);
 
         // Resolve metric
         let metric = self.resolve_metric(ink);
@@ -300,12 +303,8 @@ impl Reflex for PrometheusReflex {
         };
 
         // Build Prometheus format
-        let prometheus_format = self.build_prometheus_format(
-            &metric,
-            value,
-            &labels,
-            &self.config.metric_type,
-        );
+        let prometheus_format =
+            self.build_prometheus_format(&metric, value, &labels, &self.config.metric_type);
 
         debug!(
             "Prometheus reflex '{}' format:\n{}",

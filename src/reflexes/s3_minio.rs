@@ -155,7 +155,11 @@ impl S3MinioReflex {
 
     /// Build S3 endpoint URL
     fn s3_url(&self, bucket: &str, key: &str) -> String {
-        let scheme = if self.config.use_https { "https" } else { "http" };
+        let scheme = if self.config.use_https {
+            "https"
+        } else {
+            "http"
+        };
         let endpoint = self.config.endpoint.trim_end_matches('/');
 
         // Check if endpoint already includes scheme
@@ -259,7 +263,14 @@ impl S3MinioReflex {
         let date = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
         let date_stamp = chrono::Utc::now().format("%Y%m%d").to_string();
 
-        let (_payload_hash, headers) = self.sign_request("PUT", &url, body, &self.config.content_type, &date, &date_stamp);
+        let (_payload_hash, headers) = self.sign_request(
+            "PUT",
+            &url,
+            body,
+            &self.config.content_type,
+            &date,
+            &date_stamp,
+        );
 
         let mut request = self
             .client
@@ -304,7 +315,11 @@ impl S3MinioReflex {
             urlencoding::encode(prefix)
         );
 
-        let response = self.client.get(&url).send().await
+        let response = self
+            .client
+            .get(&url)
+            .send()
+            .await
             .with_context(|| format!("Failed to list objects in S3 bucket {}", bucket))?;
 
         if !response.status().is_success() {
@@ -317,9 +332,12 @@ impl S3MinioReflex {
         let mut objects = Vec::new();
         for line in body.lines() {
             if line.contains("<Key>")
-                && let Some(key) = line.strip_prefix("<Key>").and_then(|s| s.strip_suffix("</Key>")) {
-                    objects.push(key.to_string());
-                }
+                && let Some(key) = line
+                    .strip_prefix("<Key>")
+                    .and_then(|s| s.strip_suffix("</Key>"))
+            {
+                objects.push(key.to_string());
+            }
         }
 
         Ok(objects)
@@ -329,7 +347,11 @@ impl S3MinioReflex {
     async fn delete_object(&self, bucket: &str, key: &str) -> Result<()> {
         let url = self.s3_url(bucket, key);
 
-        let response = self.client.delete(&url).send().await
+        let response = self
+            .client
+            .delete(&url)
+            .send()
+            .await
             .with_context(|| "Failed to delete object from S3".to_string())?;
 
         if !response.status().is_success() {
@@ -381,16 +403,14 @@ impl Reflex for S3MinioReflex {
 
         // Resolve key
         let key = self.resolve_key(ink);
-        debug!(
-            "S3/MinIO reflex '{}' resolved key: {}",
-            self.name, key
-        );
+        debug!("S3/MinIO reflex '{}' resolved key: {}", self.name, key);
 
         // Render body
         let body = self.render_template(&self.config.body_template, ink);
         debug!(
             "S3/MinIO reflex '{}' body length: {}",
-            self.name, body.len()
+            self.name,
+            body.len()
         );
 
         // Upload object

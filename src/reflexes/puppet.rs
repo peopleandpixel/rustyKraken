@@ -237,7 +237,10 @@ impl PuppetReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse PuppetDB facts response")
+        response
+            .json()
+            .await
+            .context("Failed to parse PuppetDB facts response")
     }
 
     /// Get catalog for a node
@@ -263,11 +266,18 @@ impl PuppetReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse PuppetDB catalog response")
+        response
+            .json()
+            .await
+            .context("Failed to parse PuppetDB catalog response")
     }
 
     /// Get resources for a node
-    async fn get_resources(&self, node: &str, r#type: Option<&str>) -> Result<Vec<serde_json::Value>> {
+    async fn get_resources(
+        &self,
+        node: &str,
+        r#type: Option<&str>,
+    ) -> Result<Vec<serde_json::Value>> {
         let url = self.puppetdb_url(&format!(
             "/pdb/{}/resources/{}/{}",
             self.config.api_version,
@@ -301,10 +311,7 @@ impl PuppetReflex {
 
     /// Run a command via PuppetDB
     async fn run_command(&self, command: &str) -> Result<String> {
-        let url = self.puppetdb_url(&format!(
-            "/pdb/{}/commands",
-            self.config.api_version
-        ));
+        let url = self.puppetdb_url(&format!("/pdb/{}/commands", self.config.api_version));
 
         let payload = serde_json::json!({
             "cmd": command
@@ -352,7 +359,10 @@ impl PuppetReflex {
             return Err(anyhow::anyhow!("PuppetDB server info error: {}", status));
         }
 
-        response.text().await.context("Failed to read PuppetDB version")
+        response
+            .text()
+            .await
+            .context("Failed to read PuppetDB version")
             .map(serde_json::Value::String)
     }
 }
@@ -385,10 +395,7 @@ impl Reflex for PuppetReflex {
         );
 
         let action = self.resolve_action(ink);
-        debug!(
-            "Puppet reflex '{}' resolved action: {}",
-            self.name, action
-        );
+        debug!("Puppet reflex '{}' resolved action: {}", self.name, action);
 
         match action.as_str() {
             "query" => {
@@ -398,7 +405,8 @@ impl Reflex for PuppetReflex {
                 let results = self.execute_query(&query).await?;
                 info!(
                     "Puppet reflex '{}' query returned {} results",
-                    self.name, results.len()
+                    self.name,
+                    results.len()
                 );
                 debug!(
                     "Puppet reflex '{}' query results: {}",
@@ -411,23 +419,31 @@ impl Reflex for PuppetReflex {
                     "Node name is required for facts action - set node, node_template, or topic_node_mapping",
                 )?;
                 let facts = self.get_facts(&node).await?;
-                debug!("Puppet reflex '{}' facts for {}: {}", self.name, node, facts);
+                debug!(
+                    "Puppet reflex '{}' facts for {}: {}",
+                    self.name, node, facts
+                );
             }
             "catalog" => {
-                let node = self.resolve_node(ink).context(
-                    "Node name is required for catalog action",
-                )?;
+                let node = self
+                    .resolve_node(ink)
+                    .context("Node name is required for catalog action")?;
                 let catalog = self.get_catalog(&node).await?;
-                debug!("Puppet reflex '{}' catalog for {}: {}", self.name, node, catalog);
+                debug!(
+                    "Puppet reflex '{}' catalog for {}: {}",
+                    self.name, node, catalog
+                );
             }
             "resources" => {
-                let node = self.resolve_node(ink).context(
-                    "Node name is required for resources action",
-                )?;
+                let node = self
+                    .resolve_node(ink)
+                    .context("Node name is required for resources action")?;
                 let resources = self.get_resources(&node, None).await?;
                 info!(
                     "Puppet reflex '{}' found {} resources for {}",
-                    self.name, resources.len(), node
+                    self.name,
+                    resources.len(),
+                    node
                 );
             }
             "command" => {
@@ -445,10 +461,7 @@ impl Reflex for PuppetReflex {
                 debug!("Puppet reflex '{}' server info: {}", self.name, info);
             }
             _ => {
-                error!(
-                    "Puppet reflex '{}' unknown action: {}",
-                    self.name, action
-                );
+                error!("Puppet reflex '{}' unknown action: {}", self.name, action);
                 return Err(anyhow::anyhow!("Unknown Puppet action: {}", action));
             }
         }

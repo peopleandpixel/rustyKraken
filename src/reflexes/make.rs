@@ -142,13 +142,18 @@ impl MakeReflex {
 
         // Set environment variables
         if let Some(ref template) = self.config.env_template {
-            let rendered = self.render_template(template, &Ink::new(
-                "/env".to_string(),
-                "env".to_string(),
-                "make".to_string(),
-                "".to_string(),
-            ));
-            if let Ok(env_vars) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&rendered) {
+            let rendered = self.render_template(
+                template,
+                &Ink::new(
+                    "/env".to_string(),
+                    "env".to_string(),
+                    "make".to_string(),
+                    "".to_string(),
+                ),
+            );
+            if let Ok(env_vars) =
+                serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&rendered)
+            {
                 for (key, value) in env_vars {
                     let value_str = match value {
                         serde_json::Value::String(s) => s.clone(),
@@ -194,7 +199,13 @@ impl MakeReflex {
         for line in stdout.lines() {
             // Simple heuristic: lines that look like target definitions
             if line.starts_with('\t') || (line.contains(':') && !line.contains('=')) {
-                let target = line.trim().split(':').next().unwrap_or("").trim().to_string();
+                let target = line
+                    .trim()
+                    .split(':')
+                    .next()
+                    .unwrap_or("")
+                    .trim()
+                    .to_string();
                 if !target.is_empty() && !target.starts_with('.') {
                     targets.push(target);
                 }
@@ -223,23 +234,14 @@ impl Reflex for MakeReflex {
         let target = self.resolve_target(ink);
         let dir = self.resolve_dir(ink);
 
-        debug!(
-            "Make reflex '{}' target={}, dir={}",
-            self.name, target, dir
-        );
+        debug!("Make reflex '{}' target={}, dir={}", self.name, target, dir);
 
         let output = self.execute_make(&dir, &target).await?;
 
         if self.config.capture_stdout {
-            info!(
-                "Make reflex '{}' output:\n{}",
-                self.name, output
-            );
+            info!("Make reflex '{}' output:\n{}", self.name, output);
         } else {
-            info!(
-                "Make reflex '{}' completed target: {}",
-                self.name, target
-            );
+            info!("Make reflex '{}' completed target: {}", self.name, target);
         }
 
         Ok(())

@@ -87,7 +87,8 @@ impl GoogleChatReflex {
 
     async fn send_message(&self, webhook_url: &str, message: &str) -> Result<()> {
         let payload = if self.config.use_card {
-            let card_title = self.render_template(&self.config.card_title_template, &Ink::new("", "", "", ""));
+            let card_title =
+                self.render_template(&self.config.card_title_template, &Ink::new("", "", "", ""));
             serde_json::json!({
                 "cards": [{
                     "header": {

@@ -155,10 +155,13 @@ impl FtpSftpUploadReflex {
 
         let result = tokio::process::Command::new("curl")
             .args([
-                "-T", &temp_file,
-                "-u", &format!("{}:{}", self.config.username, self.config.password),
+                "-T",
+                &temp_file,
+                "-u",
+                &format!("{}:{}", self.config.username, self.config.password),
                 &format!("{}/{}", url, remote_path),
-                "--connect-timeout", &self.config.timeout.to_string(),
+                "--connect-timeout",
+                &self.config.timeout.to_string(),
             ])
             .output()
             .await
@@ -206,7 +209,8 @@ impl FtpSftpUploadReflex {
 
         let mut cmd = tokio::process::Command::new("sftp");
         cmd.args([
-            "-P", &self.config.port.to_string(),
+            "-P",
+            &self.config.port.to_string(),
             &format!("{}@{}", self.config.username, self.config.host),
         ]);
 
@@ -306,7 +310,8 @@ impl Reflex for FtpSftpUploadReflex {
         let body = self.render_template(&self.config.body_template, ink);
         debug!(
             "FTP/SFTP reflex '{}' body length: {}",
-            self.name, body.len()
+            self.name,
+            body.len()
         );
 
         // Upload based on protocol
@@ -318,7 +323,7 @@ impl Reflex for FtpSftpUploadReflex {
                 return Err(anyhow::anyhow!(
                     "Unsupported protocol: {}",
                     self.config.protocol
-                ))
+                ));
             }
         }
 

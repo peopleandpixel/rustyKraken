@@ -31,9 +31,15 @@ pub struct PushoverReflexConfig {
     pub topic_priority_mapping: HashMap<String, i8>,
 }
 
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_priority() -> i8 { 0 }
+fn default_title_template() -> String {
+    "{{topic}}".to_string()
+}
+fn default_message_template() -> String {
+    "{{body}}".to_string()
+}
+fn default_priority() -> i8 {
+    0
+}
 
 pub struct PushoverReflex {
     name: String,
@@ -43,7 +49,11 @@ pub struct PushoverReflex {
 
 impl PushoverReflex {
     pub fn new(name: String, config: PushoverReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        Self {
+            name,
+            config,
+            client: reqwest::Client::new(),
+        }
     }
 
     fn resolve_priority(&self, ink: &Ink) -> i8 {
@@ -75,15 +85,25 @@ impl PushoverReflex {
 
 #[async_trait]
 impl Reflex for PushoverReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "pushover" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "pushover"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Pushover reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "Pushover reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
         let priority = self.resolve_priority(ink);
         let title = self.render_template(&self.config.title_template, ink);
         let message = self.render_template(&self.config.message_template, ink);
-        debug!("Pushover reflex '{}' sending notification (priority {}) for topic: {}", self.name, priority, ink.topic);
+        debug!(
+            "Pushover reflex '{}' sending notification (priority {}) for topic: {}",
+            self.name, priority, ink.topic
+        );
 
         let payload = serde_json::json!({
             "token": self.config.api_token,
@@ -93,7 +113,9 @@ impl Reflex for PushoverReflex {
             "priority": priority,
         });
 
-        let response = self.client.post("https://api.pushover.net/1/messages.json")
+        let response = self
+            .client
+            .post("https://api.pushover.net/1/messages.json")
             .json(&payload)
             .send()
             .await
@@ -102,9 +124,16 @@ impl Reflex for PushoverReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Pushover API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "Pushover API error ({}): {}",
+                status,
+                error_body
+            ));
         }
-        info!("Pushover reflex '{}' sent notification for topic: {}", self.name, ink.topic);
+        info!(
+            "Pushover reflex '{}' sent notification for topic: {}",
+            self.name, ink.topic
+        );
         Ok(())
     }
 }
@@ -142,7 +171,10 @@ mod tests {
         let config = create_test_config();
         let reflex = PushoverReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]

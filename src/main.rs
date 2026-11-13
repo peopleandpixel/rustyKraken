@@ -32,14 +32,14 @@ use reflexes::{
     Printer3dReflexConfig, PrinterReflex, PrinterReflexConfig, PrometheusReflex,
     PrometheusReflexConfig, PuppetReflex, PuppetReflexConfig, PushbulletReflex,
     PushbulletReflexConfig, PushoverReflex, PushoverReflexConfig, RabbitMqReflex,
-    RabbitMqReflexConfig, S3MinioReflex, S3MinioReflexConfig, SaltStackReflex,
+    RabbitMqReflexConfig, Reflex, S3MinioReflex, S3MinioReflexConfig, SaltStackReflex,
     SaltStackReflexConfig, ScriptReflex, ScriptReflexConfig, ShellyReflex, ShellyReflexConfig,
     ShodanReflex, ShodanReflexConfig, SignalReflex, SignalReflexConfig, SoundAlertReflex,
     SoundAlertReflexConfig, SyslogReflex, SyslogReflexConfig, TasmotaReflex, TasmotaReflexConfig,
     TeamsReflex, TeamsReflexConfig, TelegramReflex, TelegramReflexConfig, TemporalReflex,
-    TemporalReflexConfig, TentacleReflex, TentacleReflexConfig, TheHiveReflex,
-    TheHiveReflexConfig, TtsReflex, TtsReflexConfig, WhatsAppReflex, WhatsAppReflexConfig,
-    ZapierReflex, ZapierReflexConfig, Zigbee2MqttReflex, Zigbee2MqttReflexConfig, Reflex,
+    TemporalReflexConfig, TentacleReflex, TentacleReflexConfig, TheHiveReflex, TheHiveReflexConfig,
+    TtsReflex, TtsReflexConfig, WhatsAppReflex, WhatsAppReflexConfig, ZapierReflex,
+    ZapierReflexConfig, Zigbee2MqttReflex, Zigbee2MqttReflexConfig,
 };
 use tentacles::{
     AsbTentacle, AsbTentacleConfig, AwsSqsTentacle, AwsSqsTentacleConfig, BleTentacle,
@@ -638,47 +638,70 @@ fn create_reflex_handler(
         "signal" => {
             let signal_config: SignalReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(SignalReflex::new(config.name.clone(), signal_config)))
+            Ok(Box::new(SignalReflex::new(
+                config.name.clone(),
+                signal_config,
+            )))
         }
         "teams" => {
             let teams_config: TeamsReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(TeamsReflex::new(config.name.clone(), teams_config)))
+            Ok(Box::new(TeamsReflex::new(
+                config.name.clone(),
+                teams_config,
+            )))
         }
         "google_chat" => {
             let gc_config: GoogleChatReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(GoogleChatReflex::new(config.name.clone(), gc_config)))
+            Ok(Box::new(GoogleChatReflex::new(
+                config.name.clone(),
+                gc_config,
+            )))
         }
         "irc" => {
-            let irc_config: IrcReflexConfig =
-                serde_yaml::from_value(config.action.config.clone())?;
+            let irc_config: IrcReflexConfig = serde_yaml::from_value(config.action.config.clone())?;
             Ok(Box::new(IrcReflex::new(config.name.clone(), irc_config)))
         }
         "pushbullet" => {
             let pb_config: PushbulletReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(PushbulletReflex::new(config.name.clone(), pb_config)))
+            Ok(Box::new(PushbulletReflex::new(
+                config.name.clone(),
+                pb_config,
+            )))
         }
         "gotify" => {
             let gotify_config: GotifyReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(GotifyReflex::new(config.name.clone(), gotify_config)))
+            Ok(Box::new(GotifyReflex::new(
+                config.name.clone(),
+                gotify_config,
+            )))
         }
         "azure_servicebus" => {
             let asb_config: AzureServiceBusReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(AzureServiceBusReflex::new(config.name.clone(), asb_config)))
+            Ok(Box::new(AzureServiceBusReflex::new(
+                config.name.clone(),
+                asb_config,
+            )))
         }
         "rabbitmq" => {
             let rmq_config: RabbitMqReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(RabbitMqReflex::new(config.name.clone(), rmq_config)))
+            Ok(Box::new(RabbitMqReflex::new(
+                config.name.clone(),
+                rmq_config,
+            )))
         }
         "kafka" => {
             let kafka_config: KafkaReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(KafkaReflex::new(config.name.clone(), kafka_config)))
+            Ok(Box::new(KafkaReflex::new(
+                config.name.clone(),
+                kafka_config,
+            )))
         }
         "nats" => {
             let nats_config: NatsReflexConfig =
@@ -693,57 +716,90 @@ fn create_reflex_handler(
         "docker" => {
             let docker_config: DockerReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(DockerReflex::new(config.name.clone(), docker_config)))
+            Ok(Box::new(DockerReflex::new(
+                config.name.clone(),
+                docker_config,
+            )))
         }
         "kubernetes" => {
             let k8s_config: KubernetesReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(KubernetesReflex::new(config.name.clone(), k8s_config)))
+            Ok(Box::new(KubernetesReflex::new(
+                config.name.clone(),
+                k8s_config,
+            )))
         }
         "ansible" => {
             let ansible_config: AnsibleReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(AnsibleReflex::new(config.name.clone(), ansible_config)))
+            Ok(Box::new(AnsibleReflex::new(
+                config.name.clone(),
+                ansible_config,
+            )))
         }
         "saltstack" => {
             let salt_config: SaltStackReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(SaltStackReflex::new(config.name.clone(), salt_config)))
+            Ok(Box::new(SaltStackReflex::new(
+                config.name.clone(),
+                salt_config,
+            )))
         }
         "puppet" => {
             let puppet_config: PuppetReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(PuppetReflex::new(config.name.clone(), puppet_config)))
+            Ok(Box::new(PuppetReflex::new(
+                config.name.clone(),
+                puppet_config,
+            )))
         }
         "powerdns" => {
             let pdns_config: PowerDnsReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(PowerDnsReflex::new(config.name.clone(), pdns_config)))
+            Ok(Box::new(PowerDnsReflex::new(
+                config.name.clone(),
+                pdns_config,
+            )))
         }
         "mqtt_publish" => {
             let mqtt_config: MqttPublishReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(MqttPublishReflex::new(config.name.clone(), mqtt_config)))
+            Ok(Box::new(MqttPublishReflex::new(
+                config.name.clone(),
+                mqtt_config,
+            )))
         }
         "zigbee2mqtt" => {
             let z2m_config: Zigbee2MqttReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(Zigbee2MqttReflex::new(config.name.clone(), z2m_config)))
+            Ok(Box::new(Zigbee2MqttReflex::new(
+                config.name.clone(),
+                z2m_config,
+            )))
         }
         "shelly" => {
             let shelly_config: ShellyReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(ShellyReflex::new(config.name.clone(), shelly_config)))
+            Ok(Box::new(ShellyReflex::new(
+                config.name.clone(),
+                shelly_config,
+            )))
         }
         "tasmota" => {
             let tasmota_config: TasmotaReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(TasmotaReflex::new(config.name.clone(), tasmota_config)))
+            Ok(Box::new(TasmotaReflex::new(
+                config.name.clone(),
+                tasmota_config,
+            )))
         }
         "esphome" => {
             let esphome_config: EsphomeReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(EsphomeReflex::new(config.name.clone(), esphome_config)))
+            Ok(Box::new(EsphomeReflex::new(
+                config.name.clone(),
+                esphome_config,
+            )))
         }
         "fhem" => {
             let fhem_config: FhemReflexConfig =
@@ -758,7 +814,10 @@ fn create_reflex_handler(
         "pushover" => {
             let pushover_config: PushoverReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(PushoverReflex::new(config.name.clone(), pushover_config)))
+            Ok(Box::new(PushoverReflex::new(
+                config.name.clone(),
+                pushover_config,
+            )))
         }
         "bark" => {
             let bark_config: BarkReflexConfig =
@@ -768,32 +827,50 @@ fn create_reflex_handler(
         "custom_webhook" => {
             let cw_config: CustomWebhookReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(CustomWebhookReflex::new(config.name.clone(), cw_config)))
+            Ok(Box::new(CustomWebhookReflex::new(
+                config.name.clone(),
+                cw_config,
+            )))
         }
         "sound_alert" => {
             let sa_config: SoundAlertReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(SoundAlertReflex::new(config.name.clone(), sa_config)))
+            Ok(Box::new(SoundAlertReflex::new(
+                config.name.clone(),
+                sa_config,
+            )))
         }
         "led_display" => {
             let led_config: LedDisplayReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(LedDisplayReflex::new(config.name.clone(), led_config)))
+            Ok(Box::new(LedDisplayReflex::new(
+                config.name.clone(),
+                led_config,
+            )))
         }
         "elasticsearch" => {
             let es_config: ElasticsearchReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(ElasticsearchReflex::new(config.name.clone(), es_config)))
+            Ok(Box::new(ElasticsearchReflex::new(
+                config.name.clone(),
+                es_config,
+            )))
         }
         "influxdb" => {
             let influx_config: InfluxdbReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(InfluxdbReflex::new(config.name.clone(), influx_config)))
+            Ok(Box::new(InfluxdbReflex::new(
+                config.name.clone(),
+                influx_config,
+            )))
         }
         "prometheus" => {
             let prom_config: PrometheusReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(PrometheusReflex::new(config.name.clone(), prom_config)))
+            Ok(Box::new(PrometheusReflex::new(
+                config.name.clone(),
+                prom_config,
+            )))
         }
         "s3_minio" => {
             let s3_config: S3MinioReflexConfig =
@@ -803,31 +880,45 @@ fn create_reflex_handler(
         "ftp_sftp_upload" => {
             let ftp_config: FtpSftpUploadReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(FtpSftpUploadReflex::new(config.name.clone(), ftp_config)))
+            Ok(Box::new(FtpSftpUploadReflex::new(
+                config.name.clone(),
+                ftp_config,
+            )))
         }
         "fail2ban" => {
             let f2b_config: Fail2BanReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(Fail2BanReflex::new(config.name.clone(), f2b_config)))
+            Ok(Box::new(Fail2BanReflex::new(
+                config.name.clone(),
+                f2b_config,
+            )))
         }
         "grafana" => {
             let grafana_config: GrafanaReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(GrafanaReflex::new(config.name.clone(), grafana_config)))
+            Ok(Box::new(GrafanaReflex::new(
+                config.name.clone(),
+                grafana_config,
+            )))
         }
         "thehive" => {
             let hive_config: TheHiveReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(TheHiveReflex::new(config.name.clone(), hive_config)))
+            Ok(Box::new(TheHiveReflex::new(
+                config.name.clone(),
+                hive_config,
+            )))
         }
         "shodan" => {
             let shodan_config: ShodanReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(ShodanReflex::new(config.name.clone(), shodan_config)))
+            Ok(Box::new(ShodanReflex::new(
+                config.name.clone(),
+                shodan_config,
+            )))
         }
         "n8n" => {
-            let n8n_config: N8nReflexConfig =
-                serde_yaml::from_value(config.action.config.clone())?;
+            let n8n_config: N8nReflexConfig = serde_yaml::from_value(config.action.config.clone())?;
             Ok(Box::new(N8nReflex::new(config.name.clone(), n8n_config)))
         }
         "make" => {
@@ -838,27 +929,38 @@ fn create_reflex_handler(
         "zapier" => {
             let zapier_config: ZapierReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(ZapierReflex::new(config.name.clone(), zapier_config)))
+            Ok(Box::new(ZapierReflex::new(
+                config.name.clone(),
+                zapier_config,
+            )))
         }
         "temporal" => {
             let temporal_config: TemporalReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(TemporalReflex::new(config.name.clone(), temporal_config)))
+            Ok(Box::new(TemporalReflex::new(
+                config.name.clone(),
+                temporal_config,
+            )))
         }
         "tts" => {
-            let tts_config: TtsReflexConfig =
-                serde_yaml::from_value(config.action.config.clone())?;
+            let tts_config: TtsReflexConfig = serde_yaml::from_value(config.action.config.clone())?;
             Ok(Box::new(TtsReflex::new(config.name.clone(), tts_config)))
         }
         "printer" => {
             let printer_config: PrinterReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(PrinterReflex::new(config.name.clone(), printer_config)))
+            Ok(Box::new(PrinterReflex::new(
+                config.name.clone(),
+                printer_config,
+            )))
         }
         "printer_3d" => {
             let p3d_config: Printer3dReflexConfig =
                 serde_yaml::from_value(config.action.config.clone())?;
-            Ok(Box::new(Printer3dReflex::new(config.name.clone(), p3d_config)))
+            Ok(Box::new(Printer3dReflex::new(
+                config.name.clone(),
+                p3d_config,
+            )))
         }
         _ => anyhow::bail!("Unknown reflex type: {}", config.action.r#type),
     }

@@ -24,9 +24,15 @@ pub struct LedDisplayReflexConfig {
     pub duration: u32,
 }
 
-fn default_display_type() -> String { "http".to_string() }
-fn default_text_template() -> String { "{{body}}".to_string() }
-fn default_color() -> String { "FF0000".to_string() }
+fn default_display_type() -> String {
+    "http".to_string()
+}
+fn default_text_template() -> String {
+    "{{body}}".to_string()
+}
+fn default_color() -> String {
+    "FF0000".to_string()
+}
 
 pub struct LedDisplayReflex {
     name: String,
@@ -36,7 +42,11 @@ pub struct LedDisplayReflex {
 
 impl LedDisplayReflex {
     pub fn new(name: String, config: LedDisplayReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        Self {
+            name,
+            config,
+            client: reqwest::Client::new(),
+        }
     }
 
     fn render_template(&self, template: &str, ink: &Ink) -> String {
@@ -61,33 +71,57 @@ impl LedDisplayReflex {
 
 #[async_trait]
 impl Reflex for LedDisplayReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "led_display" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "led_display"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("LED/Display reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "LED/Display reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
         let text = self.render_template(&self.config.text_template, ink);
-        debug!("LED/Display reflex '{}' updating display with: {}", self.name, text);
+        debug!(
+            "LED/Display reflex '{}' updating display with: {}",
+            self.name, text
+        );
 
         match self.config.display_type.as_str() {
             "http" => {
                 let payload = serde_json::json!({ "text": text, "color": self.config.color, "duration": self.config.duration });
-                let response = self.client.post(&self.config.endpoint).json(&payload).send().await
-                    .with_context(|| format!("Failed to send to display at {}", self.config.endpoint))?;
+                let response = self
+                    .client
+                    .post(&self.config.endpoint)
+                    .json(&payload)
+                    .send()
+                    .await
+                    .with_context(|| {
+                        format!("Failed to send to display at {}", self.config.endpoint)
+                    })?;
                 if !response.status().is_success() {
                     return Err(anyhow::anyhow!("Display API error: {}", response.status()));
                 }
             }
             "file" => {
-                std::fs::write(&self.config.endpoint, &text)
-                    .with_context(|| format!("Failed to write to display file {}", self.config.endpoint))?;
+                std::fs::write(&self.config.endpoint, &text).with_context(|| {
+                    format!("Failed to write to display file {}", self.config.endpoint)
+                })?;
             }
             _ => {
-                info!("LED/Display reflex '{}' using unsupported type: {}", self.name, self.config.display_type);
+                info!(
+                    "LED/Display reflex '{}' using unsupported type: {}",
+                    self.name, self.config.display_type
+                );
             }
         }
 
-        info!("LED/Display reflex '{}' updated display for topic: {}", self.name, ink.topic);
+        info!(
+            "LED/Display reflex '{}' updated display for topic: {}",
+            self.name, ink.topic
+        );
         Ok(())
     }
 }
@@ -111,7 +145,10 @@ mod tests {
         let config = create_test_config();
         let reflex = LedDisplayReflex::new("test".to_string(), config);
         let ink = Ink::new("/test/topic", "test", "test_source", "test body");
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]

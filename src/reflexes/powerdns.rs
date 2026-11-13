@@ -66,10 +66,18 @@ pub struct PowerDnsReflexConfig {
     pub verify_ssl: bool,
 }
 
-fn default_action() -> String { "create".to_string() }
-fn default_record_type() -> String { "A".to_string() }
-fn default_ttl() -> u32 { 3600 }
-fn default_verify_ssl() -> bool { true }
+fn default_action() -> String {
+    "create".to_string()
+}
+fn default_record_type() -> String {
+    "A".to_string()
+}
+fn default_ttl() -> u32 {
+    3600
+}
+fn default_verify_ssl() -> bool {
+    true
+}
 
 pub struct PowerDnsReflex {
     name: String,
@@ -151,11 +159,18 @@ impl PowerDnsReflex {
 
 #[async_trait]
 impl Reflex for PowerDnsReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "powerdns" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "powerdns"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("PowerDNS reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "PowerDNS reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
         let zone = self.resolve_zone(ink)?;
         let action = self.resolve_action(ink);
@@ -164,10 +179,9 @@ impl Reflex for PowerDnsReflex {
         let record_name = if let Some(ref template) = self.config.record_name_template {
             self.render_template(template, ink)
         } else {
-            self.config
-                .record_name
-                .clone()
-                .context("PowerDNS record_name is required - set record_name or record_name_template")?
+            self.config.record_name.clone().context(
+                "PowerDNS record_name is required - set record_name or record_name_template",
+            )?
         };
 
         let record_content = if let Some(ref template) = self.config.record_content_template {
@@ -185,7 +199,11 @@ impl Reflex for PowerDnsReflex {
         );
 
         let api_url = self.config.api_url.trim_end_matches('/');
-        let zone_url = format!("{}/api/v1/servers/localhost/zones/{}", api_url, urlencoding::encode(&zone));
+        let zone_url = format!(
+            "{}/api/v1/servers/localhost/zones/{}",
+            api_url,
+            urlencoding::encode(&zone)
+        );
 
         match action.as_str() {
             "create" | "update" => {
@@ -217,7 +235,10 @@ impl Reflex for PowerDnsReflex {
                 });
 
                 // Get existing records and add/update
-                let mut rrset: serde_json::Value = zone_data["rrsets"].as_array().map(|a| serde_json::Value::Array(a.clone())).unwrap_or_else(|| serde_json::Value::Array(vec![]));
+                let mut rrset: serde_json::Value = zone_data["rrsets"]
+                    .as_array()
+                    .map(|a| serde_json::Value::Array(a.clone()))
+                    .unwrap_or_else(|| serde_json::Value::Array(vec![]));
 
                 if let Some(arr) = rrset.as_array_mut() {
                     // Check if record exists
@@ -258,7 +279,11 @@ impl Reflex for PowerDnsReflex {
                 if !patch_response.status().is_success() {
                     let status = patch_response.status();
                     let error_body = patch_response.text().await.unwrap_or_default();
-                    return Err(anyhow::anyhow!("PowerDNS update error ({}): {}", status, error_body));
+                    return Err(anyhow::anyhow!(
+                        "PowerDNS update error ({}): {}",
+                        status,
+                        error_body
+                    ));
                 }
 
                 info!(
@@ -280,19 +305,24 @@ impl Reflex for PowerDnsReflex {
                 }
 
                 let zone_data: serde_json::Value = response.json().await?;
-                let mut rrset: serde_json::Value = zone_data["rrsets"].as_array().map(|a| serde_json::Value::Array(a.clone())).unwrap_or_else(|| serde_json::Value::Array(vec![]));
+                let mut rrset: serde_json::Value = zone_data["rrsets"]
+                    .as_array()
+                    .map(|a| serde_json::Value::Array(a.clone()))
+                    .unwrap_or_else(|| serde_json::Value::Array(vec![]));
 
                 if let Some(arr) = rrset.as_array_mut() {
                     for item in arr.iter_mut() {
-                        if item["name"] == record_name && item["type"] == record_type
-                            && let Some(records) = item["records"].as_array_mut() {
-                                records.retain(|r| r["content"] != record_content);
-                                if records.is_empty() {
-                                    item["changetype"] = serde_json::json!("delete");
-                                } else {
-                                    item["changetype"] = serde_json::json!("replace");
-                                }
+                        if item["name"] == record_name
+                            && item["type"] == record_type
+                            && let Some(records) = item["records"].as_array_mut()
+                        {
+                            records.retain(|r| r["content"] != record_content);
+                            if records.is_empty() {
+                                item["changetype"] = serde_json::json!("delete");
+                            } else {
+                                item["changetype"] = serde_json::json!("replace");
                             }
+                        }
                     }
                 }
 
@@ -305,7 +335,10 @@ impl Reflex for PowerDnsReflex {
                     .await?;
 
                 if !patch_response.status().is_success() {
-                    return Err(anyhow::anyhow!("PowerDNS delete error: {}", patch_response.status()));
+                    return Err(anyhow::anyhow!(
+                        "PowerDNS delete error: {}",
+                        patch_response.status()
+                    ));
                 }
 
                 info!(
@@ -322,19 +355,28 @@ impl Reflex for PowerDnsReflex {
                     .await?;
 
                 if !response.status().is_success() {
-                    return Err(anyhow::anyhow!("PowerDNS query error: {}", response.status()));
+                    return Err(anyhow::anyhow!(
+                        "PowerDNS query error: {}",
+                        response.status()
+                    ));
                 }
 
                 let zone_data: serde_json::Value = response.json().await?;
                 if let Some(rrsets) = zone_data["rrsets"].as_array() {
                     for rrset in rrsets {
-                        if rrset["name"] == record_name && rrset["type"] == record_type
-                            && let Some(records) = rrset["records"].as_array() {
-                                info!(
-                                    "PowerDNS reflex '{}' found {} records for {} {} in zone {}",
-                                    self.name, records.len(), record_name, record_type, zone
-                                );
-                            }
+                        if rrset["name"] == record_name
+                            && rrset["type"] == record_type
+                            && let Some(records) = rrset["records"].as_array()
+                        {
+                            info!(
+                                "PowerDNS reflex '{}' found {} records for {} {} in zone {}",
+                                self.name,
+                                records.len(),
+                                record_name,
+                                record_type,
+                                zone
+                            );
+                        }
                     }
                 }
             }
@@ -379,7 +421,10 @@ mod tests {
         let config = create_test_config();
         let reflex = PowerDnsReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("{{topic}}-{{body}}", &ink), "/test/topic-test body");
+        assert_eq!(
+            reflex.render_template("{{topic}}-{{body}}", &ink),
+            "/test/topic-test body"
+        );
     }
 
     #[test]

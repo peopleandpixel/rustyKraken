@@ -25,10 +25,18 @@ pub struct SoundAlertReflexConfig {
     pub message_template: String,
 }
 
-fn default_sound() -> String { "/usr/share/sounds/freedesktop/stereo/alert.oga".to_string() }
-fn default_player() -> String { "paplay".to_string() }
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_message_template() -> String { "{{body}}".to_string() }
+fn default_sound() -> String {
+    "/usr/share/sounds/freedesktop/stereo/alert.oga".to_string()
+}
+fn default_player() -> String {
+    "paplay".to_string()
+}
+fn default_title_template() -> String {
+    "{{topic}}".to_string()
+}
+fn default_message_template() -> String {
+    "{{body}}".to_string()
+}
 
 pub struct SoundAlertReflex {
     name: String,
@@ -62,12 +70,22 @@ impl SoundAlertReflex {
 
 #[async_trait]
 impl Reflex for SoundAlertReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "sound_alert" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "sound_alert"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Sound/Alert reflex '{}' handling ink on topic: {}", self.name, ink.topic);
-        debug!("Sound/Alert reflex '{}' playing sound: {}", self.name, self.config.sound_file);
+        info!(
+            "Sound/Alert reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
+        debug!(
+            "Sound/Alert reflex '{}' playing sound: {}",
+            self.name, self.config.sound_file
+        );
 
         // Play sound
         let _ = tokio::process::Command::new(&self.config.player_command)
@@ -86,7 +104,10 @@ impl Reflex for SoundAlertReflex {
                 .await;
         }
 
-        info!("Sound/Alert reflex '{}' triggered for topic: {}", self.name, ink.topic);
+        info!(
+            "Sound/Alert reflex '{}' triggered for topic: {}",
+            self.name, ink.topic
+        );
         Ok(())
     }
 }
@@ -110,7 +131,10 @@ mod tests {
         let config = create_test_config();
         let reflex = SoundAlertReflex::new("test".to_string(), config);
         let ink = Ink::new("/test/topic", "test", "test_source", "test body");
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]

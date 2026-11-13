@@ -135,7 +135,11 @@ impl TemporalReflex {
     /// Build Temporal API URL
     fn temporal_url(&self, path: &str) -> String {
         let host = self.config.host.trim_end_matches('/');
-        let scheme = if self.config.verify_ssl { "https" } else { "http" };
+        let scheme = if self.config.verify_ssl {
+            "https"
+        } else {
+            "http"
+        };
         format!("{}/{}{}", scheme, host, path)
     }
 
@@ -178,7 +182,10 @@ impl TemporalReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse Temporal response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Temporal response")
     }
 
     /// Signal a workflow
@@ -253,7 +260,10 @@ impl TemporalReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse Temporal query response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Temporal query response")
     }
 }
 
@@ -285,10 +295,7 @@ impl Reflex for TemporalReflex {
         let input: serde_json::Value = serde_json::from_str(&input_rendered)
             .context("input_template must render to valid JSON")?;
 
-        debug!(
-            "Temporal reflex '{}' input: {}",
-            self.name, input
-        );
+        debug!("Temporal reflex '{}' input: {}", self.name, input);
 
         // Start workflow
         let result = self.start_workflow(&workflow_type, &input).await?;
@@ -361,7 +368,10 @@ mod tests {
     fn test_resolve_workflow_from_mapping() {
         let mut config = create_test_config();
         let mut mapping = HashMap::new();
-        mapping.insert("/temporal/deploy".to_string(), "deploy-workflow".to_string());
+        mapping.insert(
+            "/temporal/deploy".to_string(),
+            "deploy-workflow".to_string(),
+        );
         config.topic_workflow_mapping = mapping;
 
         let reflex = TemporalReflex::new("test".to_string(), config);

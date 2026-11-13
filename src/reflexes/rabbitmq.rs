@@ -32,9 +32,15 @@ pub struct RabbitMqReflexConfig {
     pub topic_routing_key_mapping: HashMap<String, String>,
 }
 
-fn default_vhost() -> String { "/".to_string() }
-fn default_routing_key() -> String { "kraken".to_string() }
-fn default_message_template() -> String { "{{body}}".to_string() }
+fn default_vhost() -> String {
+    "/".to_string()
+}
+fn default_routing_key() -> String {
+    "kraken".to_string()
+}
+fn default_message_template() -> String {
+    "{{body}}".to_string()
+}
 
 pub struct RabbitMqReflex {
     name: String,
@@ -44,11 +50,20 @@ pub struct RabbitMqReflex {
 
 impl RabbitMqReflex {
     pub fn new(name: String, config: RabbitMqReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        Self {
+            name,
+            config,
+            client: reqwest::Client::new(),
+        }
     }
 
     fn resolve_routing_key(&self, ink: &Ink) -> String {
-        if let Some(key) = self.config.topic_routing_key_mapping.get(&ink.topic).filter(|k| !k.is_empty()) {
+        if let Some(key) = self
+            .config
+            .topic_routing_key_mapping
+            .get(&ink.topic)
+            .filter(|k| !k.is_empty())
+        {
             return key.clone();
         }
         self.config.routing_key.clone()
@@ -76,17 +91,32 @@ impl RabbitMqReflex {
 
 #[async_trait]
 impl Reflex for RabbitMqReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "rabbitmq" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "rabbitmq"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("RabbitMQ reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "RabbitMQ reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
         let routing_key = self.resolve_routing_key(ink);
         let body = self.render_template(&self.config.message_template, ink);
-        debug!("RabbitMQ reflex '{}' publishing to '{}' with key '{}' for topic: {}", self.name, self.config.exchange, routing_key, ink.topic);
+        debug!(
+            "RabbitMQ reflex '{}' publishing to '{}' with key '{}' for topic: {}",
+            self.name, self.config.exchange, routing_key, ink.topic
+        );
 
         let vhost_encoded = urlencoding::encode(&self.config.vhost);
-        let url = format!("{}/api/exchanges/{}/{}", self.config.api_url.trim_end_matches('/'), vhost_encoded, urlencoding::encode(&self.config.exchange));
+        let url = format!(
+            "{}/api/exchanges/{}/{}",
+            self.config.api_url.trim_end_matches('/'),
+            vhost_encoded,
+            urlencoding::encode(&self.config.exchange)
+        );
 
         let payload = serde_json::json!({
             "routing_key": routing_key,
@@ -95,7 +125,9 @@ impl Reflex for RabbitMqReflex {
             "headers": {}
         });
 
-        let response = self.client.post(&url)
+        let response = self
+            .client
+            .post(&url)
             .basic_auth(&self.config.username, Some(&self.config.password))
             .json(&payload)
             .send()
@@ -105,9 +137,16 @@ impl Reflex for RabbitMqReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("RabbitMQ API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "RabbitMQ API error ({}): {}",
+                status,
+                error_body
+            ));
         }
-        info!("RabbitMQ reflex '{}' published message for topic: {}", self.name, ink.topic);
+        info!(
+            "RabbitMQ reflex '{}' published message for topic: {}",
+            self.name, ink.topic
+        );
         Ok(())
     }
 }
@@ -146,7 +185,10 @@ mod tests {
         let config = create_test_config();
         let reflex = RabbitMqReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]

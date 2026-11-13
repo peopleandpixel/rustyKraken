@@ -69,7 +69,8 @@ fn default_index() -> String {
     "kraken-logs".to_string()
 }
 fn default_body_template() -> String {
-    r#"{"topic": "{{topic}}", "body": "{{body}}", "id": "{{id}}", "timestamp": "{{timestamp}}"}"#.to_string()
+    r#"{"topic": "{{topic}}", "body": "{{body}}", "id": "{{id}}", "timestamp": "{{timestamp}}"}"#
+        .to_string()
 }
 fn default_verify_ssl() -> bool {
     true
@@ -145,9 +146,7 @@ impl ElasticsearchReflex {
         let mut req = request;
         if let Some(ref api_key) = self.config.api_key {
             req = req.header("Authorization", format!("ApiKey {}", api_key));
-        } else if let (Some(user), Some(pass)) =
-            (&self.config.username, &self.config.password)
-        {
+        } else if let (Some(user), Some(pass)) = (&self.config.username, &self.config.password) {
             req = req.basic_auth(user, Some(pass));
         }
         for (k, v) in &self.config.custom_headers {
@@ -164,7 +163,12 @@ impl ElasticsearchReflex {
         body: &serde_json::Value,
     ) -> Result<serde_json::Value> {
         let url = if let Some(id) = document_id {
-            format!("{}/{}/_doc/{}", self.config.host.trim_end_matches('/'), index, id)
+            format!(
+                "{}/{}/_doc/{}",
+                self.config.host.trim_end_matches('/'),
+                index,
+                id
+            )
         } else {
             format!("{}/{}/_doc", self.config.host.trim_end_matches('/'), index)
         };
@@ -191,15 +195,14 @@ impl ElasticsearchReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse Elasticsearch response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Elasticsearch response")
     }
 
     /// Search documents
-    async fn search(
-        &self,
-        index: &str,
-        query: &serde_json::Value,
-    ) -> Result<serde_json::Value> {
+    async fn search(&self, index: &str, query: &serde_json::Value) -> Result<serde_json::Value> {
         let url = format!(
             "{}/{}/_search",
             self.config.host.trim_end_matches('/'),
@@ -223,7 +226,10 @@ impl ElasticsearchReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse Elasticsearch search response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Elasticsearch search response")
     }
 
     /// Delete a document
@@ -266,10 +272,16 @@ impl ElasticsearchReflex {
 
         if !response.status().is_success() {
             let status = response.status();
-            return Err(anyhow::anyhow!("Elasticsearch cluster health error: {}", status));
+            return Err(anyhow::anyhow!(
+                "Elasticsearch cluster health error: {}",
+                status
+            ));
         }
 
-        response.json().await.context("Failed to parse cluster health response")
+        response
+            .json()
+            .await
+            .context("Failed to parse cluster health response")
     }
 }
 
@@ -384,7 +396,10 @@ mod tests {
     fn test_resolve_index_from_mapping() {
         let mut config = create_test_config();
         let mut mapping = HashMap::new();
-        mapping.insert("/alerts/critical".to_string(), "critical-alerts".to_string());
+        mapping.insert(
+            "/alerts/critical".to_string(),
+            "critical-alerts".to_string(),
+        );
         config.topic_index_mapping = mapping;
 
         let reflex = ElasticsearchReflex::new("test".to_string(), config);

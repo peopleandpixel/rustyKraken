@@ -100,7 +100,13 @@ impl TeamsReflex {
         rendered
     }
 
-    async fn send_message(&self, webhook_url: &str, title: &str, text: &str, theme_color: &str) -> Result<()> {
+    async fn send_message(
+        &self,
+        webhook_url: &str,
+        title: &str,
+        text: &str,
+        theme_color: &str,
+    ) -> Result<()> {
         let payload = serde_json::json!({
             "@type": "MessageCard",
             "@context": "https://schema.org/extensions",
@@ -160,7 +166,10 @@ impl Reflex for TeamsReflex {
             self.name, ink.topic
         );
 
-        match self.send_message(&webhook_url, &title, &text, &theme_color).await {
+        match self
+            .send_message(&webhook_url, &title, &text, &theme_color)
+            .await
+        {
             Ok(()) => {
                 info!(
                     "Teams reflex '{}' sent message for topic: {}",
@@ -169,10 +178,7 @@ impl Reflex for TeamsReflex {
                 Ok(())
             }
             Err(e) => {
-                error!(
-                    "Teams reflex '{}' failed to send message: {}",
-                    self.name, e
-                );
+                error!("Teams reflex '{}' failed to send message: {}", self.name, e);
                 Err(e)
             }
         }

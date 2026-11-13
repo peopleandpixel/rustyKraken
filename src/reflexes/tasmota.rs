@@ -39,7 +39,9 @@ pub struct TasmotaReflexConfig {
     pub verify_ssl: bool,
 }
 
-fn default_verify_ssl() -> bool { true }
+fn default_verify_ssl() -> bool {
+    true
+}
 
 pub struct TasmotaReflex {
     name: String,
@@ -91,17 +93,27 @@ impl TasmotaReflex {
         if let Some(ref template) = self.config.command_template {
             return self.render_template(template, ink);
         }
-        self.config.command.clone().unwrap_or_else(|| ink.body.clone())
+        self.config
+            .command
+            .clone()
+            .unwrap_or_else(|| ink.body.clone())
     }
 }
 
 #[async_trait]
 impl Reflex for TasmotaReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "tasmota" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "tasmota"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Tasmota reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "Tasmota reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
         let command = self.resolve_command(ink);
 
@@ -130,7 +142,11 @@ impl Reflex for TasmotaReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Tasmota API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "Tasmota API error ({}): {}",
+                status,
+                error_body
+            ));
         }
 
         info!(
@@ -166,7 +182,10 @@ mod tests {
         let config = create_test_config();
         let reflex = TasmotaReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("{{topic}}-{{body}}", &ink), "/test/topic-test body");
+        assert_eq!(
+            reflex.render_template("{{topic}}-{{body}}", &ink),
+            "/test/topic-test body"
+        );
     }
 
     #[test]

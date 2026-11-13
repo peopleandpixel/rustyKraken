@@ -51,9 +51,15 @@ pub struct AwsSnsReflexConfig {
     pub user_agent_suffix: Option<String>,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_subject_template() -> String { "{{topic}}".to_string() }
-fn default_use_https() -> bool { true }
+fn default_message_template() -> String {
+    "{{body}}".to_string()
+}
+fn default_subject_template() -> String {
+    "{{topic}}".to_string()
+}
+fn default_use_https() -> bool {
+    true
+}
 
 pub struct AwsSnsReflex {
     name: String,
@@ -63,7 +69,11 @@ pub struct AwsSnsReflex {
 
 impl AwsSnsReflex {
     pub fn new(name: String, config: AwsSnsReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        Self {
+            name,
+            config,
+            client: reqwest::Client::new(),
+        }
     }
 
     /// Resolve SNS Topic ARN for a given Ink
@@ -103,11 +113,12 @@ impl AwsSnsReflex {
 
     /// Build SNS endpoint URL for the region
     fn sns_endpoint(&self) -> String {
-        let scheme = if self.config.use_https { "https" } else { "http" };
-        format!(
-            "{}://sns.{}.amazonaws.com",
-            scheme, self.config.region
-        )
+        let scheme = if self.config.use_https {
+            "https"
+        } else {
+            "http"
+        };
+        format!("{}://sns.{}.amazonaws.com", scheme, self.config.region)
     }
 
     /// Create message attributes for SNS
@@ -156,7 +167,12 @@ impl AwsSnsReflex {
 
         let canonical_request = format!(
             "{}\n{}\n{}\n{}\n{}\n{}",
-            method, canonical_uri, canonical_querystring, canonical_headers, signed_headers, payload_hash
+            method,
+            canonical_uri,
+            canonical_querystring,
+            canonical_headers,
+            signed_headers,
+            payload_hash
         );
 
         let credential_scope = format!("{}/{}/{}/aws4_request", date_stamp, region, service);
@@ -204,11 +220,18 @@ impl AwsSnsReflex {
 
 #[async_trait]
 impl Reflex for AwsSnsReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "aws_sns" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "aws_sns"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("AWS SNS reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "AWS SNS reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
         let topic_arn = self.resolve_topic_arn(ink)?;
         let message = self.render_template(&self.config.message_template, ink);
@@ -227,7 +250,10 @@ impl Reflex for AwsSnsReflex {
             "Subject": subject,
             "MessageAttributes": message_attributes
         });
-        let body = format!("Action=Publish&Version=2010-03-31&{}", urlencoding::encode(&payload.to_string()));
+        let body = format!(
+            "Action=Publish&Version=2010-03-31&{}",
+            urlencoding::encode(&payload.to_string())
+        );
 
         // Generate timestamp
         let now = ink.timestamp;
@@ -254,19 +280,27 @@ impl Reflex for AwsSnsReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("AWS SNS API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "AWS SNS API error ({}): {}",
+                status,
+                error_body
+            ));
         }
 
         // Parse response to get MessageId
         let resp_text = response.text().await.unwrap_or_default();
         if let Some(start) = resp_text.find("<MessageId>")
-            && let Some(msg_id) = resp_text[start..].find('>') {
-                let end = start + msg_id + 1;
-                if let Some(end_tag) = resp_text[end..].find("</MessageId>") {
-                    let id = &resp_text[end..end + end_tag];
-                    info!("AWS SNS reflex '{}' published message with ID: {}", self.name, id);
-                }
+            && let Some(msg_id) = resp_text[start..].find('>')
+        {
+            let end = start + msg_id + 1;
+            if let Some(end_tag) = resp_text[end..].find("</MessageId>") {
+                let id = &resp_text[end..end + end_tag];
+                info!(
+                    "AWS SNS reflex '{}' published message with ID: {}",
+                    self.name, id
+                );
             }
+        }
 
         Ok(())
     }
@@ -300,7 +334,10 @@ mod tests {
         let config = create_test_config();
         let reflex = AwsSnsReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]

@@ -246,12 +246,7 @@ impl SaltStackReflex {
     }
 
     /// Run a Salt state
-    async fn run_state(
-        &self,
-        state: &str,
-        target: &str,
-        token: &str,
-    ) -> Result<serde_json::Value> {
+    async fn run_state(&self, state: &str, target: &str, token: &str) -> Result<serde_json::Value> {
         let url = self.salt_api_url("/");
         let payload = serde_json::json!({
             "client": "local",
@@ -280,7 +275,10 @@ impl SaltStackReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse Salt state response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Salt state response")
     }
 
     /// Run a Salt runner
@@ -317,7 +315,10 @@ impl SaltStackReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse Salt runner response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Salt runner response")
     }
 
     /// List available minions
@@ -343,8 +344,10 @@ impl SaltStackReflex {
             return Err(anyhow::anyhow!("Salt API list minions error: {}", status));
         }
 
-        let result: serde_json::Value =
-            response.json().await.context("Failed to parse minions response")?;
+        let result: serde_json::Value = response
+            .json()
+            .await
+            .context("Failed to parse minions response")?;
 
         Ok(result["return"][0]
             .as_array()

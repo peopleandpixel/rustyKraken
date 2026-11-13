@@ -25,8 +25,12 @@ pub struct IrcReflexConfig {
     pub nickname: String,
 }
 
-fn default_message_template() -> String { "[{{topic}}] {{body}}".to_string() }
-fn default_nickname() -> String { "rustyKraken".to_string() }
+fn default_message_template() -> String {
+    "[{{topic}}] {{body}}".to_string()
+}
+fn default_nickname() -> String {
+    "rustyKraken".to_string()
+}
 
 pub struct IrcReflex {
     name: String,
@@ -36,11 +40,20 @@ pub struct IrcReflex {
 
 impl IrcReflex {
     pub fn new(name: String, config: IrcReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        Self {
+            name,
+            config,
+            client: reqwest::Client::new(),
+        }
     }
 
     fn resolve_channels(&self, ink: &Ink) -> Vec<String> {
-        if let Some(channels) = self.config.topic_channel_mapping.get(&ink.topic).filter(|c| !c.is_empty()) {
+        if let Some(channels) = self
+            .config
+            .topic_channel_mapping
+            .get(&ink.topic)
+            .filter(|c| !c.is_empty())
+        {
             return channels.clone();
         }
         self.config.channels.clone()
@@ -68,14 +81,24 @@ impl IrcReflex {
 
 #[async_trait]
 impl Reflex for IrcReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "irc" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "irc"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("IRC reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "IRC reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
         let channels = self.resolve_channels(ink);
         let message = self.render_template(&self.config.message_template, ink);
-        debug!("IRC reflex '{}' sending to {:?} for topic: {}", self.name, channels, ink.topic);
+        debug!(
+            "IRC reflex '{}' sending to {:?} for topic: {}",
+            self.name, channels, ink.topic
+        );
 
         let payload = serde_json::json!({
             "channel": channels[0],
@@ -83,7 +106,9 @@ impl Reflex for IrcReflex {
             "nick": self.config.nickname
         });
 
-        let response = self.client.post(&self.config.webhook_url)
+        let response = self
+            .client
+            .post(&self.config.webhook_url)
             .json(&payload)
             .send()
             .await
@@ -92,9 +117,16 @@ impl Reflex for IrcReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("IRC webhook error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "IRC webhook error ({}): {}",
+                status,
+                error_body
+            ));
         }
-        info!("IRC reflex '{}' sent message for topic: {}", self.name, ink.topic);
+        info!(
+            "IRC reflex '{}' sent message for topic: {}",
+            self.name, ink.topic
+        );
         Ok(())
     }
 }
@@ -130,7 +162,10 @@ mod tests {
         let config = create_test_config();
         let reflex = IrcReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]

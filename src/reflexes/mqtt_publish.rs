@@ -63,10 +63,18 @@ pub struct MqttPublishReflexConfig {
     pub ws_url: Option<String>,
 }
 
-fn default_port() -> u16 { 1883 }
-fn default_topic() -> String { "/kraken/out".to_string() }
-fn default_payload_template() -> String { "{{body}}".to_string() }
-fn default_client_id() -> String { "rustyKraken-reflex".to_string() }
+fn default_port() -> u16 {
+    1883
+}
+fn default_topic() -> String {
+    "/kraken/out".to_string()
+}
+fn default_payload_template() -> String {
+    "{{body}}".to_string()
+}
+fn default_client_id() -> String {
+    "rustyKraken-reflex".to_string()
+}
 
 pub struct MqttPublishReflex {
     name: String,
@@ -80,7 +88,12 @@ impl MqttPublishReflex {
 
     /// Resolve MQTT topic for a given Ink
     fn resolve_topic(&self, ink: &Ink) -> String {
-        if let Some(topic) = self.config.topic_mapping.get(&ink.topic).filter(|t| !t.is_empty()) {
+        if let Some(topic) = self
+            .config
+            .topic_mapping
+            .get(&ink.topic)
+            .filter(|t| !t.is_empty())
+        {
             return self.render_template(topic, ink);
         }
         if let Some(ref template) = self.config.topic_template {
@@ -111,11 +124,18 @@ impl MqttPublishReflex {
 
 #[async_trait]
 impl Reflex for MqttPublishReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "mqtt_publish" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "mqtt_publish"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("MQTT Publish reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "MQTT Publish reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
         let mqtt_topic = self.resolve_topic(ink);
         let payload = self.render_template(&self.config.payload_template, ink);
@@ -188,7 +208,10 @@ mod tests {
         let config = create_test_config();
         let reflex = MqttPublishReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]
@@ -202,7 +225,9 @@ mod tests {
     #[test]
     fn test_resolve_topic_mapping() {
         let mut config = create_test_config();
-        config.topic_mapping.insert("/test/topic".to_string(), "/mqtt/{{topic}}".to_string());
+        config
+            .topic_mapping
+            .insert("/test/topic".to_string(), "/mqtt/{{topic}}".to_string());
         let reflex = MqttPublishReflex::new("test".to_string(), config);
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_topic(&ink), "/mqtt//test/topic");

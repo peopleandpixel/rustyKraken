@@ -150,7 +150,10 @@ impl Printer3dReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse OctoPrint status response")
+        response
+            .json()
+            .await
+            .context("Failed to parse OctoPrint status response")
     }
 
     /// Get temperature
@@ -168,7 +171,10 @@ impl Printer3dReflex {
             return Err(anyhow::anyhow!("OctoPrint temperature error: {}", status));
         }
 
-        response.json().await.context("Failed to parse OctoPrint temperature response")
+        response
+            .json()
+            .await
+            .context("Failed to parse OctoPrint temperature response")
     }
 
     /// Start printing a file
@@ -178,7 +184,10 @@ impl Printer3dReflex {
             self.name, file_path
         );
 
-        let url = self.octoprint_url(&format!("printer/select?command=start&file={}", urlencoding::encode(file_path)));
+        let url = self.octoprint_url(&format!(
+            "printer/select?command=start&file={}",
+            urlencoding::encode(file_path)
+        ));
 
         let response = self
             .build_auth_request(self.client.post(&url))
@@ -285,8 +294,10 @@ impl Printer3dReflex {
             return Err(anyhow::anyhow!("OctoPrint list files error: {}", status));
         }
 
-        let result: serde_json::Value =
-            response.json().await.context("Failed to parse OctoPrint files response")?;
+        let result: serde_json::Value = response
+            .json()
+            .await
+            .context("Failed to parse OctoPrint files response")?;
 
         let files = result["files"]
             .as_array()
@@ -327,22 +338,16 @@ impl Reflex for Printer3dReflex {
             "status" => {
                 let status = self.get_status().await?;
                 let state = status["state"].as_str().unwrap_or("unknown");
-                info!(
-                    "3D Printer reflex '{}' printer state: {}",
-                    self.name, state
-                );
+                info!("3D Printer reflex '{}' printer state: {}", self.name, state);
             }
             "temperature" | "temp" => {
                 let temp = self.get_temperature().await?;
-                debug!(
-                    "3D Printer reflex '{}' temperature: {}",
-                    self.name, temp
-                );
+                debug!("3D Printer reflex '{}' temperature: {}", self.name, temp);
             }
             "print" | "start" => {
-                let file = self.resolve_gcode(ink).context(
-                    "G-code file is required for print action",
-                )?;
+                let file = self
+                    .resolve_gcode(ink)
+                    .context("G-code file is required for print action")?;
                 self.start_print(&file).await?;
             }
             "cancel" | "stop" => {
@@ -358,7 +363,8 @@ impl Reflex for Printer3dReflex {
                 let files = self.list_sd_files().await?;
                 info!(
                     "3D Printer reflex '{}' found {} files on SD",
-                    self.name, files.len()
+                    self.name,
+                    files.len()
                 );
             }
             _ => {

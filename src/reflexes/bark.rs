@@ -58,9 +58,15 @@ pub struct BarkReflexConfig {
     pub url: Option<String>,
 }
 
-fn default_title_template() -> String { "{{topic}}".to_string() }
-fn default_body_template() -> String { "{{body}}".to_string() }
-fn default_priority() -> u32 { 25 }
+fn default_title_template() -> String {
+    "{{topic}}".to_string()
+}
+fn default_body_template() -> String {
+    "{{body}}".to_string()
+}
+fn default_priority() -> u32 {
+    25
+}
 
 pub struct BarkReflex {
     name: String,
@@ -70,7 +76,11 @@ pub struct BarkReflex {
 
 impl BarkReflex {
     pub fn new(name: String, config: BarkReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        Self {
+            name,
+            config,
+            client: reqwest::Client::new(),
+        }
     }
 
     /// Resolve device key for a given Ink
@@ -116,11 +126,18 @@ impl BarkReflex {
 
 #[async_trait]
 impl Reflex for BarkReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "bark" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "bark"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Bark reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "Bark reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
         let device_key = self.resolve_device_key(ink);
         let priority = self.resolve_priority(ink);
@@ -133,7 +150,11 @@ impl Reflex for BarkReflex {
         );
 
         // Bark API: POST /push/:deviceKey
-        let url = format!("{}/push/{}", self.config.server.trim_end_matches('/'), device_key);
+        let url = format!(
+            "{}/push/{}",
+            self.config.server.trim_end_matches('/'),
+            device_key
+        );
 
         // Bark API: POST /push/:deviceKey with form-encoded body
         let mut form_parts = vec![
@@ -174,10 +195,17 @@ impl Reflex for BarkReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Bark API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "Bark API error ({}): {}",
+                status,
+                error_body
+            ));
         }
 
-        info!("Bark reflex '{}' sent notification to device: {}", self.name, device_key);
+        info!(
+            "Bark reflex '{}' sent notification to device: {}",
+            self.name, device_key
+        );
         Ok(())
     }
 }
@@ -212,7 +240,10 @@ mod tests {
         let config = create_test_config();
         let reflex = BarkReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]
@@ -226,7 +257,9 @@ mod tests {
     #[test]
     fn test_resolve_priority() {
         let mut config = create_test_config();
-        config.topic_priority_mapping.insert("/test/topic".to_string(), 10);
+        config
+            .topic_priority_mapping
+            .insert("/test/topic".to_string(), 10);
         let reflex = BarkReflex::new("test".to_string(), config);
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_priority(&ink), 10);

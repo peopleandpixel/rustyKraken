@@ -112,9 +112,10 @@ impl KafkaReflex {
         if let Some(ref template) = self.config.topic_template {
             return Ok(self.render_template(template, ink));
         }
-        self.config.topic.clone().context(
-            "Kafka topic is required - set topic, topic_template, or topic_mapping",
-        )
+        self.config
+            .topic
+            .clone()
+            .context("Kafka topic is required - set topic, topic_template, or topic_mapping")
     }
 
     /// Resolve message key for a given Ink
@@ -156,7 +157,9 @@ impl KafkaReflex {
     fn build_headers(&self, ink: &Ink) -> Option<Vec<(String, String)>> {
         if let Some(ref template) = self.config.headers_template {
             let rendered = self.render_template(template, ink);
-            if let Ok(headers) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&rendered) {
+            if let Ok(headers) =
+                serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&rendered)
+            {
                 let mut result = Vec::new();
                 for (k, v) in headers {
                     result.push((k, v.to_string()));
@@ -216,9 +219,7 @@ impl KafkaReflex {
             } else {
                 request = request.header("Authorization", format!("Bearer {}", api_key));
             }
-        } else if let (Some(user), Some(pass)) =
-            (&self.config.username, &self.config.password)
-        {
+        } else if let (Some(user), Some(pass)) = (&self.config.username, &self.config.password) {
             request = request.basic_auth(user, Some(pass));
         }
 
@@ -254,13 +255,17 @@ impl KafkaReflex {
 
     /// List available topics via REST Proxy
     async fn list_topics(&self) -> Result<Vec<String>> {
-        let url = format!("{}/api/v3/topics", self.config.broker_url.trim_end_matches('/'));
+        let url = format!(
+            "{}/api/v3/topics",
+            self.config.broker_url.trim_end_matches('/')
+        );
 
         let mut request = self.client.get(&url);
         if let Some(ref api_key) = self.config.api_key
-            && let Some(ref api_secret) = self.config.api_secret {
-                request = request.basic_auth(api_key, Some(api_secret));
-            }
+            && let Some(ref api_secret) = self.config.api_secret
+        {
+            request = request.basic_auth(api_key, Some(api_secret));
+        }
 
         let response = request
             .send()
@@ -304,11 +309,15 @@ impl KafkaReflex {
 
         let mut request = self.client.get(&url);
         if let Some(ref api_key) = self.config.api_key
-            && let Some(ref api_secret) = self.config.api_secret {
-                request = request.basic_auth(api_key, Some(api_secret));
-            }
+            && let Some(ref api_secret) = self.config.api_secret
+        {
+            request = request.basic_auth(api_key, Some(api_secret));
+        }
 
-        let response = request.send().await.context("Failed to check Kafka topic")?;
+        let response = request
+            .send()
+            .await
+            .context("Failed to check Kafka topic")?;
         Ok(response.status() == 200)
     }
 }
@@ -344,10 +353,7 @@ impl Reflex for KafkaReflex {
 
         // Render message value
         let value = self.render_template(&self.config.value_template, ink);
-        debug!(
-            "Kafka reflex '{}' rendered value: {}",
-            self.name, value
-        );
+        debug!("Kafka reflex '{}' rendered value: {}", self.name, value);
 
         // Build headers
         let headers = self.build_headers(ink);
@@ -428,16 +434,16 @@ mod tests {
     fn test_resolve_topic_from_mapping() {
         let mut config = create_test_config();
         let mut mapping = HashMap::new();
-        mapping.insert("/alerts/critical".to_string(), "critical-alerts".to_string());
+        mapping.insert(
+            "/alerts/critical".to_string(),
+            "critical-alerts".to_string(),
+        );
         config.topic_mapping = mapping;
         config.topic = None;
 
         let reflex = KafkaReflex::new("test".to_string(), config);
         let ink = Ink::new("/alerts/critical", "test", "test_source", "body");
-        assert_eq!(
-            reflex.resolve_topic(&ink).unwrap(),
-            "critical-alerts"
-        );
+        assert_eq!(reflex.resolve_topic(&ink).unwrap(), "critical-alerts");
     }
 
     #[test]

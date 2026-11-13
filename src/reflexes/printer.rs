@@ -254,10 +254,7 @@ impl Reflex for PrinterReflex {
         // Print
         self.print_via_lp(&printer, &text).await?;
 
-        info!(
-            "Printer reflex '{}' printed to {}",
-            self.name, printer
-        );
+        info!("Printer reflex '{}' printed to {}", self.name, printer);
 
         Ok(())
     }
@@ -292,10 +289,7 @@ mod tests {
         let config = create_test_config();
         let reflex = PrinterReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(
-            reflex.render_template("{{body}}", &ink),
-            "Hello world"
-        );
+        assert_eq!(reflex.render_template("{{body}}", &ink), "Hello world");
     }
 
     #[test]

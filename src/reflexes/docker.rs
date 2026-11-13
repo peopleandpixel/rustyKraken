@@ -224,16 +224,19 @@ impl DockerReflex {
 
         let request = format!(
             "{} {} HTTP/1.1\r\nHost: localhost\r\nContent-Length: {}\r\nContent-Type: application/json\r\n\r\n{}",
-            method,
-            path,
-            content_length,
-            body_str
+            method, path, content_length, body_str
         );
 
-        stream.write_all(request.as_bytes()).await.context("Failed to write to Docker socket")?;
+        stream
+            .write_all(request.as_bytes())
+            .await
+            .context("Failed to write to Docker socket")?;
 
         let mut response = Vec::new();
-        stream.read_to_end(&mut response).await.context("Failed to read from Docker socket")?;
+        stream
+            .read_to_end(&mut response)
+            .await
+            .context("Failed to read from Docker socket")?;
 
         let response_str = String::from_utf8_lossy(&response);
         let parts: Vec<&str> = response_str.splitn(2, "\r\n\r\n").collect();
@@ -246,8 +249,15 @@ impl DockerReflex {
 
         // Check status line
         let status_line = headers.lines().next().unwrap_or("");
-        if !status_line.contains("200") && !status_line.contains("201") && !status_line.contains("204") {
-            return Err(anyhow::anyhow!("Docker API error: {} — {}", status_line, body));
+        if !status_line.contains("200")
+            && !status_line.contains("201")
+            && !status_line.contains("204")
+        {
+            return Err(anyhow::anyhow!(
+                "Docker API error: {} — {}",
+                status_line,
+                body
+            ));
         }
 
         if body.trim().is_empty() {
@@ -266,7 +276,8 @@ impl DockerReflex {
         if self.config.host.starts_with("unix://") {
             self.socket_request("POST", &path, None).await?;
         } else {
-            self.http_request("POST", &self.docker_url(&path), None).await?;
+            self.http_request("POST", &self.docker_url(&path), None)
+                .await?;
         }
         info!(
             "Docker reflex '{}' started container: {}",
@@ -286,7 +297,8 @@ impl DockerReflex {
         if self.config.host.starts_with("unix://") {
             self.socket_request("POST", &path, None).await?;
         } else {
-            self.http_request("POST", &self.docker_url(&path), None).await?;
+            self.http_request("POST", &self.docker_url(&path), None)
+                .await?;
         }
         info!(
             "Docker reflex '{}' stopped container: {}",
@@ -306,7 +318,8 @@ impl DockerReflex {
         if self.config.host.starts_with("unix://") {
             self.socket_request("POST", &path, None).await?;
         } else {
-            self.http_request("POST", &self.docker_url(&path), None).await?;
+            self.http_request("POST", &self.docker_url(&path), None)
+                .await?;
         }
         info!(
             "Docker reflex '{}' restarted container: {}",
@@ -325,7 +338,8 @@ impl DockerReflex {
         if self.config.host.starts_with("unix://") {
             self.socket_request("DELETE", &path, None).await?;
         } else {
-            self.http_request("DELETE", &self.docker_url(&path), None).await?;
+            self.http_request("DELETE", &self.docker_url(&path), None)
+                .await?;
         }
         info!(
             "Docker reflex '{}' removed container: {}",
@@ -409,10 +423,7 @@ impl DockerReflex {
                 .await
                 .context("Failed to connect to Docker socket")?;
 
-            let request = format!(
-                "GET {} HTTP/1.1\r\nHost: localhost\r\n\r\n",
-                path
-            );
+            let request = format!("GET {} HTTP/1.1\r\nHost: localhost\r\n\r\n", path);
             stream
                 .write_all(request.as_bytes())
                 .await
@@ -464,7 +475,8 @@ impl DockerReflex {
         if self.config.host.starts_with("unix://") {
             self.socket_request("GET", &path, None).await
         } else {
-            self.http_request("GET", &self.docker_url(&path), None).await
+            self.http_request("GET", &self.docker_url(&path), None)
+                .await
         }
     }
 
@@ -474,7 +486,8 @@ impl DockerReflex {
         let result = if self.config.host.starts_with("unix://") {
             self.socket_request("GET", path, None).await?
         } else {
-            self.http_request("GET", &self.docker_url(path), None).await?
+            self.http_request("GET", &self.docker_url(path), None)
+                .await?
         };
 
         Ok(result.as_array().cloned().unwrap_or_default())
@@ -549,11 +562,7 @@ impl Reflex for DockerReflex {
                 );
             }
             "create" => {
-                let image = self
-                    .config
-                    .image
-                    .as_deref()
-                    .unwrap_or("nginx:latest");
+                let image = self.config.image.as_deref().unwrap_or("nginx:latest");
                 let payload = serde_json::json!({
                     "Image": image,
                     "name": container,
@@ -562,8 +571,12 @@ impl Reflex for DockerReflex {
                     self.socket_request("POST", "/containers/create", Some(&payload))
                         .await?;
                 } else {
-                    self.http_request("POST", &self.docker_url("/containers/create"), Some(&payload))
-                        .await?;
+                    self.http_request(
+                        "POST",
+                        &self.docker_url("/containers/create"),
+                        Some(&payload),
+                    )
+                    .await?;
                 }
                 info!(
                     "Docker reflex '{}' created container: {}",
@@ -571,10 +584,7 @@ impl Reflex for DockerReflex {
                 );
             }
             _ => {
-                error!(
-                    "Docker reflex '{}' unknown action: {}",
-                    self.name, action
-                );
+                error!("Docker reflex '{}' unknown action: {}", self.name, action);
                 return Err(anyhow::anyhow!("Unknown Docker action: {}", action));
             }
         }

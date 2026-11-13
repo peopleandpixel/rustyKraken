@@ -44,7 +44,8 @@ pub struct ZapierReflexConfig {
 }
 
 fn default_payload_template() -> String {
-    r#"{"topic": "{{topic}}", "body": "{{body}}", "id": "{{id}}", "timestamp": "{{timestamp}}"}"#.to_string()
+    r#"{"topic": "{{topic}}", "body": "{{body}}", "id": "{{id}}", "timestamp": "{{timestamp}}"}"#
+        .to_string()
 }
 fn default_method() -> String {
     "POST".to_string()
@@ -124,11 +125,7 @@ impl ZapierReflex {
     }
 
     /// Trigger Zapier webhook
-    async fn trigger_webhook(
-        &self,
-        url: &str,
-        payload: &serde_json::Value,
-    ) -> Result<()> {
+    async fn trigger_webhook(&self, url: &str, payload: &serde_json::Value) -> Result<()> {
         let request = match self.config.method.as_str() {
             "GET" => self.client.get(url),
             _ => self.client.post(url).json(payload),
@@ -182,10 +179,7 @@ impl Reflex for ZapierReflex {
         let payload: serde_json::Value = serde_json::from_str(&payload_rendered)
             .context("payload_template must render to valid JSON")?;
 
-        debug!(
-            "Zapier reflex '{}' payload: {}",
-            self.name, payload
-        );
+        debug!("Zapier reflex '{}' payload: {}", self.name, payload);
 
         // Trigger webhook
         self.trigger_webhook(&webhook_url, &payload).await?;
@@ -252,7 +246,10 @@ mod tests {
     fn test_resolve_webhook_from_mapping() {
         let mut config = create_test_config();
         let mut mapping = HashMap::new();
-        mapping.insert("/zapier/alerts".to_string(), "https://hooks.zapier.com/alerts".to_string());
+        mapping.insert(
+            "/zapier/alerts".to_string(),
+            "https://hooks.zapier.com/alerts".to_string(),
+        );
         config.topic_webhook_mapping = mapping;
 
         let reflex = ZapierReflex::new("test".to_string(), config);

@@ -38,9 +38,15 @@ pub struct SignalReflexConfig {
     pub timeout: u64,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
-fn default_use_https() -> bool { false }
-fn default_timeout() -> u64 { 30 }
+fn default_message_template() -> String {
+    "{{body}}".to_string()
+}
+fn default_use_https() -> bool {
+    false
+}
+fn default_timeout() -> u64 {
+    30
+}
 
 pub struct SignalReflex {
     name: String,
@@ -99,11 +105,18 @@ impl SignalReflex {
 
 #[async_trait]
 impl Reflex for SignalReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "signal" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "signal"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Signal reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "Signal reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
         let recipient = self.resolve_recipient(ink)?;
         let message = self.render_template(&self.config.message_template, ink);
@@ -137,7 +150,11 @@ impl Reflex for SignalReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Signal API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "Signal API error ({}): {}",
+                status,
+                error_body
+            ));
         }
 
         info!(
@@ -173,7 +190,10 @@ mod tests {
         let config = create_test_config();
         let reflex = SignalReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]
@@ -187,10 +207,9 @@ mod tests {
     #[test]
     fn test_resolve_recipient_mapping() {
         let mut config = create_test_config();
-        config.topic_recipient_mapping.insert(
-            "/test/topic".to_string(),
-            "+49987654321".to_string(),
-        );
+        config
+            .topic_recipient_mapping
+            .insert("/test/topic".to_string(), "+49987654321".to_string());
         let reflex = SignalReflex::new("test".to_string(), config);
         let ink = create_test_ink();
         assert_eq!(reflex.resolve_recipient(&ink).unwrap(), "+49987654321");

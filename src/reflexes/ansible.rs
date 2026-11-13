@@ -263,7 +263,8 @@ impl AnsibleReflex {
 
         // Extract job ID from URL path
         let job_id = location
-            .split('/').rfind(|s| !s.is_empty())
+            .split('/')
+            .rfind(|s| !s.is_empty())
             .and_then(|s| s.parse::<u64>().ok())
             .context("Failed to parse job ID from AWX response")?;
 
@@ -306,7 +307,7 @@ impl AnsibleReflex {
     /// Wait for job to complete
     async fn wait_for_job(&self, job_id: u64, token: &str) -> Result<String> {
         use std::time::Duration;
-        use tokio::time::{sleep, Instant};
+        use tokio::time::{Instant, sleep};
 
         let start = Instant::now();
         let max_wait = Duration::from_secs(self.config.max_wait);
@@ -422,9 +423,9 @@ impl Reflex for AnsibleReflex {
         );
 
         // Resolve the job template
-        let job_template = self.resolve_job_template(ink).context(
-            "Job template is required - set job_template or topic_template_mapping",
-        )?;
+        let job_template = self
+            .resolve_job_template(ink)
+            .context("Job template is required - set job_template or topic_template_mapping")?;
         debug!(
             "Ansible reflex '{}' resolved job template: {}",
             self.name, job_template
@@ -555,9 +556,8 @@ mod tests {
     #[test]
     fn test_resolve_extra_vars_from_template() {
         let mut config = create_test_config();
-        config.extra_vars_template = Some(
-            r#"{"env": "{{topic}}", "message": "{{body}}"}"#.to_string(),
-        );
+        config.extra_vars_template =
+            Some(r#"{"env": "{{topic}}", "message": "{{body}}"}"#.to_string());
 
         let reflex = AnsibleReflex::new("test".to_string(), config);
         let ink = create_test_ink();

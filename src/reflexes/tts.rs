@@ -128,10 +128,7 @@ impl TtsReflex {
 
     /// Generate TTS using espeak
     async fn espeak(&self, text: &str, output_file: &str, voice: Option<&str>) -> Result<()> {
-        info!(
-            "TTS reflex '{}' generating speech with espeak",
-            self.name
-        );
+        info!("TTS reflex '{}' generating speech with espeak", self.name);
 
         let mut cmd = tokio::process::Command::new("espeak");
         cmd.arg(text).arg("-f").arg(output_file);
@@ -199,10 +196,7 @@ impl TtsReflex {
 
     /// Play audio file
     async fn play_audio(&self, file: &str) -> Result<()> {
-        info!(
-            "TTS reflex '{}' playing audio: {}",
-            self.name, file
-        );
+        info!("TTS reflex '{}' playing audio: {}", self.name, file);
 
         // Try paplay first (PulseAudio), then aplay (ALSA)
         let paplay_result = tokio::process::Command::new("paplay")
@@ -211,9 +205,10 @@ impl TtsReflex {
             .await;
 
         if let Ok(output) = paplay_result
-            && output.status.success() {
-                return Ok(());
-            }
+            && output.status.success()
+        {
+            return Ok(());
+        }
 
         let aplay_result = tokio::process::Command::new("aplay")
             .arg(file)
@@ -221,9 +216,10 @@ impl TtsReflex {
             .await;
 
         if let Ok(output) = aplay_result
-            && output.status.success() {
-                return Ok(());
-            }
+            && output.status.success()
+        {
+            return Ok(());
+        }
 
         Err(anyhow::anyhow!("No audio player available"))
     }
@@ -261,12 +257,15 @@ impl Reflex for TtsReflex {
         match self.config.service.as_str() {
             "espeak" => self.espeak(&text, &output_file, voice.as_deref()).await?,
             "pico2wave" => self.pico2wave(&text, &output_file).await?,
-            "macos_say" => self.macos_say(&text, &output_file, voice.as_deref()).await?,
+            "macos_say" => {
+                self.macos_say(&text, &output_file, voice.as_deref())
+                    .await?
+            }
             _ => {
                 return Err(anyhow::anyhow!(
                     "Unsupported TTS service: {}",
                     self.config.service
-                ))
+                ));
             }
         }
 
@@ -312,10 +311,7 @@ mod tests {
         let config = create_test_config();
         let reflex = TtsReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(
-            reflex.render_template("{{body}}", &ink),
-            "Hello world"
-        );
+        assert_eq!(reflex.render_template("{{body}}", &ink), "Hello world");
     }
 
     #[test]

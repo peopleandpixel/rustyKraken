@@ -43,8 +43,12 @@ pub struct OpenhabReflexConfig {
     pub verify_ssl: bool,
 }
 
-fn default_value_template() -> String { "{{body}}".to_string() }
-fn default_verify_ssl() -> bool { true }
+fn default_value_template() -> String {
+    "{{body}}".to_string()
+}
+fn default_verify_ssl() -> bool {
+    true
+}
 
 pub struct OpenhabReflex {
     name: String,
@@ -105,11 +109,18 @@ impl OpenhabReflex {
 
 #[async_trait]
 impl Reflex for OpenhabReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "openhab" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "openhab"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("openHAB reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "openHAB reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
         let item = self.resolve_item(ink)?;
         let value = self.render_template(&self.config.value_template, ink);
@@ -140,7 +151,11 @@ impl Reflex for OpenhabReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("openHAB API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "openHAB API error ({}): {}",
+                status,
+                error_body
+            ));
         }
 
         info!(
@@ -177,7 +192,10 @@ mod tests {
         let config = create_test_config();
         let reflex = OpenhabReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("{{topic}}-{{body}}", &ink), "/test/topic-test body");
+        assert_eq!(
+            reflex.render_template("{{topic}}-{{body}}", &ink),
+            "/test/topic-test body"
+        );
     }
 
     #[test]

@@ -161,7 +161,12 @@ impl GrafanaReflex {
             .build_auth_request(self.client.post(&url).json(&payload))
             .send()
             .await
-            .with_context(|| format!("Failed to add annotation to Grafana dashboard {}", dashboard_uid))?;
+            .with_context(|| {
+                format!(
+                    "Failed to add annotation to Grafana dashboard {}",
+                    dashboard_uid
+                )
+            })?;
 
         if !response.status().is_success() {
             let status = response.status();
@@ -173,7 +178,10 @@ impl GrafanaReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse Grafana annotation response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Grafana annotation response")
     }
 
     /// Get dashboard by UID
@@ -196,7 +204,10 @@ impl GrafanaReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse Grafana dashboard response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Grafana dashboard response")
     }
 
     /// List alert rules
@@ -214,8 +225,10 @@ impl GrafanaReflex {
             return Err(anyhow::anyhow!("Grafana list alerts error: {}", status));
         }
 
-        let result: Vec<serde_json::Value> =
-            response.json().await.context("Failed to parse alerts response")?;
+        let result: Vec<serde_json::Value> = response
+            .json()
+            .await
+            .context("Failed to parse alerts response")?;
         Ok(result)
     }
 
@@ -223,7 +236,11 @@ impl GrafanaReflex {
     async fn health_check(&self) -> Result<String> {
         let url = format!("{}/api/health", self.config.host.trim_end_matches('/'));
 
-        let response = self.client.get(&url).send().await
+        let response = self
+            .client
+            .get(&url)
+            .send()
+            .await
             .context("Failed to check Grafana health")?;
 
         if !response.status().is_success() {
@@ -231,7 +248,10 @@ impl GrafanaReflex {
             return Err(anyhow::anyhow!("Grafana health check error: {}", status));
         }
 
-        response.text().await.context("Failed to read Grafana health response")
+        response
+            .text()
+            .await
+            .context("Failed to read Grafana health response")
     }
 
     /// Search dashboards
@@ -249,8 +269,10 @@ impl GrafanaReflex {
             return Err(anyhow::anyhow!("Grafana search error: {}", status));
         }
 
-        let result: Vec<serde_json::Value> =
-            response.json().await.context("Failed to parse search response")?;
+        let result: Vec<serde_json::Value> = response
+            .json()
+            .await
+            .context("Failed to parse search response")?;
         Ok(result)
     }
 }
@@ -272,16 +294,13 @@ impl Reflex for GrafanaReflex {
         );
 
         let action = self.resolve_action(ink);
-        debug!(
-            "Grafana reflex '{}' resolved action: {}",
-            self.name, action
-        );
+        debug!("Grafana reflex '{}' resolved action: {}", self.name, action);
 
         match action.as_str() {
             "annotation" | "annotate" => {
-                let dashboard_uid = self.resolve_dashboard_uid(ink).context(
-                    "Dashboard UID is required for annotation action",
-                )?;
+                let dashboard_uid = self
+                    .resolve_dashboard_uid(ink)
+                    .context("Dashboard UID is required for annotation action")?;
                 let result = self.add_annotation(&dashboard_uid, ink).await?;
                 info!(
                     "Grafana reflex '{}' added annotation to dashboard {}: {}",
@@ -289,9 +308,9 @@ impl Reflex for GrafanaReflex {
                 );
             }
             "dashboard" | "get-dashboard" => {
-                let dashboard_uid = self.resolve_dashboard_uid(ink).context(
-                    "Dashboard UID is required for dashboard action",
-                )?;
+                let dashboard_uid = self
+                    .resolve_dashboard_uid(ink)
+                    .context("Dashboard UID is required for dashboard action")?;
                 let dashboard = self.get_dashboard(&dashboard_uid).await?;
                 debug!(
                     "Grafana reflex '{}' got dashboard: {}",
@@ -302,29 +321,26 @@ impl Reflex for GrafanaReflex {
                 let alerts = self.list_alerts().await?;
                 info!(
                     "Grafana reflex '{}' found {} alerts",
-                    self.name, alerts.len()
+                    self.name,
+                    alerts.len()
                 );
             }
             "health" | "ping" => {
                 let health = self.health_check().await?;
-                debug!(
-                    "Grafana reflex '{}' health: {}",
-                    self.name, health
-                );
+                debug!("Grafana reflex '{}' health: {}", self.name, health);
             }
             "search" | "search-dashboards" => {
                 let query = ink.body.clone();
                 let results = self.search_dashboards(&query).await?;
                 info!(
                     "Grafana reflex '{}' search for '{}' found {} results",
-                    self.name, query, results.len()
+                    self.name,
+                    query,
+                    results.len()
                 );
             }
             _ => {
-                error!(
-                    "Grafana reflex '{}' unknown action: {}",
-                    self.name, action
-                );
+                error!("Grafana reflex '{}' unknown action: {}", self.name, action);
                 return Err(anyhow::anyhow!("Unknown Grafana action: {}", action));
             }
         }

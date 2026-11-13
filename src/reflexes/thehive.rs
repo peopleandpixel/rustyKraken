@@ -189,7 +189,10 @@ impl TheHiveReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse TheHive case response")
+        response
+            .json()
+            .await
+            .context("Failed to parse TheHive case response")
     }
 
     /// Create an alert
@@ -229,7 +232,10 @@ impl TheHiveReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse TheHive alert response")
+        response
+            .json()
+            .await
+            .context("Failed to parse TheHive alert response")
     }
 
     /// Add an observation to a case
@@ -263,12 +269,18 @@ impl TheHiveReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse TheHive observation response")
+        response
+            .json()
+            .await
+            .context("Failed to parse TheHive observation response")
     }
 
     /// Search cases
     async fn search_cases(&self, query: &str) -> Result<Vec<serde_json::Value>> {
-        let url = self.thehive_url(&format!("case/search/1/100?query={}", urlencoding::encode(query)));
+        let url = self.thehive_url(&format!(
+            "case/search/1/100?query={}",
+            urlencoding::encode(query)
+        ));
 
         let response = self
             .build_auth_request(self.client.get(&url))
@@ -281,8 +293,10 @@ impl TheHiveReflex {
             return Err(anyhow::anyhow!("TheHive search error: {}", status));
         }
 
-        let result: Vec<serde_json::Value> =
-            response.json().await.context("Failed to parse search response")?;
+        let result: Vec<serde_json::Value> = response
+            .json()
+            .await
+            .context("Failed to parse search response")?;
         Ok(result)
     }
 
@@ -306,7 +320,10 @@ impl TheHiveReflex {
             ));
         }
 
-        response.json().await.context("Failed to parse TheHive case response")
+        response
+            .json()
+            .await
+            .context("Failed to parse TheHive case response")
     }
 }
 
@@ -327,27 +344,18 @@ impl Reflex for TheHiveReflex {
         );
 
         let action = self.resolve_action(ink);
-        debug!(
-            "TheHive reflex '{}' resolved action: {}",
-            self.name, action
-        );
+        debug!("TheHive reflex '{}' resolved action: {}", self.name, action);
 
         match action.as_str() {
             "case" | "create-case" => {
                 let result = self.create_case(ink).await?;
                 let case_id = result["id"].as_str().unwrap_or("unknown");
-                info!(
-                    "TheHive reflex '{}' created case: {}",
-                    self.name, case_id
-                );
+                info!("TheHive reflex '{}' created case: {}", self.name, case_id);
             }
             "alert" | "create-alert" => {
                 let result = self.create_alert(ink).await?;
                 let alert_id = result["id"].as_str().unwrap_or("unknown");
-                info!(
-                    "TheHive reflex '{}' created alert: {}",
-                    self.name, alert_id
-                );
+                info!("TheHive reflex '{}' created alert: {}", self.name, alert_id);
             }
             "observe" | "observation" => {
                 let case_id = ink.body.clone();
@@ -363,22 +371,18 @@ impl Reflex for TheHiveReflex {
                 let results = self.search_cases(&query).await?;
                 info!(
                     "TheHive reflex '{}' search for '{}' found {} results",
-                    self.name, query, results.len()
+                    self.name,
+                    query,
+                    results.len()
                 );
             }
             "get" | "get-case" => {
                 let case_id = ink.body.clone();
                 let case = self.get_case(&case_id).await?;
-                debug!(
-                    "TheHive reflex '{}' got case: {}",
-                    self.name, case
-                );
+                debug!("TheHive reflex '{}' got case: {}", self.name, case);
             }
             _ => {
-                error!(
-                    "TheHive reflex '{}' unknown action: {}",
-                    self.name, action
-                );
+                error!("TheHive reflex '{}' unknown action: {}", self.name, action);
                 return Err(anyhow::anyhow!("Unknown TheHive action: {}", action));
             }
         }

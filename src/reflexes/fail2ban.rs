@@ -154,10 +154,7 @@ impl Fail2BanReflex {
 
     /// Ban an IP address
     async fn ban_ip(&self, ip: &str, jail: Option<&str>) -> Result<()> {
-        info!(
-            "Fail2Ban reflex '{}' banning IP: {}",
-            self.name, ip
-        );
+        info!("Fail2Ban reflex '{}' banning IP: {}", self.name, ip);
 
         let jail_name = jail.unwrap_or("sshd");
         let output = self
@@ -173,10 +170,7 @@ impl Fail2BanReflex {
 
     /// Unban an IP address
     async fn unban_ip(&self, ip: &str, jail: Option<&str>) -> Result<()> {
-        info!(
-            "Fail2Ban reflex '{}' unbanning IP: {}",
-            self.name, ip
-        );
+        info!("Fail2Ban reflex '{}' unbanning IP: {}", self.name, ip);
 
         let jail_name = jail.unwrap_or("sshd");
         let output = self
@@ -257,17 +251,11 @@ impl Reflex for Fail2BanReflex {
             }
             "status" => {
                 let status = self.get_status(jail.as_deref()).await?;
-                info!(
-                    "Fail2Ban reflex '{}' status: {}",
-                    self.name, status
-                );
+                info!("Fail2Ban reflex '{}' status: {}", self.name, status);
             }
             "get_info" | "info" => {
                 let info = self.get_info(jail.as_deref()).await?;
-                debug!(
-                    "Fail2Ban reflex '{}' info: {}",
-                    self.name, info
-                );
+                debug!("Fail2Ban reflex '{}' info: {}", self.name, info);
             }
             "list_jails" | "jails" => {
                 let jails = self.list_jails().await?;
@@ -279,10 +267,7 @@ impl Reflex for Fail2BanReflex {
                 );
             }
             _ => {
-                error!(
-                    "Fail2Ban reflex '{}' unknown action: {}",
-                    self.name, action
-                );
+                error!("Fail2Ban reflex '{}' unknown action: {}", self.name, action);
                 return Err(anyhow::anyhow!("Unknown Fail2Ban action: {}", action));
             }
         }

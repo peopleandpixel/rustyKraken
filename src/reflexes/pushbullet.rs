@@ -100,7 +100,11 @@ impl PushbulletReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Pushbullet API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "Pushbullet API error ({}): {}",
+                status,
+                error_body
+            ));
         }
         Ok(())
     }
@@ -117,14 +121,23 @@ impl Reflex for PushbulletReflex {
     }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Pushbullet reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "Pushbullet reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
         let title = self.render_template(&self.config.title_template, ink);
         let body = self.render_template(&self.config.body_template, ink);
-        debug!("Pushbullet reflex '{}' sending push for topic: {}", self.name, ink.topic);
+        debug!(
+            "Pushbullet reflex '{}' sending push for topic: {}",
+            self.name, ink.topic
+        );
 
         match self.send_push(&title, &body).await {
             Ok(()) => {
-                info!("Pushbullet reflex '{}' sent push for topic: {}", self.name, ink.topic);
+                info!(
+                    "Pushbullet reflex '{}' sent push for topic: {}",
+                    self.name, ink.topic
+                );
                 Ok(())
             }
             Err(e) => {

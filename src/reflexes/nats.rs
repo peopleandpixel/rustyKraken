@@ -43,8 +43,12 @@ pub struct NatsReflexConfig {
     pub token: Option<String>,
 }
 
-fn default_subject() -> String { "kraken.events".to_string() }
-fn default_payload_template() -> String { "{{body}}".to_string() }
+fn default_subject() -> String {
+    "kraken.events".to_string()
+}
+fn default_payload_template() -> String {
+    "{{body}}".to_string()
+}
 
 pub struct NatsReflex {
     name: String,
@@ -93,11 +97,18 @@ impl NatsReflex {
 
 #[async_trait]
 impl Reflex for NatsReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "nats" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "nats"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("NATS reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "NATS reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
         let subject = self.resolve_subject(ink);
         let payload = self.render_template(&self.config.payload_template, ink);
@@ -109,7 +120,9 @@ impl Reflex for NatsReflex {
 
         let connection = async_nats::connect(&self.config.server)
             .await
-            .with_context(|| format!("Failed to connect to NATS server at {}", self.config.server))?;
+            .with_context(|| {
+                format!("Failed to connect to NATS server at {}", self.config.server)
+            })?;
 
         connection
             .publish(subject.clone(), payload.into())
@@ -150,7 +163,10 @@ mod tests {
         let config = create_test_config();
         let reflex = NatsReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]

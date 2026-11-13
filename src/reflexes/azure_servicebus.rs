@@ -26,7 +26,9 @@ pub struct AzureServiceBusReflexConfig {
     pub topic_destination_mapping: HashMap<String, String>,
 }
 
-fn default_message_template() -> String { "{{body}}".to_string() }
+fn default_message_template() -> String {
+    "{{body}}".to_string()
+}
 
 pub struct AzureServiceBusReflex {
     name: String,
@@ -36,11 +38,20 @@ pub struct AzureServiceBusReflex {
 
 impl AzureServiceBusReflex {
     pub fn new(name: String, config: AzureServiceBusReflexConfig) -> Self {
-        Self { name, config, client: reqwest::Client::new() }
+        Self {
+            name,
+            config,
+            client: reqwest::Client::new(),
+        }
     }
 
     fn resolve_destination(&self, ink: &Ink) -> String {
-        if let Some(dest) = self.config.topic_destination_mapping.get(&ink.topic).filter(|d| !d.is_empty()) {
+        if let Some(dest) = self
+            .config
+            .topic_destination_mapping
+            .get(&ink.topic)
+            .filter(|d| !d.is_empty())
+        {
             return dest.clone();
         }
         self.config.destination.clone()
@@ -68,14 +79,24 @@ impl AzureServiceBusReflex {
 
 #[async_trait]
 impl Reflex for AzureServiceBusReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "azure_servicebus" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "azure_servicebus"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Azure Service Bus reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "Azure Service Bus reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
         let destination = self.resolve_destination(ink);
         let body = self.render_template(&self.config.message_template, ink);
-        debug!("Azure Service Bus reflex '{}' sending to '{}' for topic: {}", self.name, destination, ink.topic);
+        debug!(
+            "Azure Service Bus reflex '{}' sending to '{}' for topic: {}",
+            self.name, destination, ink.topic
+        );
 
         let url = format!(
             "https://{}.servicebus.windows.net/{}/messages?api-version=2014-09",
@@ -92,7 +113,8 @@ impl Reflex for AzureServiceBusReflex {
             .map_err(|e| anyhow::anyhow!("HMAC error: {}", e))?;
         mac.update(string_to_sign.as_bytes());
         let signature = mac.finalize().into_bytes();
-        let encoded_sig = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, signature);
+        let encoded_sig =
+            base64::Engine::encode(&base64::engine::general_purpose::STANDARD, signature);
 
         let sas_token = format!(
             "SharedAccessSignature sr={}&sig={}&se={}&skn={}",
@@ -102,7 +124,9 @@ impl Reflex for AzureServiceBusReflex {
             self.config.sas_key_name
         );
 
-        let response = self.client.post(&url)
+        let response = self
+            .client
+            .post(&url)
             .header("Authorization", &sas_token)
             .header("Content-Type", "application/json")
             .body(body)
@@ -113,9 +137,16 @@ impl Reflex for AzureServiceBusReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Azure Service Bus API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "Azure Service Bus API error ({}): {}",
+                status,
+                error_body
+            ));
         }
-        info!("Azure Service Bus reflex '{}' sent message for topic: {}", self.name, ink.topic);
+        info!(
+            "Azure Service Bus reflex '{}' sent message for topic: {}",
+            self.name, ink.topic
+        );
         Ok(())
     }
 }
@@ -152,7 +183,10 @@ mod tests {
         let config = create_test_config();
         let reflex = AzureServiceBusReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("[{{topic}}] {{body}}", &ink), "[/test/topic] test body");
+        assert_eq!(
+            reflex.render_template("[{{topic}}] {{body}}", &ink),
+            "[/test/topic] test body"
+        );
     }
 
     #[test]

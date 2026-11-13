@@ -83,15 +83,33 @@ pub struct CustomWebhookReflexConfig {
     pub retry_delay_ms: u64,
 }
 
-fn default_method() -> String { "POST".to_string() }
-fn default_content_type() -> String { "application/json".to_string() }
-fn default_body_template() -> String { "{\"topic\":\"{{topic}}\",\"body\":\"{{body}}\"}".to_string() }
-fn default_auth_type() -> String { "none".to_string() }
-fn default_api_key_header() -> String { "X-API-Key".to_string() }
-fn default_follow_redirects() -> bool { true }
-fn default_timeout() -> u64 { 30 }
-fn default_verify_ssl() -> bool { true }
-fn default_retry_delay() -> u64 { 1000 }
+fn default_method() -> String {
+    "POST".to_string()
+}
+fn default_content_type() -> String {
+    "application/json".to_string()
+}
+fn default_body_template() -> String {
+    "{\"topic\":\"{{topic}}\",\"body\":\"{{body}}\"}".to_string()
+}
+fn default_auth_type() -> String {
+    "none".to_string()
+}
+fn default_api_key_header() -> String {
+    "X-API-Key".to_string()
+}
+fn default_follow_redirects() -> bool {
+    true
+}
+fn default_timeout() -> u64 {
+    30
+}
+fn default_verify_ssl() -> bool {
+    true
+}
+fn default_retry_delay() -> u64 {
+    1000
+}
 
 pub struct CustomWebhookReflex {
     name: String,
@@ -108,13 +126,11 @@ impl CustomWebhookReflex {
             config,
             client: reqwest::Client::builder()
                 .danger_accept_invalid_certs(!verify_ssl)
-                .redirect(
-                    if follow_redirects {
-                        reqwest::redirect::Policy::default()
-                    } else {
-                        reqwest::redirect::Policy::none()
-                    },
-                )
+                .redirect(if follow_redirects {
+                    reqwest::redirect::Policy::default()
+                } else {
+                    reqwest::redirect::Policy::none()
+                })
                 .build()
                 .unwrap_or_else(|_| reqwest::Client::new()),
         }
@@ -212,8 +228,12 @@ impl CustomWebhookReflex {
 
 #[async_trait]
 impl Reflex for CustomWebhookReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "custom_webhook" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "custom_webhook"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
         info!(
@@ -265,15 +285,17 @@ impl Reflex for CustomWebhookReflex {
                     attempt + 1,
                     self.config.retry_delay_ms
                 );
-                tokio::time::sleep(std::time::Duration::from_millis(
-                    self.config.retry_delay_ms,
-                ))
-                .await;
+                tokio::time::sleep(std::time::Duration::from_millis(self.config.retry_delay_ms))
+                    .await;
             }
         }
 
         Err(last_error.unwrap_or_else(|| {
-            anyhow::anyhow!("Custom Webhook reflex '{}' failed after {} attempts", self.name, attempts)
+            anyhow::anyhow!(
+                "Custom Webhook reflex '{}' failed after {} attempts",
+                self.name,
+                attempts
+            )
         }))
     }
 }

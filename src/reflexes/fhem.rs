@@ -47,7 +47,9 @@ pub struct FhemReflexConfig {
     pub verify_ssl: bool,
 }
 
-fn default_verify_ssl() -> bool { true }
+fn default_verify_ssl() -> bool {
+    true
+}
 
 pub struct FhemReflex {
     name: String,
@@ -99,10 +101,9 @@ impl FhemReflex {
         if let Some(ref template) = self.config.device_template {
             return Ok(self.render_template(template, ink));
         }
-        self.config
-            .device
-            .clone()
-            .context("FHEM device is required - set device, device_template, or topic_device_mapping")
+        self.config.device.clone().context(
+            "FHEM device is required - set device, device_template, or topic_device_mapping",
+        )
     }
 
     fn resolve_command(&self, ink: &Ink) -> String {
@@ -123,11 +124,18 @@ impl FhemReflex {
 
 #[async_trait]
 impl Reflex for FhemReflex {
-    fn name(&self) -> &str { &self.name }
-    fn r#type(&self) -> &str { "fhem" }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn r#type(&self) -> &str {
+        "fhem"
+    }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("FHEM reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "FHEM reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
 
         let device = self.resolve_device(ink)?;
         let command = self.resolve_command(ink);
@@ -158,7 +166,11 @@ impl Reflex for FhemReflex {
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("FHEM API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "FHEM API error ({}): {}",
+                status,
+                error_body
+            ));
         }
 
         info!(
@@ -196,7 +208,10 @@ mod tests {
         let config = create_test_config();
         let reflex = FhemReflex::new("test".to_string(), config);
         let ink = create_test_ink();
-        assert_eq!(reflex.render_template("{{topic}}-{{body}}", &ink), "/test/topic-test body");
+        assert_eq!(
+            reflex.render_template("{{topic}}-{{body}}", &ink),
+            "/test/topic-test body"
+        );
     }
 
     #[test]

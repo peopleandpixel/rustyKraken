@@ -51,7 +51,8 @@ pub struct N8nReflexConfig {
 }
 
 fn default_payload_template() -> String {
-    r#"{"topic": "{{topic}}", "body": "{{body}}", "id": "{{id}}", "timestamp": "{{timestamp}}"}"#.to_string()
+    r#"{"topic": "{{topic}}", "body": "{{body}}", "id": "{{id}}", "timestamp": "{{timestamp}}"}"#
+        .to_string()
 }
 fn default_method() -> String {
     "POST".to_string()
@@ -198,10 +199,7 @@ impl Reflex for N8nReflex {
 
         // Resolve webhook
         let webhook = self.resolve_webhook(ink);
-        debug!(
-            "n8n reflex '{}' resolved webhook: {}",
-            self.name, webhook
-        );
+        debug!("n8n reflex '{}' resolved webhook: {}", self.name, webhook);
 
         // Resolve and render payload
         let payload_template = self.resolve_payload_template(ink);
@@ -209,18 +207,12 @@ impl Reflex for N8nReflex {
         let payload: serde_json::Value = serde_json::from_str(&payload_rendered)
             .context("payload_template must render to valid JSON")?;
 
-        debug!(
-            "n8n reflex '{}' payload: {}",
-            self.name, payload
-        );
+        debug!("n8n reflex '{}' payload: {}", self.name, payload);
 
         // Trigger webhook
         let result = self.trigger_webhook(&webhook, &payload).await?;
 
-        info!(
-            "n8n reflex '{}' triggered webhook: {}",
-            self.name, result
-        );
+        info!("n8n reflex '{}' triggered webhook: {}", self.name, result);
 
         Ok(())
     }

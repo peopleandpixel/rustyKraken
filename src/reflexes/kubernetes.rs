@@ -327,14 +327,11 @@ impl KubernetesReflex {
 
     /// Apply a YAML/JSON manifest
     async fn apply_manifest(&self, manifest: &str) -> Result<serde_json::Value> {
-        info!(
-            "Kubernetes reflex '{}' applying manifest",
-            self.name
-        );
+        info!("Kubernetes reflex '{}' applying manifest", self.name);
 
         // Parse the manifest to determine the resource type
-        let parsed: serde_json::Value = serde_json::from_str(manifest)
-            .context("Manifest must be valid JSON")?;
+        let parsed: serde_json::Value =
+            serde_json::from_str(manifest).context("Manifest must be valid JSON")?;
 
         let _api_version = parsed["apiVersion"].as_str().unwrap_or("v1");
         let kind = parsed["kind"].as_str().unwrap_or("");
@@ -365,22 +362,37 @@ impl KubernetesReflex {
 
         let path = match resource {
             "deployment" | "Deployment" => {
-                format!("/apis/apps/v1/namespaces/{}/deployments/{}", self.config.namespace, name)
+                format!(
+                    "/apis/apps/v1/namespaces/{}/deployments/{}",
+                    self.config.namespace, name
+                )
             }
             "pod" | "Pod" => {
                 format!("/api/v1/namespaces/{}/pods/{}", self.config.namespace, name)
             }
             "service" | "Service" => {
-                format!("/api/v1/namespaces/{}/services/{}", self.config.namespace, name)
+                format!(
+                    "/api/v1/namespaces/{}/services/{}",
+                    self.config.namespace, name
+                )
             }
             "configmap" | "ConfigMap" => {
-                format!("/api/v1/namespaces/{}/configmaps/{}", self.config.namespace, name)
+                format!(
+                    "/api/v1/namespaces/{}/configmaps/{}",
+                    self.config.namespace, name
+                )
             }
             "secret" | "Secret" => {
-                format!("/api/v1/namespaces/{}/secrets/{}", self.config.namespace, name)
+                format!(
+                    "/api/v1/namespaces/{}/secrets/{}",
+                    self.config.namespace, name
+                )
             }
             "statefulset" | "StatefulSet" => {
-                format!("/apis/apps/v1/namespaces/{}/statefulsets/{}", self.config.namespace, name)
+                format!(
+                    "/apis/apps/v1/namespaces/{}/statefulsets/{}",
+                    self.config.namespace, name
+                )
             }
             _ => return Err(anyhow::anyhow!("Unsupported resource type: {}", resource)),
         };
@@ -395,7 +407,12 @@ impl KubernetesReflex {
     }
 
     /// Add labels to a resource
-    async fn add_labels(&self, resource: &str, name: &str, labels: &serde_json::Value) -> Result<()> {
+    async fn add_labels(
+        &self,
+        resource: &str,
+        name: &str,
+        labels: &serde_json::Value,
+    ) -> Result<()> {
         info!(
             "Kubernetes reflex '{}' adding labels to {}/{}",
             self.name, resource, name
@@ -403,12 +420,20 @@ impl KubernetesReflex {
 
         let path = match resource {
             "deployment" | "Deployment" => {
-                format!("/apis/apps/v1/namespaces/{}/deployments/{}", self.config.namespace, name)
+                format!(
+                    "/apis/apps/v1/namespaces/{}/deployments/{}",
+                    self.config.namespace, name
+                )
             }
             "pod" | "Pod" => {
                 format!("/api/v1/namespaces/{}/pods/{}", self.config.namespace, name)
             }
-            _ => return Err(anyhow::anyhow!("Unsupported resource type for labeling: {}", resource)),
+            _ => {
+                return Err(anyhow::anyhow!(
+                    "Unsupported resource type for labeling: {}",
+                    resource
+                ));
+            }
         };
 
         let patch = serde_json::json!({
@@ -461,10 +486,7 @@ impl Reflex for KubernetesReflex {
         match action.as_str() {
             "get" | "inspect" => {
                 let result = self.get_resource(resource, &resource_name).await?;
-                debug!(
-                    "Kubernetes reflex '{}' get result: {}",
-                    self.name, result
-                );
+                debug!("Kubernetes reflex '{}' get result: {}", self.name, result);
             }
             "scale" => {
                 let replicas = self

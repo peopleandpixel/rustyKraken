@@ -143,10 +143,7 @@ impl ShellyReflex {
 
     /// Turn relay on
     async fn turn_on(&self, relay: u8) -> Result<()> {
-        info!(
-            "Shelly reflex '{}' turning relay {} on",
-            self.name, relay
-        );
+        info!("Shelly reflex '{}' turning relay {} on", self.name, relay);
 
         let url = self.shelly_url(&format!("/relay/{}", relay));
         let response = self
@@ -165,19 +162,13 @@ impl ShellyReflex {
             ));
         }
 
-        info!(
-            "Shelly reflex '{}' turned relay {} on",
-            self.name, relay
-        );
+        info!("Shelly reflex '{}' turned relay {} on", self.name, relay);
         Ok(())
     }
 
     /// Turn relay off
     async fn turn_off(&self, relay: u8) -> Result<()> {
-        info!(
-            "Shelly reflex '{}' turning relay {} off",
-            self.name, relay
-        );
+        info!("Shelly reflex '{}' turning relay {} off", self.name, relay);
 
         let url = self.shelly_url(&format!("/relay/{}", relay));
         let response = self
@@ -196,19 +187,13 @@ impl ShellyReflex {
             ));
         }
 
-        info!(
-            "Shelly reflex '{}' turned relay {} off",
-            self.name, relay
-        );
+        info!("Shelly reflex '{}' turned relay {} off", self.name, relay);
         Ok(())
     }
 
     /// Toggle relay
     async fn toggle(&self, relay: u8) -> Result<()> {
-        info!(
-            "Shelly reflex '{}' toggling relay {}",
-            self.name, relay
-        );
+        info!("Shelly reflex '{}' toggling relay {}", self.name, relay);
 
         let url = self.shelly_url(&format!("/relay/{}", relay));
         let response = self
@@ -227,10 +212,7 @@ impl ShellyReflex {
             ));
         }
 
-        info!(
-            "Shelly reflex '{}' toggled relay {}",
-            self.name, relay
-        );
+        info!("Shelly reflex '{}' toggled relay {}", self.name, relay);
         Ok(())
     }
 
@@ -249,7 +231,10 @@ impl ShellyReflex {
             return Err(anyhow::anyhow!("Shelly status error: {}", status));
         }
 
-        response.json().await.context("Failed to parse Shelly status response")
+        response
+            .json()
+            .await
+            .context("Failed to parse Shelly status response")
     }
 }
 
@@ -283,16 +268,10 @@ impl Reflex for ShellyReflex {
             "toggle" => self.toggle(relay).await?,
             "status" => {
                 let status = self.get_status().await?;
-                debug!(
-                    "Shelly reflex '{}' status: {}",
-                    self.name, status
-                );
+                debug!("Shelly reflex '{}' status: {}", self.name, status);
             }
             _ => {
-                error!(
-                    "Shelly reflex '{}' unknown action: {}",
-                    self.name, action
-                );
+                error!("Shelly reflex '{}' unknown action: {}", self.name, action);
                 return Err(anyhow::anyhow!("Unknown Shelly action: {}", action));
             }
         }

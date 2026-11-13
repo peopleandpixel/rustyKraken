@@ -91,7 +91,11 @@ impl GotifyReflex {
     }
 
     async fn send_notification(&self, title: &str, message: &str, priority: u8) -> Result<()> {
-        let url = format!("{}/message?token={}", self.config.server_url.trim_end_matches('/'), self.config.app_token);
+        let url = format!(
+            "{}/message?token={}",
+            self.config.server_url.trim_end_matches('/'),
+            self.config.app_token
+        );
 
         let payload = serde_json::json!({
             "title": title,
@@ -106,12 +110,21 @@ impl GotifyReflex {
             .json(&payload)
             .send()
             .await
-            .with_context(|| format!("Failed to send Gotify notification to {}", self.config.server_url))?;
+            .with_context(|| {
+                format!(
+                    "Failed to send Gotify notification to {}",
+                    self.config.server_url
+                )
+            })?;
 
         if !response.status().is_success() {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Gotify API error ({}): {}", status, error_body));
+            return Err(anyhow::anyhow!(
+                "Gotify API error ({}): {}",
+                status,
+                error_body
+            ));
         }
         Ok(())
     }
@@ -128,15 +141,24 @@ impl Reflex for GotifyReflex {
     }
 
     async fn handle(&self, ink: &Ink) -> Result<()> {
-        info!("Gotify reflex '{}' handling ink on topic: {}", self.name, ink.topic);
+        info!(
+            "Gotify reflex '{}' handling ink on topic: {}",
+            self.name, ink.topic
+        );
         let priority = self.resolve_priority(ink);
         let title = self.render_template(&self.config.title_template, ink);
         let message = self.render_template(&self.config.message_template, ink);
-        debug!("Gotify reflex '{}' sending notification (priority {}) for topic: {}", self.name, priority, ink.topic);
+        debug!(
+            "Gotify reflex '{}' sending notification (priority {}) for topic: {}",
+            self.name, priority, ink.topic
+        );
 
         match self.send_notification(&title, &message, priority).await {
             Ok(()) => {
-                info!("Gotify reflex '{}' sent notification for topic: {}", self.name, ink.topic);
+                info!(
+                    "Gotify reflex '{}' sent notification for topic: {}",
+                    self.name, ink.topic
+                );
                 Ok(())
             }
             Err(e) => {
